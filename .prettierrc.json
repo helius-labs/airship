@@ -1,0 +1,16 @@
+{
+  "importOrder": [
+    "^@/lib/(.*)$",
+    "^@/actions/(.*)$",
+    "^@/schemas/(.*)$",
+    "^@/hooks/(.*)$",
+    "^@/components/(.*)$",
+    "^[./]"
+  ],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true,
+  "plugins": [
+    "@trivago/prettier-plugin-sort-imports",
+    "prettier-plugin-tailwindcss"
+  ]
+}
