@@ -4,6 +4,7 @@
     "^@/actions/(.*)$",
     "^@/schemas/(.*)$",
     "^@/hooks/(.*)$",
+    "^@/providers/(.*)$",
     "^@/components/(.*)$",
     "^[./]"
   ],

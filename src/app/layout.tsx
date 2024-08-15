@@ -1,11 +1,12 @@
-import { NavLinks } from "@/types/NavLinks";
-import { Boxes, Wallet, icons } from "lucide-react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
-import { NavMobile } from "@/components/nav-mobile";
-import { Sidebar } from "@/components/sidebar";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
+import { WalletAdapterProvider } from "@/providers/WalletAdapterProvider";
+
+import { Header } from "@/components/Header";
+import { NavMobile } from "@/components/NavMobile";
+import { Sidebar } from "@/components/Sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import "./globals.css";
@@ -23,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
@@ -31,15 +32,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TooltipProvider>
-            <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-              <Sidebar />
-              <div className="flex flex-col">
-                <NavMobile />
-                {children}
+          <WalletAdapterProvider>
+            <TooltipProvider>
+              <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+                <Sidebar />
+                <div className="flex flex-col">
+                  <Header />
+                  {children}
+                </div>
               </div>
-            </div>
-          </TooltipProvider>
+            </TooltipProvider>
+          </WalletAdapterProvider>
         </ThemeProvider>
       </body>
     </html>
