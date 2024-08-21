@@ -4,9 +4,9 @@ import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { WalletAdapterProvider } from "@/providers/WalletAdapterProvider";
 
-import { Header } from "@/components/Header";
-import { NavMobile } from "@/components/NavMobile";
-import { Sidebar } from "@/components/Sidebar";
+import { Header } from "@/components/header";
+import { NavMobile } from "@/components/nav-mobile";
+import { Sidebar } from "@/components/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import "./globals.css";

@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  WalletDisconnectButton,
-  WalletMultiButton,
-} from "@solana/wallet-adapter-react-ui";
-import { CircleUser, Gift, Menu } from "lucide-react";
+import { Gift, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 

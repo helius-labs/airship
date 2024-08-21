@@ -2,8 +2,8 @@
 
 import { usePathname } from "next/navigation";
 
-import { NavMobile } from "@/components/NavMobile";
-import { WalletMultiButton } from "@/components/WalletMultiButton";
+import { NavMobile } from "@/components/nav-mobile";
+import { WalletMultiButton } from "@/components/wallet-multi-button";
 
 export function Header() {
   const pathname = usePathname();
