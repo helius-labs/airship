@@ -8,13 +8,17 @@ import {
   csvToPublicKeys,
   exist,
   logger,
+  send,
 } from "@repo/airdrop-sender";
 import * as web3 from "@solana/web3.js";
-import bs58 from "bs58";
 import fs from "fs-extra";
 import fileSelector from "inquirer-file-selector";
 
-export async function newAirdropFromCSV() {
+export async function newAirdropFromCSV(
+  keypair: web3.Keypair,
+  url: string,
+  mintAddress: web3.PublicKey
+) {
   // Check if the airdrop already exists
   const exists = await exist();
   if (exists) {
@@ -36,27 +40,22 @@ export async function newAirdropFromCSV() {
   });
 
   // Get the airdrop CSV file
-  const spinner = ora(`Importing ${csvPath}`); // Start the spinner
+  const spinner = ora(`Importing ${csvPath}`);
 
   logger.info(`Importing ${csvPath}`);
 
+  // Import the CSV file and create the airdrop queue
   try {
     const csvFile = fs.readFileSync(csvPath, "utf8");
     const addresses = csvToPublicKeys(csvFile);
 
-    // Get the keypair
-    const keypair = web3.Keypair.fromSecretKey(
-      bs58.decode(
-        "Liqy5qwycJmYChMr7BhGhxpyvJ1Zkyjjw3fqtkPdoqJ9ZmV7713Lau11rCuyFWFr3GQ3xeHrCk5Z6Ju2hpHZDLe"
-      )
-    );
-
     spinner.start(); // Start the spinner
 
+    // TODO: user should be able to select the amount
     await create({
       signer: keypair.publicKey,
       addresses: addresses,
-      amount: BigInt(1),
+      amount: BigInt(1e9),
     });
 
     spinner.succeed(chalk.green("Import successful!"));
@@ -83,5 +82,26 @@ export async function newAirdropFromCSV() {
           break;
       }
     }
+    process.exit(0);
+  }
+
+  const spinner2 = ora(`Sending airdrop`);
+
+  try {
+    spinner2.start(); // Start the spinner
+
+    // Send the airdrop
+    await send({
+      keypair,
+      url,
+      mintAddress,
+    });
+  } catch (error) {
+    if (error instanceof AirdropError) {
+      spinner2.fail(chalk.red(error.message));
+    } else {
+      spinner2.fail(chalk.red("Sending airdrop failed", error));
+    }
+    process.exit(0);
   }
 }

@@ -26,6 +26,7 @@ export const transaction_queue = sqliteTable(
     last_attempted_at: integer("last_attempted_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(unixepoch())`),
+    commitment_status: integer("commitment_status").notNull().default(0),
   },
   (table) => {
     return {

@@ -3,6 +3,7 @@ export enum AirdropErrorCode {
   airdropCSVEmpty = 2,
   aidrdopCSVInvalid = 3,
   airdopAddressInvalid = 4,
+  airdropMaxAddressesPerTransaction = 5,
 }
 
 export enum AirdropErrorMessage {
@@ -10,6 +11,7 @@ export enum AirdropErrorMessage {
   airdropCSVEmpty = "CSV file is empty",
   aidrdopCSVInvalid = "CSV file is invalid",
   airdopAddressInvalid = "Address is invalid",
+  airdropMaxAddressesPerTransaction = "Max addresses per transaction is 16",
 }
 
 export class AirdropError extends Error {

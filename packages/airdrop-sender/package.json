@@ -29,6 +29,7 @@
     "@lightprotocol/compressed-token": "^0.10.1",
     "@lightprotocol/stateless.js": "^0.10.1",
     "@solana/web3.js": "^1.95.3",
+    "@solana/spl-token": "^0.4.8",
     "better-sqlite3": "^11.2.1",
     "bs58": "^6.0.0",
     "drizzle-orm": "^0.33.0",

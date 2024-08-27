@@ -19,7 +19,7 @@ function initDB(db: BetterSQLite3Database<Record<string, never>>) {
 	\`created_at\` integer DEFAULT (unixepoch()) NOT NULL,
 	\`attempts\` integer DEFAULT 0 NOT NULL,
 	\`last_attempted_at\` integer DEFAULT (unixepoch()) NOT NULL,
-	\`confirmation_status\` integer DEFAULT 0
+	\`commitment_status\` integer DEFAULT 0
 );`);
   db.run(
     sql`CREATE INDEX IF NOT EXISTS \`signer\` ON \`transaction_queue\` (\`signer\`);`
