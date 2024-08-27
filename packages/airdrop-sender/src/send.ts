@@ -6,7 +6,7 @@ import {
   lookupTableAddress,
   maxAddressesPerTransaction,
 } from "./constants";
-import { ne, desc, asc, sql, eq } from "drizzle-orm";
+import { ne, desc, asc, sql, eq, count } from "drizzle-orm";
 import {
   buildAndSignTx,
   createRpc,
@@ -18,7 +18,7 @@ import { CompressedTokenProgram } from "@lightprotocol/compressed-token";
 import { AirdropError, AirdropErrorCode, AirdropErrorMessage } from "./errors";
 import { logger } from "./logger";
 import bs58 from "bs58";
-import { log } from "winston";
+import { SendTransactionError } from "@solana/web3.js";
 
 // https://docs.solanalabs.com/consensus/commitments
 enum CommitmentStatus {
@@ -37,6 +37,12 @@ interface SendParams {
 export async function send(params: SendParams) {
   const { keypair, url, mintAddress } = params;
 
+  // Fetch total amount of addresses to send
+  const totalQueue = await db
+    .select({ count: count() })
+    .from(transaction_queue);
+  const totalTransactionsToSend = totalQueue[0].count;
+
   // Fetch the airdrop queue
   const transactionQueue = await db
     .select({
@@ -51,6 +57,8 @@ export async function send(params: SendParams) {
       desc(transaction_queue.last_attempted_at),
       asc(transaction_queue.commitment_status)
     );
+
+  let transactionsSend = totalTransactionsToSend - transactionQueue.length;
 
   const connection: Rpc = createRpc(url, url);
 
@@ -69,6 +77,15 @@ export async function send(params: SendParams) {
 
   for (const transaction of transactionQueue) {
     try {
+      transactionsSend++;
+
+      console.log(
+        `Batch [${transactionsSend}/${totalTransactionsToSend}] sending...`
+      );
+      logger.info(
+        `Batch [${transactionsSend}/${totalTransactionsToSend}] sending...`
+      );
+
       const addresses = transaction.addresses.map(
         (address) => new web3.PublicKey(address)
       );
@@ -109,14 +126,32 @@ export async function send(params: SendParams) {
         .where(eq(transaction_queue.id, transaction.id));
 
       console.log(
-        `Transaction ${transaction.id} sent successfully: ${signature}`
+        `Batch [${transactionsSend}/${totalTransactionsToSend}] finalized: ${signature}`
       );
       logger.info(
-        `Transaction ${transaction.id} sent successfully: ${signature}`
+        `Batch [${transactionsSend}/${totalTransactionsToSend}] finalized: ${signature}`
       );
     } catch (error) {
-      console.error(error);
-      logger.error(error);
+      if (error instanceof SendTransactionError) {
+        if (error.logs?.includes("Program log: Error: insufficient funds")) {
+          logger.error(
+            AirdropErrorMessage.airdropInsufficientFunds +
+              ": " +
+              keypair.publicKey.toBase58()
+          );
+          throw new AirdropError(
+            AirdropErrorMessage.airdropInsufficientFunds +
+              ": " +
+              keypair.publicKey.toBase58(),
+            AirdropErrorCode.airdropInsufficientFunds
+          );
+        }
+        console.error(error.message);
+        logger.error(error.message);
+      } else {
+        console.error(error);
+        logger.error(error);
+      }
     }
   }
 }

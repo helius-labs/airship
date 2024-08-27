@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import ora from "ora";
-import { AirdropError, send } from "@repo/airdrop-sender";
+import { AirdropError, logger, send } from "@repo/airdrop-sender";
 import * as web3 from "@solana/web3.js";
 
 export async function resumeAirdrop(
@@ -8,10 +8,9 @@ export async function resumeAirdrop(
   url: string,
   mintAddress: web3.PublicKey
 ) {
-  const spinner2 = ora(`Sending airdrop`);
-
   try {
-    spinner2.start(); // Start the spinner
+    console.log(chalk.green(`Resuming airdrop...`));
+    logger.info(`Resuming airdrop...`);
 
     // Send the airdrop
     await send({
@@ -21,9 +20,9 @@ export async function resumeAirdrop(
     });
   } catch (error) {
     if (error instanceof AirdropError) {
-      spinner2.fail(chalk.red(error.message));
+      console.error(chalk.red(error.message));
     } else {
-      spinner2.fail(chalk.red("Sending airdrop failed", error));
+      console.error(chalk.red("Sending airdrop failed", error));
     }
     process.exit(0);
   }

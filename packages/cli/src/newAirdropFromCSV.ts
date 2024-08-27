@@ -85,11 +85,7 @@ export async function newAirdropFromCSV(
     process.exit(0);
   }
 
-  const spinner2 = ora(`Sending airdrop`);
-
   try {
-    spinner2.start(); // Start the spinner
-
     // Send the airdrop
     await send({
       keypair,
@@ -98,9 +94,9 @@ export async function newAirdropFromCSV(
     });
   } catch (error) {
     if (error instanceof AirdropError) {
-      spinner2.fail(chalk.red(error.message));
+      console.error(chalk.red(error.message));
     } else {
-      spinner2.fail(chalk.red("Sending airdrop failed", error));
+      console.error(chalk.red("Sending airdrop failed", error));
     }
     process.exit(0);
   }
