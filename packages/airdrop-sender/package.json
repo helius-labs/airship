@@ -1,0 +1,49 @@
+{
+  "name": "@repo/airdrop-sender",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Airdrop sender tool for Solana using ZK Compression",
+  "license": "MIT",
+  "author": {
+    "name": "Helius",
+    "url": "https://www.helius.dev/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/helius/airdrop.git",
+    "directory": "packages/airdrop-sender"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": "./dist/index.js",
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "generate": "drizzle-kit generate",
+    "migrate": "drizzle-kit migrate",
+    "studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@lightprotocol/compressed-token": "^0.10.1",
+    "@lightprotocol/stateless.js": "^0.10.1",
+    "@solana/web3.js": "^1.95.3",
+    "better-sqlite3": "^11.2.1",
+    "bs58": "^6.0.0",
+    "drizzle-orm": "^0.33.0",
+    "bn.js": "^5.2.1",
+    "winston": "^3.14.2",
+    "papaparse": "^5.4.1"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.24.0",
+    "tsup": "^8.2.4",
+    "typescript": "^5.5.4",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/bn.js": "^5.1.1",
+    "@types/papaparse": "^5.3.14",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*"
+  }
+}

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import chalk from "chalk";
 import { select } from "@inquirer/prompts";
-import ora from "ora";
 import { getPackageInfo } from "./utils/get-package-info";
+import { newAirdropFromCSV } from "./newAirdropFromCSV";
+import chalk from "chalk";
 
 process.on("SIGINT", () => process.exit(0));
 process.on("SIGTERM", () => process.exit(0));
@@ -22,25 +22,38 @@ async function main() {
     );
 
   program.action(async () => {
-    const answer = await select({
-      message: "To which network do you want to airdrop?",
+    const options = await select({
+      message: "What do you want to do?",
       choices: [
         {
-          name: "Mainnet-beta",
-          value: "mainnet-beta",
+          name: "New Airdrop",
+          value: "new_csv",
         },
         {
-          name: "Devnet",
-          value: "devnet",
+          name: "Resume Airdrop",
+          value: "resume",
+        },
+        {
+          name: "Exit",
+          value: "exit",
         },
       ],
     });
 
-    const spinner = ora(`Connecting to ${answer}...`).start(); // Start the spinner
-
-    setTimeout(() => {
-      spinner.succeed(chalk.green("Done!"));
-    }, 3000);
+    switch (options) {
+      case "new_csv":
+        await newAirdropFromCSV();
+        break;
+      case "resume":
+        // TODO: resume airdrop
+        // await resumeAirdrop();
+        console.log(chalk.red("Resume Airdrop not yet implemented"));
+        process.exit(0);
+        break;
+      case "exit":
+        console.log(chalk.green("Exiting..."));
+        process.exit(0);
+    }
   });
 
   program.parse();

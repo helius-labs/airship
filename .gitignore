@@ -36,4 +36,10 @@ yarn-error.log*
 dist/
 
 # db
-sqlite.db
+*.db
+
+# logs
+*.log
+
+# csv
+*.csv
