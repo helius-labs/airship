@@ -31,11 +31,10 @@ enum CommitmentStatus {
 interface SendParams {
   keypair: web3.Keypair;
   url: string;
-  mintAddress: web3.PublicKey;
 }
 
 export async function send(params: SendParams) {
-  const { keypair, url, mintAddress } = params;
+  const { keypair, url } = params;
 
   // Fetch total amount of addresses to send
   const totalQueue = await db
@@ -47,6 +46,7 @@ export async function send(params: SendParams) {
   const transactionQueue = await db
     .select({
       id: transaction_queue.id,
+      mint_address: transaction_queue.mint_address,
       addresses: transaction_queue.addresses,
       amount: transaction_queue.amount,
       attempts: transaction_queue.attempts,
@@ -66,6 +66,10 @@ export async function send(params: SendParams) {
   const lookupTableAccount = (
     await connection.getAddressLookupTable(lookupTableAddress)
   ).value!;
+
+  console.log("mint_address", transactionQueue[0].mint_address);
+
+  const mintAddress = new web3.PublicKey(transactionQueue[0].mint_address);
 
   // Get the source token account for the mint address
   const sourceTokenAccount = await splToken.getOrCreateAssociatedTokenAccount(
@@ -109,6 +113,7 @@ export async function send(params: SendParams) {
       );
 
       // TODO: only send the transaction and use a worker thread to check the status
+      // Direclty save the signature to the database to avoid sending the same transaction twice
       // const signature = await connection.sendRawTransaction(tx.serialize());
       const signature = await sendAndConfirmTx(connection, signedTx, {
         commitment: "finalized",

@@ -3,11 +3,7 @@ import ora from "ora";
 import { AirdropError, logger, send } from "@repo/airdrop-sender";
 import * as web3 from "@solana/web3.js";
 
-export async function resumeAirdrop(
-  keypair: web3.Keypair,
-  url: string,
-  mintAddress: web3.PublicKey
-) {
+export async function resumeAirdrop(keypair: web3.Keypair, url: string) {
   try {
     console.log(chalk.green(`Resuming airdrop...`));
     logger.info(`Resuming airdrop...`);
@@ -16,7 +12,6 @@ export async function resumeAirdrop(
     await send({
       keypair,
       url,
-      mintAddress,
     });
   } catch (error) {
     if (error instanceof AirdropError) {

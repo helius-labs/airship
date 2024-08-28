@@ -1,37 +1,16 @@
 import chalk from "chalk";
-import { confirm } from "@inquirer/prompts";
 import ora from "ora";
 import {
   AirdropError,
   AirdropErrorCode,
-  create,
   csvToPublicKeys,
-  exist,
   logger,
-  send,
 } from "@repo/airdrop-sender";
-import * as web3 from "@solana/web3.js";
 import fs from "fs-extra";
 import fileSelector from "inquirer-file-selector";
+import { PublicKey } from "@solana/web3.js";
 
-export async function newAirdropFromCSV(
-  keypair: web3.Keypair,
-  url: string,
-  mintAddress: web3.PublicKey
-) {
-  // Check if the airdrop already exists
-  const exists = await exist();
-  if (exists) {
-    const overwrite = await confirm({
-      message: "An airdrop already exists. Do you want to overwrite it?",
-      default: false,
-    });
-    if (!overwrite) {
-      console.log(chalk.green("Exiting..."));
-      process.exit(0);
-    }
-  }
-
+export async function csv(): Promise<PublicKey[]> {
   const csvPath = await fileSelector({
     message: "Select CSV to import:",
     hideNonMatch: true,
@@ -46,19 +25,11 @@ export async function newAirdropFromCSV(
 
   // Import the CSV file and create the airdrop queue
   try {
+    spinner.start(); // Start the spinner
     const csvFile = fs.readFileSync(csvPath, "utf8");
     const addresses = csvToPublicKeys(csvFile);
-
-    spinner.start(); // Start the spinner
-
-    // TODO: user should be able to select the amount
-    await create({
-      signer: keypair.publicKey,
-      addresses: addresses,
-      amount: BigInt(1e9),
-    });
-
-    spinner.succeed(chalk.green("Import successful!"));
+    spinner.succeed(chalk.green(`Imported ${addresses.length} addresses`));
+    return addresses;
   } catch (error) {
     if (error instanceof AirdropError) {
       switch (error.code) {
@@ -81,22 +52,6 @@ export async function newAirdropFromCSV(
           spinner.fail(chalk.red(error.message));
           break;
       }
-    }
-    process.exit(0);
-  }
-
-  try {
-    // Send the airdrop
-    await send({
-      keypair,
-      url,
-      mintAddress,
-    });
-  } catch (error) {
-    if (error instanceof AirdropError) {
-      console.error(chalk.red(error.message));
-    } else {
-      console.error(chalk.red("Sending airdrop failed", error));
     }
     process.exit(0);
   }

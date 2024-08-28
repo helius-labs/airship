@@ -12,6 +12,7 @@ export const transaction_queue = sqliteTable(
   {
     id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
     signer: text("signer", { length: 44 }).notNull(),
+    mint_address: text("mint_address", { length: 44 }).notNull(),
     addresses: text("addresses", { mode: "json" })
       .notNull()
       .$type<string[]>()

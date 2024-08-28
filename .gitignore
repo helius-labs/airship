@@ -37,6 +37,8 @@ dist/
 
 # db
 *.db
+*.db-shm
+*.db-wal
 
 # logs
 *.log
