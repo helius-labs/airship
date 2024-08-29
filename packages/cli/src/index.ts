@@ -22,12 +22,12 @@ import {
   isNFTCollection,
   getCollectionHolders,
   isFungibleToken,
+  normalizeTokenAmount,
 } from "@repo/airdrop-sender";
 import { resumeAirdrop } from "./resumeAirdrop";
 import ora from "ora";
 import { csv } from "./csv";
 import Table from "cli-table3";
-import { roundUp } from "./utils/math";
 
 process.on("SIGINT", () => process.exit(0));
 process.on("SIGTERM", () => process.exit(0));
@@ -74,12 +74,10 @@ async function main() {
       keypair = web3.Keypair.fromSecretKey(Uint8Array.from(keypairData));
 
       console.log(
-        chalk.green(
-          `Keypair loaded with public key: ${keypair.publicKey.toBase58()}`
-        )
+        `🔑 Keypair loaded with public key: ${keypair.publicKey.toBase58()}`
       );
       logger.info(
-        `Keypair loaded with public key: ${keypair.publicKey.toBase58()}`
+        `🔑 Keypair loaded with public key: ${keypair.publicKey.toBase58()}`
       );
     } catch (error) {
       console.log(chalk.red("Invalid keypair file"));
@@ -351,7 +349,7 @@ async function main() {
           ],
         });
 
-        let amount = 0;
+        let amount: bigint = BigInt(0);
         const token = tokens.find((token) => {
           return token.mintAddress.toBase58() === mintAddress;
         });
@@ -365,23 +363,24 @@ async function main() {
               min: 0.1,
             });
 
-            amount = fixed!;
+            // Calculate the amount in lamports
+            amount =
+              BigInt(fixed! * 10) * BigInt(10) ** BigInt(token!.decimals - 1);
             break;
           case "percent":
             const percent = await number({
               message: "How much percent would you like to airdrop?",
               required: true,
-              step: 0.1,
-              min: 0.1,
+              step: 1,
+              min: 1,
               max: 100,
             });
 
-            amount = roundUp(
-              ((token!.amount / 10 ** token!.decimals) * percent!) /
-                100 /
-                addresses.length,
-              token!.decimals
-            );
+            // Calculate the amount in lamports
+            amount =
+              (BigInt(token!.amount) * BigInt(percent!)) /
+              BigInt(100) /
+              BigInt(addresses.length);
             break;
           case "exit":
             console.log(chalk.green("Exiting..."));
@@ -418,8 +417,17 @@ async function main() {
         table.push(["Keypair address", keypair.publicKey.toBase58()]);
         table.push(["Token", mintAddress]);
         table.push(["Total addresses", addresses.length]);
-        table.push(["Amount per address", amount]);
-        table.push(["Total amount", amount * addresses.length]);
+        table.push([
+          "Amount per address",
+          normalizeTokenAmount(amount.toString(), token!.decimals),
+        ]);
+        table.push([
+          "Total amount",
+          normalizeTokenAmount(
+            (amount * BigInt(addresses.length)).toString(),
+            token!.decimals
+          ),
+        ]);
         table.push(["Number of transaction", numberOfTransactions]);
         table.push([
           "Approximate transaction fee",
@@ -449,7 +457,7 @@ async function main() {
           await create({
             signer: keypair.publicKey,
             addresses: addresses,
-            amount: BigInt(amount * 10 ** token!.decimals),
+            amount: amount,
             mintAddress: new web3.PublicKey(mintAddress),
           });
 

@@ -15,7 +15,10 @@ import {
   sendAndConfirmTx,
 } from "@lightprotocol/stateless.js";
 import * as splToken from "@solana/spl-token";
-import { CompressedTokenProgram } from "@lightprotocol/compressed-token";
+import {
+  CompressedTokenProgram,
+  createTokenPool,
+} from "@lightprotocol/compressed-token";
 import { AirdropError, AirdropErrorCode, AirdropErrorMessage } from "./errors";
 import { logger } from "./logger";
 import bs58 from "bs58";
@@ -77,6 +80,21 @@ export async function send(params: SendParams) {
     mintAddress,
     keypair.publicKey
   );
+
+  // Create a token pool for the mint address if it doesn't exist
+  try {
+    await createTokenPool(connection, keypair, mintAddress);
+    console.log("Token pool created.");
+    logger.info("Token pool created.");
+  } catch (error: any) {
+    if (error.message.includes("already in use")) {
+      console.log("Token pool already exists.");
+      logger.info("Token pool already exists.");
+    } else {
+      console.error("Failed to create token pool:", error);
+      logger.error("Failed to create token pool:", error);
+    }
+  }
 
   for (const transaction of transactionQueue) {
     try {

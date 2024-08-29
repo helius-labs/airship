@@ -1,5 +1,5 @@
 import { isNFTCollection } from "./isNFTCollection";
-import { isSolanaAddress } from "./common";
+import { isSolanaAddress, normalizeTokenAmount } from "./common";
 import {
   computeUnitLimit,
   computeUnitPrice,
@@ -28,6 +28,7 @@ export {
   getCollectionHolders,
   getTokenAccounts,
   isSolanaAddress,
+  normalizeTokenAmount,
   saga2PreOrderTokenMintAddress,
   maxAddressesPerTransaction,
   computeUnitLimit,

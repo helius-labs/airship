@@ -28,7 +28,7 @@ export async function csv(): Promise<PublicKey[]> {
     spinner.start(); // Start the spinner
     const csvFile = fs.readFileSync(csvPath, "utf8");
     const addresses = csvToPublicKeys(csvFile);
-    spinner.succeed(chalk.green(`Imported ${addresses.length} addresses`));
+    spinner.succeed(`Imported ${addresses.length} addresses`);
     return addresses;
   } catch (error) {
     if (error instanceof AirdropError) {
