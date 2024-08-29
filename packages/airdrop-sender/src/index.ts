@@ -1,4 +1,4 @@
-import { checkCollection } from "./checkCollection";
+import { isNFTCollection } from "./isNFTCollection";
 import { isSolanaAddress } from "./common";
 import {
   computeUnitLimit,
@@ -15,13 +15,15 @@ import { getTokenAccounts } from "./getTokenAccounts";
 import { getTokensByOwner, Token } from "./getTokensByOwner";
 import { logger } from "./logger";
 import { send } from "./send";
+import { isFungibleToken } from "./isFungibleToken";
 
 export {
   create,
   exist,
   send,
   csvToPublicKeys,
-  checkCollection,
+  isNFTCollection,
+  isFungibleToken,
   getTokensByOwner,
   getCollectionHolders,
   getTokenAccounts,

@@ -19,8 +19,9 @@ import {
   computeUnitPrice,
   computeUnitLimit,
   isSolanaAddress,
-  checkCollection,
+  isNFTCollection,
   getCollectionHolders,
+  isFungibleToken,
 } from "@repo/airdrop-sender";
 import { resumeAirdrop } from "./resumeAirdrop";
 import ora from "ora";
@@ -192,7 +193,6 @@ async function main() {
             {
               name: "SPL token holders",
               value: "spl-token",
-              disabled: true,
             },
             {
               name: "Import from CSV",
@@ -240,19 +240,19 @@ async function main() {
             break;
           case "nft":
             const collectionAddress = await input({
-              message: "Enter your collection address",
+              message: "Enter a collection address",
               required: true,
               validate: async (value) => {
                 if (!isSolanaAddress(value)) {
                   return "Please enter a valid address";
                 }
 
-                const collectionCheck = await checkCollection({
-                  url: options.url,
-                  collectionAddress: new web3.PublicKey(value),
-                });
-
-                if (!collectionCheck) {
+                if (
+                  !(await isNFTCollection({
+                    url: options.url,
+                    collectionAddress: new web3.PublicKey(value),
+                  }))
+                ) {
                   return "Collection not found please check the address";
                 }
 
@@ -284,6 +284,47 @@ async function main() {
             }
             break;
           case "spl-token":
+            const tokenAddress = await input({
+              message: "Enter a token address",
+              required: true,
+              validate: async (value) => {
+                if (!isSolanaAddress(value)) {
+                  return "Please enter a valid address";
+                }
+                if (
+                  !(await isFungibleToken({
+                    url: options.url,
+                    tokenAddress: new web3.PublicKey(value),
+                  }))
+                ) {
+                  return "Token not found please check the address";
+                }
+
+                return true;
+              },
+            });
+
+            try {
+              const spinner = ora("Fetching token holders").start();
+              const tokenAccounts = await getTokenAccounts({
+                url: options.url,
+                tokenMintAddress: new web3.PublicKey(tokenAddress),
+              });
+
+              addresses = tokenAccounts.map((tokenAccount) => {
+                return tokenAccount.owner;
+              });
+
+              // TODO save addresses to CSV using Papa.unparse for easy re-import
+
+              spinner.succeed(
+                `Fetched ${chalk.blue(addresses.length)} holders`
+              );
+            } catch (error) {
+              spinner.fail(`Failed to fetch holders: ${error}`);
+              logger.error(`Failed to fetch holders: ${error}`);
+              process.exit(0);
+            }
             break;
           case "csv":
             addresses = await csv();
@@ -321,6 +362,7 @@ async function main() {
               message: "How much tokens would you like to airdrop per address?",
               required: true,
               step: 0.1,
+              min: 0.1,
             });
 
             amount = fixed!;
@@ -329,6 +371,9 @@ async function main() {
             const percent = await number({
               message: "How much percent would you like to airdrop?",
               required: true,
+              step: 0.1,
+              min: 0.1,
+              max: 100,
             });
 
             amount = roundUp(

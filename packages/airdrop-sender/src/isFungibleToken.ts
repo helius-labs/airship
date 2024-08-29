@@ -1,14 +1,14 @@
 import * as web3 from "@solana/web3.js";
 
-interface CheckCollectionParams {
+interface FungibleTokenParams {
   url: string;
-  collectionAddress: web3.PublicKey;
+  tokenAddress: web3.PublicKey;
 }
 
-export async function checkCollection(
-  params: CheckCollectionParams
+export async function isFungibleToken(
+  params: FungibleTokenParams
 ): Promise<boolean> {
-  const { url, collectionAddress } = params;
+  const { url, tokenAddress } = params;
 
   const response: any = await fetch(url, {
     method: "POST",
@@ -20,17 +20,15 @@ export async function checkCollection(
       id: "helius-airdrop-sender",
       method: "getAsset",
       params: {
-        id: collectionAddress.toBase58(),
-        options: {
-          showUnverifiedCollections: true,
-        },
+        id: tokenAddress.toBase58(),
+        options: {},
       },
     }),
   });
 
   const data = await response.json();
 
-  if (data.result) {
+  if (data.result && data.result.interface === "FungibleToken") {
     return true;
   }
 
