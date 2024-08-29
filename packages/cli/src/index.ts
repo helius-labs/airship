@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import { number, select, confirm } from "@inquirer/prompts";
+import { number, select, confirm, input } from "@inquirer/prompts";
 import { getPackageInfo } from "./utils/get-package-info";
 import chalk from "chalk";
 import * as web3 from "@solana/web3.js";
@@ -18,6 +18,9 @@ import {
   maxAddressesPerTransaction,
   computeUnitPrice,
   computeUnitLimit,
+  isSolanaAddress,
+  checkCollection,
+  getCollectionHolders,
 } from "@repo/airdrop-sender";
 import { resumeAirdrop } from "./resumeAirdrop";
 import ora from "ora";
@@ -149,15 +152,19 @@ async function main() {
           };
         });
 
+        if (tokenChoices.length === 0) {
+          console.log(
+            chalk.red(
+              `No tokens found. Please transfer or mint tokens to ${keypair.publicKey.toBase58()}`
+            )
+          );
+          process.exit(0);
+        }
+
         tokenChoices.push({
           name: "Exit",
           value: "exit",
         });
-
-        if (tokenChoices.length === 0) {
-          console.log(chalk.red("No tokens found"));
-          process.exit(0);
-        }
 
         const mintAddress = await select({
           message: "Which token do you want to airdrop?",
@@ -181,7 +188,6 @@ async function main() {
             {
               name: "NFT/cNFT collection holders",
               value: "nft",
-              disabled: true,
             },
             {
               name: "SPL token holders",
@@ -221,22 +227,61 @@ async function main() {
                 return tokenAccount.owner;
               });
 
-              // TODO save addresses to CSV using Papa.unparse
+              // TODO save addresses to CSV using Papa.unparse for easy re-import
 
               spinner.succeed(
                 `Fetched ${chalk.blue(addresses.length)} holders`
               );
             } catch (error) {
-              spinner.fail(
-                `Failed to fetch Chapter 2 Preorder Token holders: ${error}`
-              );
-              logger.error(
-                `Failed to fetch Chapter 2 Preorder Token holders: ${error}`
-              );
+              spinner.fail(`Failed to fetch holders: ${error}`);
+              logger.error(`Failed to fetch holders: ${error}`);
               process.exit(0);
             }
             break;
           case "nft":
+            const collectionAddress = await input({
+              message: "Enter your collection address",
+              required: true,
+              validate: async (value) => {
+                if (!isSolanaAddress(value)) {
+                  return "Please enter a valid address";
+                }
+
+                const collectionCheck = await checkCollection({
+                  url: options.url,
+                  collectionAddress: new web3.PublicKey(value),
+                });
+
+                if (!collectionCheck) {
+                  return "Collection not found please check the address";
+                }
+
+                return true;
+              },
+            });
+
+            try {
+              const spinner = ora("Fetching collection holders").start();
+
+              const collectionHolders = await getCollectionHolders({
+                url: options.url,
+                collectionAddress: new web3.PublicKey(collectionAddress),
+              });
+
+              addresses = collectionHolders.map((collectionHolder) => {
+                return collectionHolder.owner;
+              });
+
+              // TODO save addresses to CSV using Papa.unparse for easy re-import
+
+              spinner.succeed(
+                `Fetched ${chalk.blue(addresses.length)} holders`
+              );
+            } catch (error) {
+              spinner.fail(`Failed to fetch holders: ${error}`);
+              logger.error(`Failed to fetch holders: ${error}`);
+              process.exit(0);
+            }
             break;
           case "spl-token":
             break;

@@ -27,7 +27,7 @@ export async function getTokensByOwner(
     },
     body: JSON.stringify({
       jsonrpc: "2.0",
-      id: "1",
+      id: "helius-airdrop-sender",
       method: "getAssetsByOwner",
       params: {
         ownerAddress: ownerAddress.toBase58(),

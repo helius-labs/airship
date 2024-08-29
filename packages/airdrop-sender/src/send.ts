@@ -3,6 +3,7 @@ import { db } from "./db";
 import { transaction_queue } from "./schema/transaction_queue";
 import {
   computeUnitLimit,
+  computeUnitPrice,
   lookupTableAddress,
   maxAddressesPerTransaction,
 } from "./constants";
@@ -66,8 +67,6 @@ export async function send(params: SendParams) {
   const lookupTableAccount = (
     await connection.getAddressLookupTable(lookupTableAddress)
   ).value!;
-
-  console.log("mint_address", transactionQueue[0].mint_address);
 
   const mintAddress = new web3.PublicKey(transactionQueue[0].mint_address);
 
@@ -185,11 +184,18 @@ async function createInstructions(
   const instructions: web3.TransactionInstruction[] = [];
 
   // Set the compute unit limit and add it to the transaction
-  const budgetIX = web3.ComputeBudgetProgram.setComputeUnitLimit({
+  const unitLimitIX = web3.ComputeBudgetProgram.setComputeUnitLimit({
     units: computeUnitLimit,
   });
 
-  instructions.push(budgetIX);
+  instructions.push(unitLimitIX);
+
+  // Set the compute unit limit and add it to the transaction
+  const unitPriceIX = web3.ComputeBudgetProgram.setComputeUnitPrice({
+    microLamports: computeUnitPrice,
+  });
+
+  instructions.push(unitPriceIX);
 
   // Compress tokens for each airdrop address and add it to the transaction
   const compressIx = await CompressedTokenProgram.compress({

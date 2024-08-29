@@ -1,3 +1,5 @@
+import { checkCollection } from "./checkCollection";
+import { isSolanaAddress } from "./common";
 import {
   computeUnitLimit,
   computeUnitPrice,
@@ -8,6 +10,7 @@ import { create } from "./create";
 import { csvToPublicKeys } from "./csv";
 import { AirdropError, AirdropErrorMessage, AirdropErrorCode } from "./errors";
 import { exist } from "./exist";
+import { getCollectionHolders } from "./getCollectionHolders";
 import { getTokenAccounts } from "./getTokenAccounts";
 import { getTokensByOwner, Token } from "./getTokensByOwner";
 import { logger } from "./logger";
@@ -18,8 +21,11 @@ export {
   exist,
   send,
   csvToPublicKeys,
+  checkCollection,
   getTokensByOwner,
+  getCollectionHolders,
   getTokenAccounts,
+  isSolanaAddress,
   saga2PreOrderTokenMintAddress,
   maxAddressesPerTransaction,
   computeUnitLimit,

@@ -2,18 +2,10 @@ import Papa from "papaparse";
 import * as web3 from "@solana/web3.js";
 import { logger } from "./logger";
 import { AirdropError, AirdropErrorCode, AirdropErrorMessage } from "./errors";
+import { isSolanaAddress } from "./common";
 
 interface Row {
   address: string;
-}
-
-function isSolanaAddress(address: string): boolean {
-  try {
-    new web3.PublicKey(address);
-    return true;
-  } catch (error) {
-    return false;
-  }
 }
 
 export function csvToPublicKeys(csvFile: string): web3.PublicKey[] {
