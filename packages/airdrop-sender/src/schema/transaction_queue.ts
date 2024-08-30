@@ -18,6 +18,7 @@ export const transaction_queue = sqliteTable(
       .$type<string[]>()
       .default(sql`'[]'`),
     amount: blob("amount", { mode: "bigint" }).notNull(),
+    blockhash: text("blockhash", { length: 44 }),
     serialised_transaction: text("serialised_transaction"),
     signature: text("signature", { length: 88 }),
     created_at: integer("created_at", { mode: "timestamp" })

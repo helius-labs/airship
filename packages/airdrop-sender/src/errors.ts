@@ -7,6 +7,7 @@ export enum AirdropErrorCode {
   airdopAddressInvalid = 4,
   airdropMaxAddressesPerTransaction = 5,
   airdropInsufficientFunds = 6,
+  airdropNothingToSend = 7,
 }
 
 export enum AirdropErrorMessage {
@@ -16,6 +17,7 @@ export enum AirdropErrorMessage {
   airdopAddressInvalid = "Address is invalid",
   airdropMaxAddressesPerTransaction = `Max addresses per transaction is ${maxAddressesPerTransaction}`,
   airdropInsufficientFunds = "Insufficient funds, please add funds to address",
+  airdropNothingToSend = "Nothing to send",
 }
 
 export class AirdropError extends Error {

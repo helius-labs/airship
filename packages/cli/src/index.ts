@@ -330,6 +330,12 @@ async function main() {
         }
         // endregion
 
+        if (addresses.length === 0) {
+          console.error(chalk.red("No addresses found"));
+          logger.error("No addresses found");
+          process.exit(0);
+        }
+
         // region Amount
         const amountChoice = await select({
           message: "What amount would you like to airdrop?",

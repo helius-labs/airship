@@ -8,12 +8,7 @@ import {
   maxAddressesPerTransaction,
 } from "./constants";
 import { ne, desc, asc, sql, eq, count } from "drizzle-orm";
-import {
-  buildAndSignTx,
-  createRpc,
-  Rpc,
-  sendAndConfirmTx,
-} from "@lightprotocol/stateless.js";
+import { buildAndSignTx, createRpc, Rpc } from "@lightprotocol/stateless.js";
 import * as splToken from "@solana/spl-token";
 import {
   CompressedTokenProgram,
@@ -58,11 +53,17 @@ export async function send(params: SendParams) {
     .from(transaction_queue)
     .where(ne(transaction_queue.commitment_status, CommitmentStatus.Finalized))
     .orderBy(
+      asc(transaction_queue.id),
       desc(transaction_queue.last_attempted_at),
       asc(transaction_queue.commitment_status)
     );
 
-  let transactionsSend = totalTransactionsToSend - transactionQueue.length;
+  if (transactionQueue.length === 0) {
+    throw new AirdropError(
+      AirdropErrorMessage.airdropNothingToSend,
+      AirdropErrorCode.airdropNothingToSend
+    );
+  }
 
   const connection: Rpc = createRpc(url, url);
 
@@ -98,13 +99,11 @@ export async function send(params: SendParams) {
 
   for (const transaction of transactionQueue) {
     try {
-      transactionsSend++;
-
       console.log(
-        `Batch [${transactionsSend}/${totalTransactionsToSend}] sending...`
+        `Transaction [${transaction.id}/${totalTransactionsToSend}] sending...`
       );
       logger.info(
-        `Batch [${transactionsSend}/${totalTransactionsToSend}] sending...`
+        `Transaction [${transaction.id}/${totalTransactionsToSend}] sending...`
       );
 
       const addresses = transaction.addresses.map(
@@ -131,10 +130,12 @@ export async function send(params: SendParams) {
 
       // TODO: only send the transaction and use a worker thread to check the status
       // Direclty save the signature to the database to avoid sending the same transaction twice
-      // const signature = await connection.sendRawTransaction(tx.serialize());
-      const signature = await sendAndConfirmTx(connection, signedTx, {
-        commitment: "finalized",
-      });
+      const signature = await connection.sendRawTransaction(
+        signedTx.serialize(),
+        {
+          skipPreflight: false,
+        }
+      );
 
       await db
         .update(transaction_queue)
@@ -142,16 +143,16 @@ export async function send(params: SendParams) {
           signature: signature,
           attempts: transaction.attempts + 1,
           last_attempted_at: sql`(unixepoch())`,
+          blockhash: blockhash,
           serialised_transaction: bs58.encode(signedTx.serialize()),
-          commitment_status: CommitmentStatus.Finalized,
         })
         .where(eq(transaction_queue.id, transaction.id));
 
       console.log(
-        `Batch [${transactionsSend}/${totalTransactionsToSend}] finalized: ${signature}`
+        `Transaction [${transaction.id}/${totalTransactionsToSend}] sent: ${signature}`
       );
       logger.info(
-        `Batch [${transactionsSend}/${totalTransactionsToSend}] finalized: ${signature}`
+        `Transaction [${transaction.id}/${totalTransactionsToSend}] sent: ${signature}`
       );
     } catch (error) {
       if (error instanceof SendTransactionError) {

@@ -1,10 +1,13 @@
 import * as web3 from "@solana/web3.js";
 import { logger } from "./logger";
-import { db } from "./db";
-import { transaction_queue } from "./schema/transaction_queue";
-import { maxAddressesPerTransaction } from "./constants";
 import { AirdropError, AirdropErrorCode, AirdropErrorMessage } from "./errors";
-import { sql } from "drizzle-orm";
+import workerpool from "workerpool";
+import { fileURLToPath } from "url";
+
+// create a worker pool using an external worker script
+const pool = workerpool.pool(
+  fileURLToPath(import.meta.resolve("./workers/create.js"))
+);
 
 interface CreateParams {
   signer: web3.PublicKey;
@@ -24,25 +27,14 @@ export async function create(params: CreateParams) {
     );
   }
 
-  // Create will overwrite any existing airdrop
-  await db.delete(transaction_queue);
+  await pool.exec("create", [
+    signer.toBase58(),
+    addresses.map((a) => a.toBase58()),
+    amount,
+    mintAddress.toBase58(),
+  ]);
 
-  const prepared = db
-    .insert(transaction_queue)
-    .values({
-      signer: signer.toBase58(),
-      mint_address: mintAddress.toBase58(),
-      addresses: sql.placeholder("addresses"),
-      amount: amount,
-    })
-    .prepare();
-
-  for (let i = 0; i < addresses.length; i += maxAddressesPerTransaction) {
-    const batch = addresses.slice(i, i + maxAddressesPerTransaction);
-    await prepared.execute({
-      addresses: batch.map((a) => a.toBase58()),
-    });
-  }
+  pool.terminate();
 
   logger.info(`Created airdrop queue for ${addresses.length} addresses`);
 }
