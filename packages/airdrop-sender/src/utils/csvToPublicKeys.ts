@@ -1,8 +1,12 @@
 import Papa from "papaparse";
 import * as web3 from "@solana/web3.js";
-import { logger } from "./logger";
-import { AirdropError, AirdropErrorCode, AirdropErrorMessage } from "./errors";
-import { isSolanaAddress } from "./common";
+import { logger } from "../services/logger";
+import {
+  AirdropError,
+  AirdropErrorCode,
+  AirdropErrorMessage,
+} from "../utils/airdropError";
+import { isSolanaAddress } from "../utils/common";
 
 interface Row {
   address: string;

@@ -1,4 +1,4 @@
-import { maxAddressesPerTransaction } from "./constants";
+import { maxAddressesPerTransaction } from "../config/constants";
 
 export enum AirdropErrorCode {
   airdropNoAddresses = 1,

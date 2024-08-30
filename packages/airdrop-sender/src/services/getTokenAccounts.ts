@@ -1,20 +1,19 @@
 import * as web3 from "@solana/web3.js";
-import { is } from "drizzle-orm";
-import { isSolanaAddress } from "./common";
+import { isSolanaAddress } from "../utils/common";
 
-interface GetCollectionHoldersParams {
-  collectionAddress: web3.PublicKey;
+interface GetTokenAccountsParams {
   url: string;
+  tokenMintAddress: web3.PublicKey;
 }
 
 export interface TokenAccount {
   owner: web3.PublicKey;
 }
 
-export async function getCollectionHolders(
-  params: GetCollectionHoldersParams
+export async function getTokenAccounts(
+  params: GetTokenAccountsParams
 ): Promise<TokenAccount[]> {
-  const { collectionAddress, url } = params;
+  const { url, tokenMintAddress } = params;
 
   let tokens: TokenAccount[] = [];
   let cursor;
@@ -28,10 +27,9 @@ export async function getCollectionHolders(
       body: JSON.stringify({
         jsonrpc: "2.0",
         id: "helius-airdrop-sender",
-        method: "getAssetsByGroup",
+        method: "getTokenAccounts",
         params: {
-          groupKey: "collection",
-          groupValue: collectionAddress.toBase58(),
+          mint: tokenMintAddress,
           cursor: cursor,
           limit: 1000,
         },
@@ -46,10 +44,10 @@ export async function getCollectionHolders(
 
     cursor = data.result.cursor;
 
-    data.result.items.forEach((item: any) => {
-      if (isSolanaAddress(item.ownership.owner)) {
+    data.result.token_accounts.forEach((item: any) => {
+      if (isSolanaAddress(item.owner)) {
         tokens.push({
-          owner: new web3.PublicKey(item.ownership.owner),
+          owner: new web3.PublicKey(item.owner),
         });
       }
     });

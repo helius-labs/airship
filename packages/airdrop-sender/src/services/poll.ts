@@ -1,6 +1,6 @@
 import * as web3 from "@solana/web3.js";
 import { db } from "./db";
-import { transaction_queue } from "./schema/transaction_queue";
+import { transaction_queue } from "../schema/transaction_queue";
 import { ne, desc, asc, eq, and, isNotNull, count } from "drizzle-orm";
 import { logger } from "./logger";
 import { SendTransactionError } from "@solana/web3.js";

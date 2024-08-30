@@ -1,21 +1,27 @@
-import { isNFTCollection } from "./isNFTCollection";
-import { isSolanaAddress, normalizeTokenAmount } from "./common";
 import {
   computeUnitLimit,
   computeUnitPrice,
   maxAddressesPerTransaction,
   saga2PreOrderTokenMintAddress,
-} from "./constants";
-import { create } from "./create";
-import { csvToPublicKeys } from "./csv";
-import { AirdropError, AirdropErrorMessage, AirdropErrorCode } from "./errors";
-import { exist } from "./exist";
-import { getCollectionHolders } from "./getCollectionHolders";
-import { getTokenAccounts } from "./getTokenAccounts";
-import { getTokensByOwner, Token } from "./getTokensByOwner";
-import { logger } from "./logger";
-import { send } from "./send";
-import { isFungibleToken } from "./isFungibleToken";
+} from "./config/constants";
+
+import { isSolanaAddress, normalizeTokenAmount } from "./utils/common";
+import { csvToPublicKeys } from "./utils/csvToPublicKeys";
+import {
+  AirdropError,
+  AirdropErrorMessage,
+  AirdropErrorCode,
+} from "./utils/airdropError";
+
+import { create } from "./services/create";
+import { send } from "./services/send";
+import { logger } from "./services/logger";
+import { exist } from "./services/exist";
+import { getCollectionHolders } from "./services/getCollectionHolders";
+import { getTokenAccounts } from "./services/getTokenAccounts";
+import { getTokensByOwner, Token } from "./services/getTokensByOwner";
+import { isFungibleToken } from "./services/isFungibleToken";
+import { isNFTCollection } from "./services/isNFTCollection";
 
 export {
   create,

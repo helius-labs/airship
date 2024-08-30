@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { transaction_queue } from "./schema/transaction_queue";
+import { transaction_queue } from "../schema/transaction_queue";
 
 export async function exist(): Promise<boolean> {
   // Check if there already is an airdrop queue

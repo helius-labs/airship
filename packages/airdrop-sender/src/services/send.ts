@@ -1,12 +1,12 @@
 import * as web3 from "@solana/web3.js";
 import { db } from "./db";
-import { transaction_queue } from "./schema/transaction_queue";
+import { transaction_queue } from "../schema/transaction_queue";
 import {
   computeUnitLimit,
   computeUnitPrice,
   lookupTableAddress,
   maxAddressesPerTransaction,
-} from "./constants";
+} from "../config/constants";
 import { ne, desc, asc, sql, eq, count } from "drizzle-orm";
 import { buildAndSignTx, createRpc, Rpc } from "@lightprotocol/stateless.js";
 import * as splToken from "@solana/spl-token";
@@ -14,7 +14,11 @@ import {
   CompressedTokenProgram,
   createTokenPool,
 } from "@lightprotocol/compressed-token";
-import { AirdropError, AirdropErrorCode, AirdropErrorMessage } from "./errors";
+import {
+  AirdropError,
+  AirdropErrorCode,
+  AirdropErrorMessage,
+} from "../utils/airdropError";
 import { logger } from "./logger";
 import bs58 from "bs58";
 import { SendTransactionError } from "@solana/web3.js";

@@ -1,6 +1,10 @@
 import * as web3 from "@solana/web3.js";
 import { logger } from "./logger";
-import { AirdropError, AirdropErrorCode, AirdropErrorMessage } from "./errors";
+import {
+  AirdropError,
+  AirdropErrorCode,
+  AirdropErrorMessage,
+} from "../utils/airdropError";
 import workerpool from "workerpool";
 import { fileURLToPath } from "url";
 

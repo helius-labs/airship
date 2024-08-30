@@ -1,6 +1,6 @@
-import { db } from "../db";
+import { db } from "../services/db";
 import { transaction_queue } from "../schema/transaction_queue";
-import { maxAddressesPerTransaction } from "../constants";
+import { maxAddressesPerTransaction } from "../config/constants";
 import { getTableName, sql } from "drizzle-orm";
 import workerpool from "workerpool";
 
