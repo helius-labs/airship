@@ -150,6 +150,9 @@ importers:
       winston:
         specifier: ^3.14.2
         version: 3.14.2
+      workerpool:
+        specifier: ^9.1.3
+        version: 9.1.3
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -7771,6 +7774,9 @@ packages:
   winston@3.14.2:
     resolution: {integrity: sha512-CO8cdpBB2yqzEf8v895L+GNKYJiEq8eKlHU38af3snQBQ+sdAIUepjMSguOIJC7ICbzm0ZI+Af2If4vIJrtmOg==}
     engines: {node: '>= 12.0.0'}
+
+  workerpool@9.1.3:
+    resolution: {integrity: sha512-LhUrk4tbxJRDQmRrrFWA9EnboXI79fe0ZNTy3u8m+dqPN1EkVSIsQYAB8OF/fkyhG8Rtup+c/bzj/+bzbG8fqg==}
 
   wrap-ansi@5.1.0:
     resolution: {integrity: sha512-QC1/iN/2/RPVJ5jYK8BGttj5z83LmSKmvbvrXPNCLZSEb32KKVDJDl/MOt2N01qU2H/FkzEa9PKto1BqDjtd7Q==}
@@ -16932,6 +16938,8 @@ snapshots:
       stack-trace: 0.0.10
       triple-beam: 1.4.1
       winston-transport: 4.7.1
+
+  workerpool@9.1.3: {}
 
   wrap-ansi@5.1.0:
     dependencies:
