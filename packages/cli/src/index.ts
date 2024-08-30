@@ -362,16 +362,31 @@ async function main() {
 
         switch (amountChoice) {
           case "fixed":
-            const fixed = await number({
+            const fixed = await input({
               message: "How much tokens would you like to airdrop per address?",
               required: true,
-              step: 0.1,
-              min: 0.1,
+              validate: (value) => {
+                if (
+                  Number.isNaN(Number.parseFloat(value)) ||
+                  !Number.isFinite(Number.parseFloat(value))
+                ) {
+                  return "Please enter a valid amount";
+                }
+
+                if (
+                  Number.parseFloat(value) <
+                  normalizeTokenAmount(1, token!.decimals)
+                ) {
+                  return `Amount must be greater than ${normalizeTokenAmount(1, token!.decimals)}`;
+                }
+
+                return true;
+              },
             });
 
             // Calculate the amount in lamports
-            amount =
-              BigInt(fixed! * 10) * BigInt(10) ** BigInt(token!.decimals - 1);
+            amount = BigInt(Number.parseFloat(fixed!) * 10 ** token!.decimals);
+
             break;
           case "percent":
             const percent = await number({
@@ -425,14 +440,14 @@ async function main() {
         table.push(["Total addresses", addresses.length]);
         table.push([
           "Amount per address",
-          normalizeTokenAmount(amount.toString(), token!.decimals),
+          normalizeTokenAmount(amount.toString(), token!.decimals).toString(),
         ]);
         table.push([
           "Total amount",
           normalizeTokenAmount(
             (amount * BigInt(addresses.length)).toString(),
             token!.decimals
-          ),
+          ).toString(),
         ]);
         table.push(["Number of transaction", numberOfTransactions]);
         table.push([
