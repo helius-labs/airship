@@ -6,6 +6,7 @@ import { getPackageInfo } from "./utils/get-package-info";
 import chalk from "chalk";
 import * as web3 from "@solana/web3.js";
 import fs from "fs-extra";
+import Table from "cli-table3";
 import {
   logger,
   getTokensByOwner,
@@ -13,21 +14,17 @@ import {
   create,
   AirdropError,
   send,
-  saga2PreOrderTokenMintAddress,
-  getTokenAccounts,
   maxAddressesPerTransaction,
   computeUnitPrice,
   computeUnitLimit,
-  isSolanaAddress,
-  isNFTCollection,
-  getCollectionHolders,
-  isFungibleToken,
   normalizeTokenAmount,
 } from "@repo/airdrop-sender";
-import { resumeAirdrop } from "./resumeAirdrop";
+import { resume } from "./resume";
 import ora from "ora";
-import { csv } from "./csv";
-import Table from "cli-table3";
+import { csv } from "./imports/csv";
+import { chapter2 } from "./imports/chapter-2";
+import { nft } from "./imports/nft";
+import { splToken } from "./imports/spl-token";
 
 process.on("SIGINT", () => process.exit(0));
 process.on("SIGTERM", () => process.exit(0));
@@ -212,117 +209,13 @@ async function main() {
 
         switch (importChoice) {
           case "chapter-2":
-            try {
-              const spinner = ora(
-                "Fetching Chapter 2 Preorder Token holders"
-              ).start();
-              const tokenAccounts = await getTokenAccounts({
-                url: options.url,
-                tokenMintAddress: saga2PreOrderTokenMintAddress,
-              });
-
-              addresses = tokenAccounts.map((tokenAccount) => {
-                return tokenAccount.owner;
-              });
-
-              // TODO save addresses to CSV using Papa.unparse for easy re-import
-
-              spinner.succeed(
-                `Fetched ${chalk.blue(addresses.length)} holders`
-              );
-            } catch (error) {
-              spinner.fail(`Failed to fetch holders: ${error}`);
-              logger.error(`Failed to fetch holders: ${error}`);
-              process.exit(0);
-            }
+            addresses = await chapter2(options.url);
             break;
           case "nft":
-            const collectionAddress = await input({
-              message: "Enter a collection address",
-              required: true,
-              validate: async (value) => {
-                if (!isSolanaAddress(value)) {
-                  return "Please enter a valid address";
-                }
-
-                if (
-                  !(await isNFTCollection({
-                    url: options.url,
-                    collectionAddress: new web3.PublicKey(value),
-                  }))
-                ) {
-                  return "Collection not found please check the address";
-                }
-
-                return true;
-              },
-            });
-
-            try {
-              const spinner = ora("Fetching collection holders").start();
-
-              const collectionHolders = await getCollectionHolders({
-                url: options.url,
-                collectionAddress: new web3.PublicKey(collectionAddress),
-              });
-
-              addresses = collectionHolders.map((collectionHolder) => {
-                return collectionHolder.owner;
-              });
-
-              // TODO save addresses to CSV using Papa.unparse for easy re-import
-
-              spinner.succeed(
-                `Fetched ${chalk.blue(addresses.length)} holders`
-              );
-            } catch (error) {
-              spinner.fail(`Failed to fetch holders: ${error}`);
-              logger.error(`Failed to fetch holders: ${error}`);
-              process.exit(0);
-            }
+            addresses = await nft(options.url);
             break;
           case "spl-token":
-            const tokenAddress = await input({
-              message: "Enter a token address",
-              required: true,
-              validate: async (value) => {
-                if (!isSolanaAddress(value)) {
-                  return "Please enter a valid address";
-                }
-                if (
-                  !(await isFungibleToken({
-                    url: options.url,
-                    tokenAddress: new web3.PublicKey(value),
-                  }))
-                ) {
-                  return "Token not found please check the address";
-                }
-
-                return true;
-              },
-            });
-
-            try {
-              const spinner = ora("Fetching token holders").start();
-              const tokenAccounts = await getTokenAccounts({
-                url: options.url,
-                tokenMintAddress: new web3.PublicKey(tokenAddress),
-              });
-
-              addresses = tokenAccounts.map((tokenAccount) => {
-                return tokenAccount.owner;
-              });
-
-              // TODO save addresses to CSV using Papa.unparse for easy re-import
-
-              spinner.succeed(
-                `Fetched ${chalk.blue(addresses.length)} holders`
-              );
-            } catch (error) {
-              spinner.fail(`Failed to fetch holders: ${error}`);
-              logger.error(`Failed to fetch holders: ${error}`);
-              process.exit(0);
-            }
+            addresses = await splToken(options.url);
             break;
           case "csv":
             addresses = await csv();
@@ -510,7 +403,7 @@ async function main() {
         break;
       case "resume":
         // region Resume
-        await resumeAirdrop(keypair, options.url);
+        await resume(keypair, options.url);
         break;
       // endregion
       case "exit":
