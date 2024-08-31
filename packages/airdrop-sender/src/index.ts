@@ -14,7 +14,7 @@ import {
 } from "./utils/airdropError";
 
 import { create } from "./services/create";
-import { send } from "./services/send";
+import { start } from "./services/start";
 import { logger } from "./services/logger";
 import { exist } from "./services/exist";
 import { getCollectionHolders } from "./services/getCollectionHolders";
@@ -26,7 +26,7 @@ import { isNFTCollection } from "./services/isNFTCollection";
 export {
   create,
   exist,
-  send,
+  start,
   csvToPublicKeys,
   isNFTCollection,
   isFungibleToken,
@@ -44,4 +44,5 @@ export {
   AirdropErrorCode,
   logger,
 };
+
 export type { Token };

@@ -17,3 +17,7 @@ export function normalizeTokenAmount(
   else rawTokens = raw;
   return rawTokens / Math.pow(10, decimals);
 }
+
+export async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

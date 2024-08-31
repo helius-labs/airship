@@ -13,13 +13,12 @@ import {
   exist,
   create,
   AirdropError,
-  send,
+  start,
   maxAddressesPerTransaction,
   computeUnitPrice,
   computeUnitLimit,
   normalizeTokenAmount,
 } from "@repo/airdrop-sender";
-import { resume } from "./resume";
 import ora from "ora";
 import { csv } from "./imports/csv";
 import { chapter2 } from "./imports/chapter-2";
@@ -385,8 +384,8 @@ async function main() {
 
         // region Send
         try {
-          // Send the airdrop
-          await send({
+          // Start airdrop
+          await start({
             keypair: keypair,
             url: options.url,
           });
@@ -403,7 +402,23 @@ async function main() {
         break;
       case "resume":
         // region Resume
-        await resume(keypair, options.url);
+        try {
+          console.log(chalk.green(`Resuming airdrop...`));
+          logger.info(`Resuming airdrop...`);
+
+          // Start airdrop
+          await start({
+            keypair: keypair,
+            url: options.url,
+          });
+        } catch (error) {
+          if (error instanceof AirdropError) {
+            console.error(chalk.red(error.message));
+          } else {
+            console.error(chalk.red("Sending airdrop failed", error));
+          }
+          process.exit(0);
+        }
         break;
       // endregion
       case "exit":

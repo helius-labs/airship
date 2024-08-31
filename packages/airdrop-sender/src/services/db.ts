@@ -19,6 +19,7 @@ function initDB(db: BetterSQLite3Database<Record<string, never>>) {
 	\`addresses\` text NOT NULL,
 	\`amount\` blob NOT NULL,
 	\`blockhash\` text(44),
+	\`last_valid_block_height\` integer DEFAULT 0,
 	\`serialised_transaction\` text,
 	\`signature\` text(88),
 	\`created_at\` integer DEFAULT (unixepoch()) NOT NULL,
