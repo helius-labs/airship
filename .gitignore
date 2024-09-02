@@ -47,4 +47,4 @@ dist/
 *.csv
 
 # JSON keypair
-*.json
+/*.json
