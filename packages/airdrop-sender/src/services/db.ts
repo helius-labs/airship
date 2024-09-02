@@ -2,17 +2,21 @@ import { BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import { sql } from "drizzle-orm";
 
-const sqlite = new Database("airdrop.db");
+// Constants
+const DB_FILE = "airdrop.db";
+const TABLE_NAME = "transaction_queue";
 
-// Enable WAL mode for better performance
-sqlite.pragma("journal_mode = WAL");
+// Database initialization
+function createDatabase(): BetterSQLite3Database<Record<string, never>> {
+  const sqlite = new Database(DB_FILE);
+  sqlite.pragma("journal_mode = WAL");
+  return drizzle(sqlite);
+}
 
-export const db = drizzle(sqlite);
-
-initDB(db);
-
-function initDB(db: BetterSQLite3Database<Record<string, never>>) {
-  db.run(sql`CREATE TABLE IF NOT EXISTS \`transaction_queue\` (
+function createTransactionQueueTable(
+  db: BetterSQLite3Database<Record<string, never>>
+) {
+  db.run(sql`CREATE TABLE IF NOT EXISTS ${sql.identifier(TABLE_NAME)} (
 	\`id\` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	\`signer\` text(44) NOT NULL,
 	\`mint_address\` text(44) NOT NULL,
@@ -27,10 +31,23 @@ function initDB(db: BetterSQLite3Database<Record<string, never>>) {
 	\`last_attempted_at\` integer DEFAULT (unixepoch()) NOT NULL,
 	\`commitment_status\` integer DEFAULT 0
 );`);
+}
+// Index creation
+function createIndexes(db: BetterSQLite3Database<Record<string, never>>) {
   db.run(
-    sql`CREATE INDEX IF NOT EXISTS \`signer\` ON \`transaction_queue\` (\`signer\`);`
+    sql`CREATE INDEX IF NOT EXISTS \`signer\` ON ${sql.identifier(TABLE_NAME)} (\`signer\`);`
   );
   db.run(
-    sql`CREATE INDEX IF NOT EXISTS \`last_attempted_at\` ON \`transaction_queue\` (\`last_attempted_at\`);`
+    sql`CREATE INDEX IF NOT EXISTS \`last_attempted_at\` ON ${sql.identifier(TABLE_NAME)} (\`last_attempted_at\`);`
   );
 }
+
+// Database initialization
+function initDB(db: BetterSQLite3Database<Record<string, never>>) {
+  createTransactionQueueTable(db);
+  createIndexes(db);
+}
+
+// Export the initialized database
+export const db = createDatabase();
+initDB(db);
