@@ -25,17 +25,14 @@ export async function start(params: SendParams) {
   // Start sending pool
   sendingPool
     .exec("sending", [keypair.secretKey, url], {
-      on: function (payload) {
-        if (payload.stdout) {
-          console.log(payload.stdout.trim()); // outputs 'captured stdout: stdout message'
-        }
-        if (payload.stderr) {
-          console.log(payload.stderr.trim()); // outputs 'captured stderr: stderr message'
-        }
-      },
-    })
-    .then(function (result) {
-      console.log("result", result);
+      // on: function (payload) {
+      //   if (payload.stdout) {
+      //     console.log(payload.stdout.trim()); // outputs 'captured stdout: stdout message'
+      //   }
+      //   if (payload.stderr) {
+      //     console.log(payload.stderr.trim()); // outputs 'captured stderr: stderr message'
+      //   }
+      // },
     })
     .catch(function (err) {
       console.error(err);
@@ -47,17 +44,14 @@ export async function start(params: SendParams) {
   // Start polling pool
   pollingPool
     .exec("polling", [url], {
-      on: function (payload) {
-        if (payload.stdout) {
-          console.log(payload.stdout.trim()); // outputs 'captured stdout: stdout message'
-        }
-        if (payload.stderr) {
-          console.log(payload.stderr.trim()); // outputs 'captured stderr: stderr message'
-        }
-      },
-    })
-    .then(function (result) {
-      console.log("result", result);
+      // on: function (payload) {
+      //   if (payload.stdout) {
+      //     console.log(payload.stdout.trim()); // outputs 'captured stdout: stdout message'
+      //   }
+      //   if (payload.stderr) {
+      //     console.log(payload.stderr.trim()); // outputs 'captured stderr: stderr message'
+      //   }
+      // },
     })
     .catch(function (err) {
       console.error(err);

@@ -10,3 +10,11 @@ export const lookupTableAddress = new web3.PublicKey(
 export const saga2PreOrderTokenMintAddress = new web3.PublicKey(
   "2DMMamkkxQ6zDMBtkFp8KH7FoWzBMBA1CGTYwom4QH6Z"
 );
+
+// https://docs.solanalabs.com/consensus/commitments
+export enum CommitmentStatus {
+  Undefined = 0,
+  Processed = 1,
+  Confirmed = 2,
+  Finalized = 3,
+}

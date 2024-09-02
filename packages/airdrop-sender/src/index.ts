@@ -5,7 +5,7 @@ import {
   saga2PreOrderTokenMintAddress,
 } from "./config/constants";
 
-import { isSolanaAddress, normalizeTokenAmount } from "./utils/common";
+import { isSolanaAddress, normalizeTokenAmount, sleep } from "./utils/common";
 import { csvToPublicKeys } from "./utils/csvToPublicKeys";
 import {
   AirdropError,
@@ -14,9 +14,11 @@ import {
 } from "./utils/airdropError";
 
 import { create } from "./services/create";
+import { exist } from "./services/exist";
+import { status } from "./services/status";
 import { start } from "./services/start";
 import { logger } from "./services/logger";
-import { exist } from "./services/exist";
+
 import { getCollectionHolders } from "./services/getCollectionHolders";
 import { getTokenAccounts } from "./services/getTokenAccounts";
 import { getTokensByOwner, Token } from "./services/getTokensByOwner";
@@ -27,6 +29,7 @@ export {
   create,
   exist,
   start,
+  status,
   csvToPublicKeys,
   isNFTCollection,
   isFungibleToken,
@@ -35,6 +38,7 @@ export {
   getTokenAccounts,
   isSolanaAddress,
   normalizeTokenAmount,
+  sleep,
   saga2PreOrderTokenMintAddress,
   maxAddressesPerTransaction,
   computeUnitLimit,

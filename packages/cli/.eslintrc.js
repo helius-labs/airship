@@ -1,3 +1,3 @@
 module.exports = {
-  extends: ["@repo/eslint-config/pacakge.js"],
+  extends: ["@repo/eslint-config/library.js"],
 };

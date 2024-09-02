@@ -1,5 +1,5 @@
 {
-  "name": "@helius/airship",
+  "name": "helius-airship",
   "version": "0.5.0",
   "description": "ZK-Compressed Airdrop Tool for Solana",
   "publishConfig": {
@@ -27,12 +27,7 @@
     "typecheck": "tsc --noEmit",
     "start": "node dist/index.js",
     "format:write": "prettier --write \"**/*.{ts,tsx,mdx}\" --cache",
-    "format:check": "prettier --check \"**/*.{ts,tsx,mdx}\" --cache",
-    "release": "changeset version",
-    "pub:beta": "pnpm build && pnpm publish --no-git-checks --access public --tag beta",
-    "pub:next": "pnpm build && pnpm publish --no-git-checks --access public --tag next",
-    "pub:release": "pnpm build && pnpm publish --access public",
-    "test": "vitest run"
+    "format:check": "prettier --check \"**/*.{ts,tsx,mdx}\" --cache"
   },
   "dependencies": {
     "inquirer-file-selector": "^0.4.0",
@@ -45,9 +40,11 @@
     "@solana/web3.js": "^1.95.3",
     "@repo/airdrop-sender": "workspace:*",
     "bs58": "^6.0.0",
-    "cli-table3": "^0.6.5"
+    "cli-table3": "^0.6.5",
+    "cli-progress": "^3.12.0"
   },
   "devDependencies": {
+    "@types/cli-progress": "^3.11.6",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.5.0",
     "tsup": "^8.2.4",

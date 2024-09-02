@@ -5,14 +5,7 @@ import { desc, asc, eq, ne, and, count, isNotNull } from "drizzle-orm";
 import { logger } from "../services/logger";
 import { SendTransactionError } from "@solana/web3.js";
 import workerpool from "workerpool";
-
-// https://docs.solanalabs.com/consensus/commitments
-enum CommitmentStatus {
-  Undefined = 0,
-  Processed = 1,
-  Confirmed = 2,
-  Finalized = 3,
-}
+import { CommitmentStatus } from "../config/constants";
 
 async function polling(url: string) {
   const connection = new web3.Connection(url, "confirmed");

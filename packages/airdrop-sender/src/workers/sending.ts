@@ -2,6 +2,7 @@ import * as web3 from "@solana/web3.js";
 import { db } from "../services/db";
 import { transaction_queue } from "../schema/transaction_queue";
 import {
+  CommitmentStatus,
   computeUnitLimit,
   computeUnitPrice,
   lookupTableAddress,
@@ -24,14 +25,6 @@ import bs58 from "bs58";
 import { SendTransactionError } from "@solana/web3.js";
 import workerpool from "workerpool";
 import { sleep } from "../utils/common";
-
-// https://docs.solanalabs.com/consensus/commitments
-enum CommitmentStatus {
-  Undefined = 0,
-  Processed = 1,
-  Confirmed = 2,
-  Finalized = 3,
-}
 
 async function sending(secretKey: Uint8Array, url: string) {
   const keypair = web3.Keypair.fromSecretKey(secretKey);
@@ -82,8 +75,12 @@ async function sending(secretKey: Uint8Array, url: string) {
 
     // No transaction to send. Wait for a second and try again
     if (transactionQueue.length === 0) {
-      console.log("All transactions sent. Pausing for 5 seconds...");
-      logger.info("All transactions sent. Pausing for 5 seconds...");
+      console.log(
+        "All transactions sent. Checking for possible retries in 5 seconds..."
+      );
+      logger.info(
+        "All transactions sent. Checking for possible retries in 5 seconds..."
+      );
       await sleep(5000);
       continue;
     }
@@ -122,13 +119,6 @@ async function sending(secretKey: Uint8Array, url: string) {
 
     for (const transaction of transactionQueue) {
       try {
-        console.log(
-          `Transaction [${transaction.id}/${totalTransactionsToSend}] sending...`
-        );
-        logger.info(
-          `Transaction [${transaction.id}/${totalTransactionsToSend}] sending...`
-        );
-
         const addresses = transaction.addresses.map(
           (address) => new web3.PublicKey(address)
         );
@@ -152,8 +142,6 @@ async function sending(secretKey: Uint8Array, url: string) {
           [lookupTableAccount]
         );
 
-        // TODO: only send the transaction and use a worker thread to check the status
-        // Direclty save the signature to the database to avoid sending the same transaction twice
         const signature = await connection.sendRawTransaction(
           signedTx.serialize(),
           {

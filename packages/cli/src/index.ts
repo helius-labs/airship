@@ -1,19 +1,21 @@
 #!/usr/bin/env node
-
 import { Command } from "commander";
 import { number, select, confirm, input } from "@inquirer/prompts";
+import * as cliProgress from "cli-progress";
 import { getPackageInfo } from "./utils/get-package-info";
 import chalk from "chalk";
 import * as web3 from "@solana/web3.js";
 import fs from "fs-extra";
 import Table from "cli-table3";
 import {
+  status,
   logger,
   getTokensByOwner,
   exist,
   create,
   AirdropError,
   start,
+  sleep,
   maxAddressesPerTransaction,
   computeUnitPrice,
   computeUnitLimit,
@@ -24,6 +26,7 @@ import { csv } from "./imports/csv";
 import { chapter2 } from "./imports/chapter-2";
 import { nft } from "./imports/nft";
 import { splToken } from "./imports/spl-token";
+import { log } from "console";
 
 process.on("SIGINT", () => process.exit(0));
 process.on("SIGTERM", () => process.exit(0));
@@ -120,14 +123,16 @@ async function main() {
         // endregion
 
         // region Tokens
-        const spinner = ora("Loading tokens owned by the keypair").start();
+        const tokensSpinner = ora(
+          "Loading tokens owned by the keypair"
+        ).start();
 
         const tokens = await getTokensByOwner({
           ownerAddress: keypair.publicKey,
           url: options.url,
         });
 
-        spinner.succeed("Loading tokens owned by the keypair");
+        tokensSpinner.succeed("Loading tokens owned by the keypair");
 
         // Create the choices for the user to select the token to airdrop
         const tokenChoices: {
@@ -326,7 +331,7 @@ async function main() {
           },
         });
 
-        table.push(["Network", "Devnet"]);
+        table.push(["URL", options.url]);
         table.push(["Keypair address", keypair.publicKey.toBase58()]);
         table.push(["Token", mintAddress]);
         table.push(["Total addresses", addresses.length]);
@@ -363,10 +368,10 @@ async function main() {
         }
         // endregion
 
+        const createSpinner = ora("Creating transaction queue").start();
+
         // region Create
         try {
-          const spinner = ora("Creating transaction queue").start();
-
           await create({
             signer: keypair.publicKey,
             addresses: addresses,
@@ -374,51 +379,21 @@ async function main() {
             mintAddress: new web3.PublicKey(mintAddress),
           });
 
-          spinner.succeed("Transaction queue created");
+          createSpinner.succeed("Transaction queue created");
         } catch (error) {
-          spinner.fail("Failed to create transaction queue");
+          createSpinner.fail("Failed to create transaction queue");
           logger.error("Failed to create transaction queue", error);
           process.exit(0);
         }
         // endregion
 
-        // region Send
-        try {
-          // Start airdrop
-          await start({
-            keypair: keypair,
-            url: options.url,
-          });
-        } catch (error) {
-          if (error instanceof AirdropError) {
-            console.error(chalk.red(error.message));
-          } else {
-            console.error(chalk.red("Sending airdrop failed", error));
-          }
-          process.exit(0);
-        }
-        // endregion
-
+        await startAndMonitorAirdrop(keypair, options.url);
         break;
-      case "resume":
-        // region Resume
-        try {
-          console.log(chalk.green(`Resuming airdrop...`));
-          logger.info(`Resuming airdrop...`);
 
-          // Start airdrop
-          await start({
-            keypair: keypair,
-            url: options.url,
-          });
-        } catch (error) {
-          if (error instanceof AirdropError) {
-            console.error(chalk.red(error.message));
-          } else {
-            console.error(chalk.red("Sending airdrop failed", error));
-          }
-          process.exit(0);
-        }
+      case "resume":
+        console.log(chalk.green(`Resuming airdrop...`));
+
+        await startAndMonitorAirdrop(keypair, options.url);
         break;
       // endregion
       case "exit":
@@ -428,6 +403,78 @@ async function main() {
   });
 
   program.parse();
+}
+
+async function startAndMonitorAirdrop(keypair: web3.Keypair, url: string) {
+  const startSpinner = ora("Starting airdrop");
+  // region Send
+  try {
+    startSpinner.start();
+
+    // Start airdrop
+    await start({
+      keypair: keypair,
+      url: url,
+    });
+
+    startSpinner.succeed("Airdrop started");
+  } catch (error) {
+    startSpinner.fail("Failed to start airdrop");
+    if (error instanceof AirdropError) {
+      console.error(chalk.red(error.message));
+    } else {
+      console.error(chalk.red("Sending airdrop failed", error));
+    }
+    process.exit(0);
+  }
+  // endregion
+
+  // create new container
+  const multibar = new cliProgress.MultiBar(
+    {
+      clearOnComplete: false,
+      hideCursor: true,
+      autopadding: true,
+      format: "{type} | {bar} {percentage}% | {value}/{total}",
+    },
+    cliProgress.Presets.shades_classic
+  );
+
+  const airdropStatus = await status();
+
+  // add bars
+  const b1 = multibar.create(
+    airdropStatus.totalTransactionsToSend,
+    airdropStatus.totalTransactionsSent,
+    { type: "Transactions sent     " }
+  );
+  const b2 = multibar.create(
+    airdropStatus.totalTransactionsToSend,
+    airdropStatus.totalTransactionsFinalized,
+    { type: "Transactions finalized" }
+  );
+
+  while (true) {
+    const airdropStatus = await status();
+
+    b1.update(airdropStatus.totalTransactionsSent);
+    b2.update(airdropStatus.totalTransactionsFinalized);
+
+    if (
+      airdropStatus.totalTransactionsFinalized ===
+      airdropStatus.totalTransactionsToSend
+    ) {
+      // stop all bars
+      multibar.stop();
+      // print the final message
+      console.log(chalk.green("🥳 Airdrop completed!"));
+      logger.info("🥳 Airdrop completed!");
+      process.exit(0);
+    }
+
+    // Update the progress bar every second
+    await sleep(1000);
+  }
 }
 
 main();
