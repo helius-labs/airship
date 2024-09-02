@@ -6,16 +6,21 @@
     "lint": "turbo lint",
     "type-check": "turbo type-check",
     "clean": "turbo clean",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "publish-packages": "turbo run build lint test && changeset version && changeset publish"
   },
   "devDependencies": {
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.11",
-    "turbo": "^2.0.14"
+    "turbo": "^2.0.14",
+    "@changesets/cli": "^2.27.7"
   },
   "packageManager": "pnpm@9.9.0+sha256.7a4261e50d9a44d9240baf6c9d6e10089dcf0a79d0007f2a26985a6927324177",
   "engines": {
     "node": ">=18"
   },
-  "name": "with-tailwind"
+  "name": "airship",
+  "dependencies": {
+    "@changesets/cli": "^2.27.7"
+  }
 }
