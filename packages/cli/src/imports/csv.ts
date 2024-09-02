@@ -16,6 +16,11 @@ export async function csv(): Promise<PublicKey[]> {
     hideNonMatch: true,
     match: (file) => file.name.endsWith(".csv"),
     allowCancel: true,
+  }).catch((error) => {
+    if (error.name === "ExitPromptError") {
+      console.log(chalk.green("Exiting..."));
+      process.exit(0);
+    }
   });
 
   // Get the airdrop CSV file
@@ -26,7 +31,7 @@ export async function csv(): Promise<PublicKey[]> {
   // Import the CSV file and create the airdrop queue
   try {
     spinner.start(); // Start the spinner
-    const csvFile = fs.readFileSync(csvPath, "utf8");
+    const csvFile = fs.readFileSync(csvPath!, "utf8");
     const addresses = csvToPublicKeys(csvFile);
     spinner.succeed(`Imported ${addresses.length} addresses`);
     return addresses;

@@ -26,10 +26,15 @@ import { csv } from "./imports/csv";
 import { chapter2 } from "./imports/chapter-2";
 import { nft } from "./imports/nft";
 import { splToken } from "./imports/spl-token";
-import { log } from "console";
 
-process.on("SIGINT", () => process.exit(0));
-process.on("SIGTERM", () => process.exit(0));
+process.on("SIGINT", () => {
+  console.log(chalk.green("\nExiting..."));
+  process.exit(0);
+});
+process.on("SIGTERM", () => {
+  console.log(chalk.green("\nExiting..."));
+  process.exit(0);
+});
 
 async function main() {
   const packageInfo = await getPackageInfo();
@@ -102,6 +107,11 @@ async function main() {
           value: "exit",
         },
       ],
+    }).catch((error) => {
+      if (error.name === "ExitPromptError") {
+        console.log(chalk.green("Exiting..."));
+        process.exit(0);
+      }
     });
     // endregion
 
@@ -114,6 +124,11 @@ async function main() {
             message:
               "A previous airdrop already exists. Are you sure you want to overwrite it?",
             default: false,
+          }).catch((error) => {
+            if (error.name === "ExitPromptError") {
+              console.log(chalk.green("Exiting..."));
+              process.exit(0);
+            }
           });
           if (!overwrite) {
             console.log(chalk.green("Exiting..."));
@@ -169,6 +184,11 @@ async function main() {
         const mintAddress = await select({
           message: "Which token do you want to airdrop?",
           choices: tokenChoices,
+        }).catch((error) => {
+          if (error.name === "ExitPromptError") {
+            console.log(chalk.green("Exiting..."));
+            process.exit(0);
+          }
         });
 
         if (mintAddress === "exit") {
@@ -202,6 +222,11 @@ async function main() {
               value: "exit",
             },
           ],
+        }).catch((error) => {
+          if (error.name === "ExitPromptError") {
+            console.log(chalk.green("Exiting..."));
+            process.exit(0);
+          }
         });
 
         if (importChoice === "exit") {
@@ -250,6 +275,11 @@ async function main() {
               value: "exit",
             },
           ],
+        }).catch((error) => {
+          if (error.name === "ExitPromptError") {
+            console.log(chalk.green("Exiting..."));
+            process.exit(0);
+          }
         });
 
         let amount: bigint = BigInt(0);
@@ -279,6 +309,11 @@ async function main() {
 
                 return true;
               },
+            }).catch((error) => {
+              if (error.name === "ExitPromptError") {
+                console.log(chalk.green("Exiting..."));
+                process.exit(0);
+              }
             });
 
             // Calculate the amount in lamports
@@ -292,6 +327,11 @@ async function main() {
               step: 1,
               min: 1,
               max: 100,
+            }).catch((error) => {
+              if (error.name === "ExitPromptError") {
+                console.log(chalk.green("Exiting..."));
+                process.exit(0);
+              }
             });
 
             // Calculate the amount in lamports
@@ -333,7 +373,7 @@ async function main() {
 
         table.push(["URL", options.url]);
         table.push(["Keypair address", keypair.publicKey.toBase58()]);
-        table.push(["Token", mintAddress]);
+        table.push(["Token", mintAddress!]);
         table.push(["Total addresses", addresses.length]);
         table.push([
           "Amount per address",
@@ -360,6 +400,11 @@ async function main() {
 
         const confirm_airdrop = await confirm({
           message: `Are you sure you want to send the airdrop?`,
+        }).catch((error) => {
+          if (error.name === "ExitPromptError") {
+            console.log(chalk.green("Exiting..."));
+            process.exit(0);
+          }
         });
 
         if (!confirm_airdrop) {
@@ -376,7 +421,7 @@ async function main() {
             signer: keypair.publicKey,
             addresses: addresses,
             amount: amount,
-            mintAddress: new web3.PublicKey(mintAddress),
+            mintAddress: new web3.PublicKey(mintAddress!),
           });
 
           createSpinner.succeed("Transaction queue created");
