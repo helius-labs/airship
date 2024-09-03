@@ -106,13 +106,19 @@ function loadKeypair(keypairPath: string): web3.Keypair {
 }
 
 async function selectAction() {
+  const airdropExists = await exist();
+  const choices = [
+    { name: "Create a new airdrop", value: "new" },
+    { name: "Exit", value: "exit" },
+  ];
+
+  if (airdropExists) {
+    choices.splice(1, 0, { name: "Resume the last airdrop", value: "resume" });
+  }
+
   return await select({
     message: "What would you like to do?",
-    choices: [
-      { name: "Create a new airdrop", value: "new" },
-      { name: "Resume the last airdrop", value: "resume" },
-      { name: "Exit", value: "exit" },
-    ],
+    choices: choices,
   }).catch(handleExitError);
 }
 
@@ -467,7 +473,7 @@ function handleExitError(error: any) {
 }
 
 function exitProgram() {
-  console.log(chalk.green("Exiting..."));
+  console.log(chalk.green("\nExiting..."));
   process.exit(0);
 }
 
