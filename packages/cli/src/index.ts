@@ -121,7 +121,7 @@ async function handleNewAirdrop(keypair: web3.Keypair, options: any) {
   const tokens = await loadTokens(keypair, options.url);
   const mintAddress = await selectToken(keypair, tokens);
   const addresses = await selectRecipients(options.url);
-  const amount = await selectAmount(tokens, mintAddress);
+  const amount = await selectAmount(tokens, mintAddress, addresses.length);
   await confirmAirdrop(keypair, mintAddress, addresses, amount, tokens);
   await createAirdropQueue(keypair, mintAddress, addresses, amount);
   await startAndMonitorAirdrop(keypair, options.url);
@@ -227,7 +227,11 @@ async function selectRecipients(url: string) {
   return addresses;
 }
 
-async function selectAmount(tokens: any[], mintAddress: string) {
+async function selectAmount(
+  tokens: any[],
+  mintAddress: string,
+  totalAddresses: number
+) {
   const amountChoice = await select({
     message: "What amount would you like to airdrop?",
     choices: [
@@ -249,7 +253,7 @@ async function selectAmount(tokens: any[], mintAddress: string) {
       amount = await getFixedAmount(token);
       break;
     case "percent":
-      amount = await getPercentAmount(token);
+      amount = await getPercentAmount(token, totalAddresses);
       break;
     default:
       exitProgram();
@@ -283,7 +287,7 @@ function validateFixedAmount(value: string, token: any) {
   return true;
 }
 
-async function getPercentAmount(token: any) {
+async function getPercentAmount(token: any, totalAddresses: number) {
   const percent = await number({
     message: "How much percent would you like to airdrop?",
     required: true,
@@ -292,7 +296,11 @@ async function getPercentAmount(token: any) {
     max: 100,
   }).catch(handleExitError);
 
-  return (BigInt(token.amount) * BigInt(percent!)) / BigInt(100);
+  return (
+    (BigInt(token.amount) * BigInt(percent!)) /
+    BigInt(100) /
+    BigInt(totalAddresses)
+  );
 }
 
 async function confirmAirdrop(
