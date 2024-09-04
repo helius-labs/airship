@@ -1,20 +1,44 @@
-import { BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3";
-import Database from "better-sqlite3";
+import * as drizzleBetterSqlite3 from "drizzle-orm/better-sqlite3";
+import * as drizzleSqlJs from "drizzle-orm/sql-js";
+import { DB_FILE, TABLE_NAME } from "../config/constants";
 import { sql } from "drizzle-orm";
+import { isNode } from "../utils/common";
 
-// Constants
-const DB_FILE = "airdrop.db";
-const TABLE_NAME = "transaction_queue";
+async function loadServerDB(): Promise<drizzleBetterSqlite3.BetterSQLite3Database> {
+  const { default: Database } = await import("better-sqlite3");
 
-// Database initialization
-function createDatabase(): BetterSQLite3Database<Record<string, never>> {
-  const sqlite = new Database(DB_FILE);
+  const sqlite = new Database(DB_FILE); // You can pass the file path as an argument
   sqlite.pragma("journal_mode = WAL");
-  return drizzle(sqlite);
+  const db = drizzleBetterSqlite3.drizzle(sqlite);
+  initDB(db);
+  return db;
+}
+
+async function loadBrowserDB(): Promise<drizzleSqlJs.SQLJsDatabase> {
+  // Browser environment
+  const { default: initSqlJs } = await import("sql.js");
+  const SQL = await initSqlJs({
+    // Required to load the wasm binary asynchronously. Of course, you can host it wherever you want
+    // You can omit locateFile completely when running in node
+    locateFile: (file) => `https://sql.js.org/dist/${file}`,
+  });
+
+  const sqlite = new SQL.Database();
+  const db = drizzleSqlJs.drizzle(sqlite);
+  initDB(db);
+  return db;
+}
+
+export async function loadDB(): Promise<any> {
+  if (typeof process !== "undefined" && isNode(process)) {
+    return loadServerDB();
+  } else {
+    return loadBrowserDB();
+  }
 }
 
 function createTransactionQueueTable(
-  db: BetterSQLite3Database<Record<string, never>>
+  db: drizzleBetterSqlite3.BetterSQLite3Database | drizzleSqlJs.SQLJsDatabase
 ) {
   db.run(sql`CREATE TABLE IF NOT EXISTS ${sql.identifier(TABLE_NAME)} (
 	\`id\` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -33,7 +57,9 @@ function createTransactionQueueTable(
 );`);
 }
 // Index creation
-function createIndexes(db: BetterSQLite3Database<Record<string, never>>) {
+function createIndexes(
+  db: drizzleBetterSqlite3.BetterSQLite3Database | drizzleSqlJs.SQLJsDatabase
+) {
   db.run(
     sql`CREATE INDEX IF NOT EXISTS \`signer\` ON ${sql.identifier(TABLE_NAME)} (\`signer\`);`
   );
@@ -43,11 +69,9 @@ function createIndexes(db: BetterSQLite3Database<Record<string, never>>) {
 }
 
 // Database initialization
-function initDB(db: BetterSQLite3Database<Record<string, never>>) {
+function initDB(
+  db: drizzleBetterSqlite3.BetterSQLite3Database | drizzleSqlJs.SQLJsDatabase
+) {
   createTransactionQueueTable(db);
   createIndexes(db);
 }
-
-// Export the initialized database
-export const db = createDatabase();
-initDB(db);

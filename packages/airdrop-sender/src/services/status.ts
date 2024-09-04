@@ -1,9 +1,11 @@
-import { db } from "../services/db";
+import { loadDB } from "../services/db";
 import { transaction_queue } from "../schema/transaction_queue";
 import { eq, count, isNotNull } from "drizzle-orm";
 import { CommitmentStatus } from "../config/constants";
 
 export async function status() {
+  const db = await loadDB();
+
   // Fetch total amount of addresses to send
   const totalQueue = await db
     .select({ count: count() })

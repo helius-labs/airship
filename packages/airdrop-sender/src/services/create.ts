@@ -6,12 +6,7 @@ import {
   AirdropErrorMessage,
 } from "../utils/airdropError";
 import workerpool from "workerpool";
-import { fileURLToPath } from "url";
-
-// create a worker pool using an external worker script
-const pool = workerpool.pool(
-  fileURLToPath(import.meta.resolve("./workers/create.js"))
-);
+import { WorkerUrl } from "../utils/common";
 
 interface CreateParams {
   signer: web3.PublicKey;
@@ -22,6 +17,13 @@ interface CreateParams {
 
 export async function create(params: CreateParams) {
   const { signer, addresses, amount, mintAddress } = params;
+
+  const createURL = await WorkerUrl(
+    new URL("./workers/create.js", import.meta.url)
+  );
+
+  // create a worker pool using an external worker script
+  const pool = workerpool.pool(createURL.toString());
 
   if (addresses.length === 0) {
     logger.info(AirdropErrorMessage.airdropNoAddresses);

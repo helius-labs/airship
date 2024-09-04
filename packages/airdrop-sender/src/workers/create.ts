@@ -1,4 +1,4 @@
-import { db } from "../services/db";
+import { loadDB } from "../services/db";
 import { transaction_queue } from "../schema/transaction_queue";
 import { maxAddressesPerTransaction } from "../config/constants";
 import { getTableName, sql } from "drizzle-orm";
@@ -10,6 +10,7 @@ async function create(
   amount: bigint,
   mintAddress: string
 ) {
+  const db = await loadDB();
   // Create will overwrite any existing airdrop
   // Delete the existing airdrop queue
   // Delete the sqlite_sequence record to reset the autoincrement

@@ -1,5 +1,5 @@
 import * as web3 from "@solana/web3.js";
-import { db } from "../services/db";
+import { loadDB } from "../services/db";
 import { transaction_queue } from "../schema/transaction_queue";
 import {
   CommitmentStatus,
@@ -27,6 +27,8 @@ import workerpool from "workerpool";
 import { sleep } from "../utils/common";
 
 async function sending(secretKey: Uint8Array, url: string) {
+  const db = await loadDB();
+
   const keypair = web3.Keypair.fromSecretKey(secretKey);
 
   workerpool.workerEmit({
@@ -120,7 +122,7 @@ async function sending(secretKey: Uint8Array, url: string) {
     for (const transaction of transactionQueue) {
       try {
         const addresses = transaction.addresses.map(
-          (address) => new web3.PublicKey(address)
+          (address: any) => new web3.PublicKey(address)
         );
 
         const instructions = await createInstructions(

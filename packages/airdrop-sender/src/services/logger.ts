@@ -1,6 +1,7 @@
 import { createLogger, transports, format } from "winston";
+import { isNode } from "../utils/common";
 
-export const logger = createLogger({
+const logger = createLogger({
   format: format.combine(
     format.timestamp({
       format: "YYYY-MM-DD hh:mm:ss.SSS",
@@ -10,5 +11,10 @@ export const logger = createLogger({
       return `[${timestamp}] ${level}: ${message}`;
     })
   ),
-  transports: [new transports.File({ filename: "airdrop.log" })],
 });
+
+if (typeof process !== "undefined" && isNode(process)) {
+  logger.add(new transports.File({ filename: "airdrop.log" }));
+}
+
+export { logger };

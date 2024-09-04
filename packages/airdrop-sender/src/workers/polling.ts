@@ -1,5 +1,5 @@
 import * as web3 from "@solana/web3.js";
-import { db } from "../services/db";
+import { loadDB } from "../services/db";
 import { transaction_queue } from "../schema/transaction_queue";
 import { desc, asc, eq, ne, and, count, isNotNull } from "drizzle-orm";
 import { logger } from "../services/logger";
@@ -9,6 +9,8 @@ import { CommitmentStatus } from "../config/constants";
 
 async function polling(url: string) {
   const connection = new web3.Connection(url, "confirmed");
+
+  const db = await loadDB();
 
   // Fetch total amount of addresses to send
   const totalQueue = await db

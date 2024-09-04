@@ -21,3 +21,21 @@ export function normalizeTokenAmount(
 export async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+export const isNode = function (nodeProcess: any): boolean {
+  return (
+    typeof nodeProcess !== "undefined" &&
+    nodeProcess.versions != null &&
+    nodeProcess.versions.node != null &&
+    nodeProcess + "" === "[object process]"
+  );
+};
+
+export async function WorkerUrl(url: URL): Promise<string> {
+  if (typeof process !== "undefined" && isNode(process)) {
+    const { fileURLToPath } = await import("url");
+    return fileURLToPath(url);
+  } else {
+    return url.toString();
+  }
+}

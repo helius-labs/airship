@@ -1,18 +1,6 @@
 import * as web3 from "@solana/web3.js";
 import workerpool from "workerpool";
-import { fileURLToPath } from "url";
-
-// create a worker pool using an external worker script
-const sendingPool = workerpool.pool(
-  fileURLToPath(import.meta.resolve("./workers/sending.js")),
-  { emitStdStreams: true }
-);
-
-// create a worker pool using an external worker script
-const pollingPool = workerpool.pool(
-  fileURLToPath(import.meta.resolve("./workers/polling.js")),
-  { emitStdStreams: true }
-);
+import { WorkerUrl } from "../utils/common";
 
 interface SendParams {
   keypair: web3.Keypair;
@@ -22,18 +10,21 @@ interface SendParams {
 export async function start(params: SendParams) {
   const { keypair, url } = params;
 
+  const sendingURL = await WorkerUrl(
+    new URL("./workers/sending.js", import.meta.url)
+  );
+
+  const sendingPool = workerpool.pool(sendingURL, { emitStdStreams: true });
+
+  const pollingURL = await WorkerUrl(
+    new URL("./workers/polling.js", import.meta.url)
+  );
+
+  const pollingPool = workerpool.pool(pollingURL, { emitStdStreams: true });
+
   // Start sending pool
   sendingPool
-    .exec("sending", [keypair.secretKey, url], {
-      // on: function (payload) {
-      //   if (payload.stdout) {
-      //     console.log(payload.stdout.trim()); // outputs 'captured stdout: stdout message'
-      //   }
-      //   if (payload.stderr) {
-      //     console.log(payload.stderr.trim()); // outputs 'captured stderr: stderr message'
-      //   }
-      // },
-    })
+    .exec("sending", [keypair.secretKey, url])
     .catch(function (err) {
       console.error(err);
     })
@@ -43,16 +34,7 @@ export async function start(params: SendParams) {
 
   // Start polling pool
   pollingPool
-    .exec("polling", [url], {
-      // on: function (payload) {
-      //   if (payload.stdout) {
-      //     console.log(payload.stdout.trim()); // outputs 'captured stdout: stdout message'
-      //   }
-      //   if (payload.stderr) {
-      //     console.log(payload.stderr.trim()); // outputs 'captured stderr: stderr message'
-      //   }
-      // },
-    })
+    .exec("polling", [url])
     .catch(function (err) {
       console.error(err);
     })

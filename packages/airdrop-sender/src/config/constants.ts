@@ -18,3 +18,7 @@ export enum CommitmentStatus {
   Confirmed = 2,
   Finalized = 3,
 }
+
+// Constants
+export const DB_FILE = "airdrop.db";
+export const TABLE_NAME = "transaction_queue";
