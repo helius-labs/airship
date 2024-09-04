@@ -1,8 +1,9 @@
 "use client";
 
-import { Gift, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import { navLinks } from "#lib/data";
 import { cn } from "#lib/utils";
 import { Button } from "#components/ui/button";
@@ -32,8 +33,14 @@ export function NavMobile(): JSX.Element {
             className="flex items-center gap-2 text-lg font-semibold"
             href="#"
           >
-            <Gift className="h-6 w-6" />
-            <span className="">Helius Airdrop Tool</span>
+            <Image
+              alt="Picture of the author"
+              className="mr-1"
+              height={30}
+              src="/logo.svg"
+              width={30}
+            />
+            <span className="">Helius Airship</span>
           </Link>
           {navLinks.map((item) => (
             <Link

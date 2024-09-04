@@ -35,7 +35,8 @@
     "react-hook-form": "^7.53.0",
     "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "bs58": "^6.0.0"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^14.2.3",

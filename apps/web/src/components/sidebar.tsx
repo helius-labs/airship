@@ -1,8 +1,8 @@
 "use client";
 
-import { Gift } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import { navLinks } from "#lib/data";
 import { cn } from "#lib/utils";
 import { Button } from "#components/ui/button";
@@ -22,8 +22,14 @@ export function Sidebar(): JSX.Element {
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <Link className="flex items-center gap-2 font-semibold" href="/">
-            <Gift className="h-6 w-6" />
-            <span className="">Helius Airdrop Tool</span>
+            <Image
+              alt="Picture of the author"
+              className="mr-1"
+              height={30}
+              src="/logo.svg"
+              width={30}
+            />
+            <span className="">Helius Airship</span>
           </Link>
         </div>
         <div className="flex-1">

@@ -11,8 +11,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "zk-compression Airdrop",
-  description: "",
+  title: "Helius Airship",
+  description:
+    "Helius Airship simplifies Solana token airdrops with a user-friendly interface, offering cost savings through ZK Compression, secure client-side processing, and reliability with its resume feature.",
 };
 
 export default function RootLayout({
