@@ -1,5 +1,5 @@
 import * as drizzleBetterSqlite3 from "drizzle-orm/better-sqlite3";
-import * as drizzleSqlJs from "drizzle-orm/sql-js";
+import * as drizzleSqlLocal from "drizzle-orm/sqlite-proxy";
 import { DB_FILE, TABLE_NAME } from "../config/constants";
 import { sql } from "drizzle-orm";
 import { isNode } from "../utils/common";
@@ -14,17 +14,12 @@ async function loadServerDB(): Promise<drizzleBetterSqlite3.BetterSQLite3Databas
   return db;
 }
 
-async function loadBrowserDB(): Promise<drizzleSqlJs.SQLJsDatabase> {
+async function loadBrowserDB(): Promise<drizzleSqlLocal.SqliteRemoteDatabase> {
   // Browser environment
-  const { default: initSqlJs } = await import("sql.js");
-  const SQL = await initSqlJs({
-    // Required to load the wasm binary asynchronously. Of course, you can host it wherever you want
-    // You can omit locateFile completely when running in node
-    locateFile: (file) => `https://sql.js.org/dist/${file}`,
-  });
+  const { SQLocalDrizzle } = await import("sqlocal/drizzle");
+  const { driver, batchDriver } = new SQLocalDrizzle(DB_FILE);
 
-  const sqlite = new SQL.Database();
-  const db = drizzleSqlJs.drizzle(sqlite);
+  const db = drizzleSqlLocal.drizzle(driver, batchDriver);
   initDB(db);
   return db;
 }
@@ -37,10 +32,13 @@ export async function loadDB(): Promise<any> {
   }
 }
 
-function createTransactionQueueTable(
-  db: drizzleBetterSqlite3.BetterSQLite3Database | drizzleSqlJs.SQLJsDatabase
+async function createTransactionQueueTable(
+  db:
+    | drizzleBetterSqlite3.BetterSQLite3Database
+    | drizzleSqlLocal.SqliteRemoteDatabase
 ) {
-  db.run(sql`CREATE TABLE IF NOT EXISTS ${sql.identifier(TABLE_NAME)} (
+  await db.run(
+    sql`CREATE TABLE IF NOT EXISTS ${sql.identifier(TABLE_NAME)} (
 	\`id\` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	\`signer\` text(44) NOT NULL,
 	\`mint_address\` text(44) NOT NULL,
@@ -54,23 +52,28 @@ function createTransactionQueueTable(
 	\`attempts\` integer DEFAULT 0 NOT NULL,
 	\`last_attempted_at\` integer DEFAULT (unixepoch()) NOT NULL,
 	\`commitment_status\` integer DEFAULT 0
-);`);
+);`
+  );
 }
 // Index creation
-function createIndexes(
-  db: drizzleBetterSqlite3.BetterSQLite3Database | drizzleSqlJs.SQLJsDatabase
+async function createIndexes(
+  db:
+    | drizzleBetterSqlite3.BetterSQLite3Database
+    | drizzleSqlLocal.SqliteRemoteDatabase
 ) {
-  db.run(
+  await db.run(
     sql`CREATE INDEX IF NOT EXISTS \`signer\` ON ${sql.identifier(TABLE_NAME)} (\`signer\`);`
   );
-  db.run(
+  await db.run(
     sql`CREATE INDEX IF NOT EXISTS \`last_attempted_at\` ON ${sql.identifier(TABLE_NAME)} (\`last_attempted_at\`);`
   );
 }
 
 // Database initialization
 function initDB(
-  db: drizzleBetterSqlite3.BetterSQLite3Database | drizzleSqlJs.SQLJsDatabase
+  db:
+    | drizzleBetterSqlite3.BetterSQLite3Database
+    | drizzleSqlLocal.SqliteRemoteDatabase
 ) {
   createTransactionQueueTable(db);
   createIndexes(db);

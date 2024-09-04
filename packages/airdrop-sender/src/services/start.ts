@@ -14,13 +14,23 @@ export async function start(params: SendParams) {
     new URL("./workers/sending.js", import.meta.url)
   );
 
-  const sendingPool = workerpool.pool(sendingURL, { emitStdStreams: true });
+  const sendingPool = workerpool.pool(sendingURL, {
+    emitStdStreams: true,
+    workerOpts: {
+      type: "module",
+    },
+  });
 
   const pollingURL = await WorkerUrl(
     new URL("./workers/polling.js", import.meta.url)
   );
 
-  const pollingPool = workerpool.pool(pollingURL, { emitStdStreams: true });
+  const pollingPool = workerpool.pool(pollingURL, {
+    emitStdStreams: true,
+    workerOpts: {
+      type: "module",
+    },
+  });
 
   // Start sending pool
   sendingPool

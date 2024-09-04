@@ -13,6 +13,7 @@ import {
   computeUnitLimit,
   baseFee,
   compressionFee,
+  exist,
 } from "@repo/airdrop-sender";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
@@ -77,6 +78,7 @@ export default function CreateAirdrop() {
     approximateTransactionFee: string;
     approximateCompressionFee: string;
   } | null>(null);
+  const [amountValue, setAmountValue] = useState<bigint | null>(null);
 
   useEffect(() => {
     async function loadTokens() {
@@ -165,8 +167,8 @@ export default function CreateAirdrop() {
         maximumFractionDigits: selectedTokenInfo.decimals,
       }),
       numberOfTransactions: Number(numberOfTransactions),
-      approximateTransactionFee: `${(Number(numberOfTransactions * transactionFee) / 1e9).toFixed(9)} SOL`,
-      approximateCompressionFee: `${(Number(BigInt(recipientList.length) * BigInt(compressionFee)) / 1e9).toFixed(9)} SOL`,
+      approximateTransactionFee: `${Number(numberOfTransactions * transactionFee) / 1e9} SOL`,
+      approximateCompressionFee: `${Number(BigInt(recipientList.length) * BigInt(compressionFee)) / 1e9} SOL`,
     };
   };
 
@@ -201,10 +203,10 @@ export default function CreateAirdrop() {
           throw new Error("Selected token not found");
         }
 
-        let amountValue: bigint;
+        let calculatedAmountValue: bigint;
         if (amountType === "fixed") {
           const fixedAmount = parseFloat(amount);
-          amountValue = BigInt(
+          calculatedAmountValue = BigInt(
             Math.floor(fixedAmount * 10 ** selectedTokenInfo.decimals)
           );
         } else {
@@ -214,14 +216,17 @@ export default function CreateAirdrop() {
           const calculatedAmount =
             (totalAmount * BigInt(Math.floor(percentAmount * 100))) /
             BigInt(10000);
-          amountValue = calculatedAmount / BigInt(recipientList.length);
+          calculatedAmountValue =
+            calculatedAmount / BigInt(recipientList.length);
         }
+
+        setAmountValue(calculatedAmountValue);
 
         const overview = calculateAirdropOverview(
           keypair,
           selectedTokenInfo,
           recipientList,
-          amountValue
+          calculatedAmountValue
         );
         setAirdropOverview(overview);
         setStep(4);
@@ -234,6 +239,10 @@ export default function CreateAirdrop() {
 
     if (step === 4) {
       try {
+        if (!amountValue) {
+          throw new Error("Amount value is not set");
+        }
+
         const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
         const recipientList = recipients
           .split("\n")
@@ -242,12 +251,16 @@ export default function CreateAirdrop() {
         await create({
           signer: keypair.publicKey,
           addresses: recipientList,
-          amount: BigInt(amount),
+          amount: amountValue,
           mintAddress: new PublicKey(selectedToken),
+          worker: false,
         });
 
+        const exists = await exist();
+        console.log("exists", exists);
+
         alert("Airdrop created successfully!");
-        router.push("/");
+        // router.push("/");
       } catch (error) {
         console.error("Failed to create airdrop:", error);
         alert("Failed to create airdrop. Please try again.");

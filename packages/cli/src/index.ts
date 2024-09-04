@@ -385,6 +385,7 @@ async function createAirdropQueue(
       addresses: addresses,
       amount: amount,
       mintAddress: new web3.PublicKey(mintAddress),
+      worker: true,
     });
     createSpinner.succeed("Transaction queue created");
   } catch (error) {
