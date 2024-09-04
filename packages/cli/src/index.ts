@@ -16,6 +16,8 @@ import {
   AirdropError,
   start,
   sleep,
+  baseFee,
+  compressionFee,
   maxAddressesPerTransaction,
   computeUnitPrice,
   computeUnitLimit,
@@ -319,9 +321,8 @@ async function confirmAirdrop(
   const numberOfTransactions = Math.ceil(
     addresses.length / maxAddressesPerTransaction
   );
-  const baseFee = 5000;
+
   const transactionFee = baseFee + (computeUnitLimit * computeUnitPrice) / 1e9;
-  const compressionFee = 300;
 
   const token = tokens.find((token) => {
     return token.mintAddress.toBase58() === mintAddress;

@@ -2,12 +2,25 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { AlertTriangle, HelpCircle } from "lucide-react";
+import type { Token } from "@repo/airdrop-sender";
+import {
+  getTokensByOwner,
+  normalizeTokenAmount,
+  create,
+  maxAddressesPerTransaction,
+  computeUnitPrice,
+  computeUnitLimit,
+  baseFee,
+  compressionFee,
+} from "@repo/airdrop-sender";
+import { Keypair, PublicKey } from "@solana/web3.js";
+import bs58 from "bs58";
 import { Button } from "#components/ui/button";
 import { Input } from "#components/ui/input";
 import { Textarea } from "#components/ui/textarea";
 import { Label } from "#components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "#components/ui/alert";
-import { AlertTriangle, HelpCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -21,13 +34,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "#components/ui/tooltip";
-import {
-  getTokensByOwner,
-  normalizeTokenAmount,
-  Token,
-} from "@repo/airdrop-sender";
-import { Keypair, PublicKey } from "@solana/web3.js";
-import bs58 from "bs58";
+import { Table, TableBody, TableCell, TableRow } from "#components/ui/table";
 
 function isValidPrivateKey(key: string): boolean {
   try {
@@ -60,6 +67,16 @@ export default function CreateAirdrop() {
   const [privateKeyError, setPrivateKeyError] = useState<string | null>(null);
   const [rpcUrlError, setRpcUrlError] = useState<string | null>(null);
   const [noTokensMessage, setNoTokensMessage] = useState<string | null>(null);
+  const [airdropOverview, setAirdropOverview] = useState<{
+    keypairAddress: string;
+    token: string;
+    totalAddresses: number;
+    amountPerAddress: string;
+    totalAmount: string;
+    numberOfTransactions: number;
+    approximateTransactionFee: string;
+    approximateCompressionFee: string;
+  } | null>(null);
 
   useEffect(() => {
     async function loadTokens() {
@@ -80,7 +97,6 @@ export default function CreateAirdrop() {
           setNoTokensMessage(null);
         }
       } catch (error) {
-        // Handle error (e.g., show an error message to the user)
         setNoTokensMessage("Error loading tokens. Please try again.");
       }
     }
@@ -117,7 +133,44 @@ export default function CreateAirdrop() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const calculateAirdropOverview = (
+    keypair: Keypair,
+    selectedTokenInfo: Token,
+    recipientList: PublicKey[],
+    amountValue: bigint
+  ) => {
+    const numberOfTransactions = BigInt(
+      Math.ceil(recipientList.length / Number(maxAddressesPerTransaction))
+    );
+    const transactionFee =
+      BigInt(baseFee) +
+      (BigInt(computeUnitLimit) * BigInt(computeUnitPrice)) / BigInt(1e9);
+
+    const totalAmount = amountValue * BigInt(recipientList.length);
+
+    return {
+      keypairAddress: keypair.publicKey.toBase58(),
+      token: selectedTokenInfo.name || selectedTokenInfo.mintAddress.toString(),
+      totalAddresses: recipientList.length,
+      amountPerAddress: normalizeTokenAmount(
+        amountValue.toString(),
+        selectedTokenInfo.decimals
+      ).toLocaleString("en-US", {
+        maximumFractionDigits: selectedTokenInfo.decimals,
+      }),
+      totalAmount: normalizeTokenAmount(
+        totalAmount.toString(),
+        selectedTokenInfo.decimals
+      ).toLocaleString("en-US", {
+        maximumFractionDigits: selectedTokenInfo.decimals,
+      }),
+      numberOfTransactions: Number(numberOfTransactions),
+      approximateTransactionFee: `${(Number(numberOfTransactions * transactionFee) / 1e9).toFixed(9)} SOL`,
+      approximateCompressionFee: `${(Number(BigInt(recipientList.length) * BigInt(compressionFee)) / 1e9).toFixed(9)} SOL`,
+    };
+  };
+
+  const handleSubmit = async (e: React.FormEvent): void => {
     e.preventDefault();
     if (step < 3) {
       if (
@@ -133,20 +186,72 @@ export default function CreateAirdrop() {
       return;
     }
 
-    try {
-      // TODO: Implement airdrop creation logic using the private key
-      // For now, just log the data (remove this in production)
-      console.log("Creating airdrop:", {
-        privateKey: "***********",
-        rpcUrl,
-        selectedToken,
-        recipients,
-        amountType,
-        amount,
-      });
-      router.push("/");
-    } catch (error) {
-      // Handle error (e.g., show an error message to the user)
+    if (step === 3) {
+      try {
+        const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
+        const recipientList = recipients
+          .split("\n")
+          .map((address) => new PublicKey(address.trim()));
+
+        const selectedTokenInfo = tokens.find(
+          (t) => t.mintAddress.toString() === selectedToken
+        );
+
+        if (!selectedTokenInfo) {
+          throw new Error("Selected token not found");
+        }
+
+        let amountValue: bigint;
+        if (amountType === "fixed") {
+          const fixedAmount = parseFloat(amount);
+          amountValue = BigInt(
+            Math.floor(fixedAmount * 10 ** selectedTokenInfo.decimals)
+          );
+        } else {
+          // Percent
+          const percentAmount = parseFloat(amount);
+          const totalAmount = BigInt(selectedTokenInfo.amount);
+          const calculatedAmount =
+            (totalAmount * BigInt(Math.floor(percentAmount * 100))) /
+            BigInt(10000);
+          amountValue = calculatedAmount / BigInt(recipientList.length);
+        }
+
+        const overview = calculateAirdropOverview(
+          keypair,
+          selectedTokenInfo,
+          recipientList,
+          amountValue
+        );
+        setAirdropOverview(overview);
+        setStep(4);
+      } catch (error) {
+        console.error("Failed to calculate airdrop overview:", error);
+        alert("Failed to calculate airdrop overview. Please try again.");
+      }
+      return;
+    }
+
+    if (step === 4) {
+      try {
+        const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
+        const recipientList = recipients
+          .split("\n")
+          .map((address) => new PublicKey(address.trim()));
+
+        await create({
+          signer: keypair.publicKey,
+          addresses: recipientList,
+          amount: BigInt(amount),
+          mintAddress: new PublicKey(selectedToken),
+        });
+
+        alert("Airdrop created successfully!");
+        router.push("/");
+      } catch (error) {
+        console.error("Failed to create airdrop:", error);
+        alert("Failed to create airdrop. Please try again.");
+      }
     }
   };
 
@@ -175,15 +280,15 @@ export default function CreateAirdrop() {
         </div>
         <Textarea
           id="privateKey"
-          value={privateKey}
           onChange={handlePrivateKeyChange}
           placeholder="Paste your private key here"
           required
+          value={privateKey}
         />
-        {privateKeyError && (
+        {privateKeyError ? (
           <p className="text-red-500 text-sm">{privateKeyError}</p>
-        )}
-        <Alert variant="warning">
+        ) : null}
+        <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Warning</AlertTitle>
           <AlertDescription>
@@ -197,12 +302,14 @@ export default function CreateAirdrop() {
         <Label htmlFor="rpcUrl">RPC URL</Label>
         <Input
           id="rpcUrl"
-          value={rpcUrl}
           onChange={handleRpcUrlChange}
           placeholder="Enter RPC URL"
           required
+          value={rpcUrl}
         />
-        {rpcUrlError && <p className="text-red-500 text-sm">{rpcUrlError}</p>}
+        {rpcUrlError ? (
+          <p className="text-red-500 text-sm">{rpcUrlError}</p>
+        ) : null}
       </div>
     </>
   );
@@ -245,12 +352,12 @@ export default function CreateAirdrop() {
         <Label htmlFor="recipients">Recipients</Label>
         <Textarea
           id="recipients"
-          value={recipients}
           onChange={(e) => {
             setRecipients(e.target.value);
           }}
           placeholder="Enter recipient addresses (one per line)"
           required
+          value={recipients}
         />
       </div>
     </>
@@ -280,8 +387,6 @@ export default function CreateAirdrop() {
         <Label htmlFor="amount">Amount</Label>
         <Input
           id="amount"
-          type="number"
-          value={amount}
           onChange={(e) => {
             setAmount(e.target.value);
           }}
@@ -289,8 +394,68 @@ export default function CreateAirdrop() {
             amountType === "fixed" ? "Enter token amount" : "Enter percentage"
           }
           required
+          type="number"
+          value={amount}
         />
       </div>
+    </>
+  );
+
+  const renderStep4 = () => (
+    <>
+      <h2 className="text-2xl font-semibold mb-4">Airdrop Overview</h2>
+      {airdropOverview ? (
+        <Table>
+          <TableBody>
+            <TableRow>
+              <TableCell className="font-medium">Keypair address</TableCell>
+              <TableCell>{airdropOverview.keypairAddress}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="font-medium">Token</TableCell>
+              <TableCell>{airdropOverview.token}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="font-medium">Total addresses</TableCell>
+              <TableCell>{airdropOverview.totalAddresses}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="font-medium">Amount per address</TableCell>
+              <TableCell>{airdropOverview.amountPerAddress}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="font-medium">Total amount</TableCell>
+              <TableCell>{airdropOverview.totalAmount}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="font-medium">
+                Number of transactions
+              </TableCell>
+              <TableCell>{airdropOverview.numberOfTransactions}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="font-medium">
+                Approximate transaction fee
+              </TableCell>
+              <TableCell>{airdropOverview.approximateTransactionFee}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="font-medium">
+                Approximate compression fee
+              </TableCell>
+              <TableCell>{airdropOverview.approximateCompressionFee}</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      ) : null}
+      <Alert className="mt-4" variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Confirmation</AlertTitle>
+        <AlertDescription>
+          Are you sure you want to create this airdrop? This action cannot be
+          undone.
+        </AlertDescription>
+      </Alert>
     </>
   );
 
@@ -298,21 +463,32 @@ export default function CreateAirdrop() {
     <main className="flex min-h-screen flex-col items-center justify-between p-6">
       <div className="w-full max-w-2xl">
         <h1 className="text-3xl font-bold mb-6">Create New Airdrop</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
           {step === 3 && renderStep3()}
+          {step === 4 && renderStep4()}
           <div className="flex justify-between">
             {step > 1 && (
-              <Button type="button" onClick={() => setStep(step - 1)}>
+              <Button
+                onClick={() => {
+                  setStep(step - 1);
+                }}
+                type="button"
+              >
                 Previous
               </Button>
             )}
-            <Button type="button" onClick={() => router.push("/")}>
+            <Button
+              onClick={() => {
+                router.push("/");
+              }}
+              type="button"
+            >
               Cancel
             </Button>
             <Button type="submit">
-              {step < 3 ? "Next" : "Create Airdrop"}
+              {step < 4 ? "Next" : "Confirm and Create Airdrop"}
             </Button>
           </div>
         </form>

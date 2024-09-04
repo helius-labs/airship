@@ -1,4 +1,6 @@
 import {
+  baseFee,
+  compressionFee,
   computeUnitLimit,
   computeUnitPrice,
   maxAddressesPerTransaction,
@@ -43,6 +45,8 @@ export {
   maxAddressesPerTransaction,
   computeUnitLimit,
   computeUnitPrice,
+  baseFee,
+  compressionFee,
   AirdropError,
   AirdropErrorMessage,
   AirdropErrorCode,

@@ -1,6 +1,9 @@
 import * as web3 from "@solana/web3.js";
 
 export const maxAddressesPerTransaction = 5;
+
+export const baseFee = 5000;
+export const compressionFee = 300;
 export const computeUnitLimit = 500_000;
 // Compute unit price is micro lamports
 export const computeUnitPrice = 10_000;
