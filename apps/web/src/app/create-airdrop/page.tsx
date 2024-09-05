@@ -7,7 +7,7 @@ import type { Token } from "@repo/airdrop-sender";
 import {
   getTokensByOwner,
   normalizeTokenAmount,
-  createWeb,
+  create,
   maxAddressesPerTransaction,
   computeUnitPrice,
   computeUnitLimit,
@@ -248,7 +248,7 @@ export default function CreateAirdrop() {
           .split("\n")
           .map((address) => new PublicKey(address.trim()));
 
-        await createWeb({
+        await create({
           signer: keypair.publicKey,
           addresses: recipientList,
           amount: amountValue,

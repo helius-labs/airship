@@ -9,7 +9,6 @@ import { sql, getTableName } from "drizzle-orm";
 import { maxAddressesPerTransaction } from "../config/constants";
 import { transaction_queue } from "../schema/transaction_queue";
 import { loadDB } from "./db";
-import Worker from "web-worker";
 
 interface CreateParams {
   signer: web3.PublicKey;
@@ -28,16 +27,6 @@ export async function createWeb(params: CreateParams) {
       AirdropErrorCode.airdropNoAddresses
     );
   }
-
-  const worker = new Worker(new URL("./workers/worker.js", import.meta.url), {
-    type: "module",
-  });
-
-  worker.addEventListener("message", (e) => {
-    console.log(e.data); // "hiya!"
-  });
-
-  worker.postMessage("hello");
 
   const db = await loadDB();
   // Create will overwrite any existing airdrop

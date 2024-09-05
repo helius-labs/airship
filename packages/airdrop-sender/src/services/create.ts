@@ -31,7 +31,12 @@ export async function create(params: CreateParams) {
   );
 
   // create a worker pool using an external worker script
-  const pool = workerpool.pool(createURL.toString());
+  const pool = workerpool.pool(createURL.toString(), {
+    emitStdStreams: true,
+    workerOpts: {
+      type: "module",
+    },
+  });
 
   await pool.exec("create", [
     signer.toBase58(),
