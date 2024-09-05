@@ -30,7 +30,7 @@ export async function create(params: CreateParams) {
 
   if (worker) {
     const createURL = await WorkerUrl(
-      new URL("./workers/createWorker.js", import.meta.url)
+      new URL("./workers/create.js", import.meta.url)
     );
 
     // create a worker pool using an external worker script

@@ -34,7 +34,7 @@ export async function start(params: SendParams) {
 
   // Start sending pool
   sendingPool
-    .exec("sending", [keypair.secretKey, url])
+    .exec("start", [keypair.secretKey, url])
     .catch(function (err) {
       console.error(err);
     })
@@ -44,7 +44,7 @@ export async function start(params: SendParams) {
 
   // Start polling pool
   pollingPool
-    .exec("polling", [url])
+    .exec("start", [url])
     .catch(function (err) {
       console.error(err);
     })
