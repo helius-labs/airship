@@ -29,8 +29,9 @@ export async function createWeb(params: CreateParams) {
     );
   }
 
-  const url = new URL("./workers/worker.js", import.meta.url);
-  const worker = new Worker(url);
+  const worker = new Worker(new URL("./workers/worker.js", import.meta.url), {
+    type: "module",
+  });
 
   worker.addEventListener("message", (e) => {
     console.log(e.data); // "hiya!"
