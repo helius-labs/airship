@@ -7,7 +7,7 @@ import type { Token } from "@repo/airdrop-sender";
 import {
   getTokensByOwner,
   normalizeTokenAmount,
-  create,
+  createWeb,
   maxAddressesPerTransaction,
   computeUnitPrice,
   computeUnitLimit,
@@ -248,13 +248,12 @@ export default function CreateAirdrop() {
           .split("\n")
           .map((address) => new PublicKey(address.trim()));
 
-        // await create({
-        //   signer: keypair.publicKey,
-        //   addresses: recipientList,
-        //   amount: amountValue,
-        //   mintAddress: new PublicKey(selectedToken),
-        //   worker: false,
-        // });
+        await createWeb({
+          signer: keypair.publicKey,
+          addresses: recipientList,
+          amount: amountValue,
+          mintAddress: new PublicKey(selectedToken),
+        });
 
         const exists = await exist();
         console.log("exists", exists);
