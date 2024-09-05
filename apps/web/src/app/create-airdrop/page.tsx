@@ -248,13 +248,13 @@ export default function CreateAirdrop() {
           .split("\n")
           .map((address) => new PublicKey(address.trim()));
 
-        await create({
-          signer: keypair.publicKey,
-          addresses: recipientList,
-          amount: amountValue,
-          mintAddress: new PublicKey(selectedToken),
-          worker: false,
-        });
+        // await create({
+        //   signer: keypair.publicKey,
+        //   addresses: recipientList,
+        //   amount: amountValue,
+        //   mintAddress: new PublicKey(selectedToken),
+        //   worker: false,
+        // });
 
         const exists = await exist();
         console.log("exists", exists);
