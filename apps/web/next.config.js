@@ -37,4 +37,5 @@ module.exports = {
       },
     ]
   },
+  transpilePackages: ['@repo/airdrop-sender'],
 };
