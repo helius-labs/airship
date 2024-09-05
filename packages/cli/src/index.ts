@@ -130,7 +130,14 @@ async function handleNewAirdrop(keypair: web3.Keypair, options: any) {
   const mintAddress = await selectToken(keypair, tokens);
   const addresses = await selectRecipients(options.url);
   const amount = await selectAmount(tokens, mintAddress, addresses.length);
-  await confirmAirdrop(keypair, mintAddress, addresses, amount, tokens);
+  await confirmAirdrop(
+    options.url,
+    keypair,
+    mintAddress,
+    addresses,
+    amount,
+    tokens
+  );
   await createAirdropQueue(keypair, mintAddress, addresses, amount);
   await startAndMonitorAirdrop(keypair, options.url);
 }
@@ -312,6 +319,7 @@ async function getPercentAmount(token: any, totalAddresses: number) {
 }
 
 async function confirmAirdrop(
+  url: string,
   keypair: web3.Keypair,
   mintAddress: string,
   addresses: web3.PublicKey[],
@@ -333,6 +341,7 @@ async function confirmAirdrop(
   });
 
   table.push(
+    ["RPC URL", url],
     ["Keypair address", keypair.publicKey.toBase58()],
     ["Token", mintAddress],
     ["Total addresses", addresses.length],

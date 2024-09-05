@@ -1,4 +1,4 @@
-import { PackageOpen, PackagePlus, Wallet } from "lucide-react";
+import { PackagePlus, Wallet } from "lucide-react";
 import type { NavLinks } from "#types/nav-links";
 
 export const navLinks: NavLinks[] = [
@@ -13,11 +13,5 @@ export const navLinks: NavLinks[] = [
     name: "Wallet",
     href: "/wallet",
     icon: Wallet,
-  },
-  {
-    id: 3,
-    name: "Claim",
-    href: "/claim",
-    icon: PackageOpen,
   },
 ];

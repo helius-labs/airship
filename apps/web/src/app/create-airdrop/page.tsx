@@ -36,6 +36,14 @@ import {
   TooltipTrigger,
 } from "#components/ui/tooltip";
 import { Table, TableBody, TableCell, TableRow } from "#components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "#components/ui/dialog";
 
 function isValidPrivateKey(key: string): boolean {
   try {
@@ -77,8 +85,10 @@ export default function CreateAirdrop() {
     numberOfTransactions: number;
     approximateTransactionFee: string;
     approximateCompressionFee: string;
+    rpcUrl: string;
   } | null>(null);
   const [amountValue, setAmountValue] = useState<bigint | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   useEffect(() => {
     async function loadTokens() {
@@ -108,7 +118,7 @@ export default function CreateAirdrop() {
   const handlePrivateKeyChange = (
     e: React.ChangeEvent<HTMLTextAreaElement>
   ) => {
-    const newPrivateKey = e.target.value;
+    const newPrivateKey = e.target.value.trim();
     setPrivateKey(newPrivateKey);
     if (newPrivateKey) {
       if (isValidPrivateKey(newPrivateKey)) {
@@ -139,7 +149,8 @@ export default function CreateAirdrop() {
     keypair: Keypair,
     selectedTokenInfo: Token,
     recipientList: PublicKey[],
-    amountValue: bigint
+    amountValue: bigint,
+    rpcUrl: string
   ) => {
     const numberOfTransactions = BigInt(
       Math.ceil(recipientList.length / Number(maxAddressesPerTransaction))
@@ -169,10 +180,11 @@ export default function CreateAirdrop() {
       numberOfTransactions: Number(numberOfTransactions),
       approximateTransactionFee: `${Number(numberOfTransactions * transactionFee) / 1e9} SOL`,
       approximateCompressionFee: `${Number(BigInt(recipientList.length) * BigInt(compressionFee)) / 1e9} SOL`,
+      rpcUrl: rpcUrl,
     };
   };
 
-  const handleSubmit = async (e: React.FormEvent): void => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (step < 3) {
       if (
@@ -226,7 +238,8 @@ export default function CreateAirdrop() {
           keypair,
           selectedTokenInfo,
           recipientList,
-          calculatedAmountValue
+          calculatedAmountValue,
+          rpcUrl
         );
         setAirdropOverview(overview);
         setStep(4);
@@ -238,33 +251,37 @@ export default function CreateAirdrop() {
     }
 
     if (step === 4) {
-      try {
-        if (!amountValue) {
-          throw new Error("Amount value is not set");
-        }
+      setShowConfirmDialog(true);
+    }
+  };
 
-        const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
-        const recipientList = recipients
-          .split("\n")
-          .map((address) => new PublicKey(address.trim()));
-
-        await create({
-          signer: keypair.publicKey,
-          addresses: recipientList,
-          amount: amountValue,
-          mintAddress: new PublicKey(selectedToken),
-          worker: false,
-        });
-
-        const exists = await exist();
-        console.log("exists", exists);
-
-        alert("Airdrop created successfully!");
-        // router.push("/");
-      } catch (error) {
-        console.error("Failed to create airdrop:", error);
-        alert("Failed to create airdrop. Please try again.");
+  const handleSendAirdrop = async () => {
+    try {
+      if (!amountValue) {
+        throw new Error("Amount value is not set");
       }
+
+      const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
+      const recipientList = recipients
+        .split("\n")
+        .map((address) => new PublicKey(address.trim()));
+
+      await create({
+        signer: keypair.publicKey,
+        addresses: recipientList,
+        amount: amountValue,
+        mintAddress: new PublicKey(selectedToken),
+        worker: false,
+      });
+
+      const exists = await exist();
+      console.log("exists", exists);
+
+      alert("Airdrop created successfully!");
+      router.push("/");
+    } catch (error) {
+      console.error("Failed to create airdrop:", error);
+      alert("Failed to create airdrop. Please try again.");
     }
   };
 
@@ -339,6 +356,7 @@ export default function CreateAirdrop() {
           </Alert>
         ) : (
           <Select
+            value={selectedToken}
             onValueChange={(value) => {
               setSelectedToken(value);
             }}
@@ -381,6 +399,7 @@ export default function CreateAirdrop() {
       <div>
         <Label htmlFor="amountType">Amount Type</Label>
         <Select
+          value={amountType}
           onValueChange={(value: "fixed" | "percent") => {
             setAmountType(value);
           }}
@@ -420,6 +439,10 @@ export default function CreateAirdrop() {
       {airdropOverview ? (
         <Table>
           <TableBody>
+            <TableRow>
+              <TableCell className="font-medium w-1/3">RPC URL</TableCell>
+              <TableCell>{airdropOverview.rpcUrl}</TableCell>
+            </TableRow>
             <TableRow>
               <TableCell className="font-medium">Keypair address</TableCell>
               <TableCell>{airdropOverview.keypairAddress}</TableCell>
@@ -461,14 +484,6 @@ export default function CreateAirdrop() {
           </TableBody>
         </Table>
       ) : null}
-      <Alert className="mt-4" variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Confirmation</AlertTitle>
-        <AlertDescription>
-          Are you sure you want to create this airdrop? This action cannot be
-          undone.
-        </AlertDescription>
-      </Alert>
     </>
   );
 
@@ -481,31 +496,56 @@ export default function CreateAirdrop() {
           {step === 2 && renderStep2()}
           {step === 3 && renderStep3()}
           {step === 4 && renderStep4()}
-          <div className="flex justify-between">
-            {step > 1 && (
-              <Button
-                onClick={() => {
-                  setStep(step - 1);
-                }}
-                type="button"
-              >
-                Previous
-              </Button>
-            )}
-            <Button
-              onClick={() => {
-                router.push("/");
-              }}
-              type="button"
-            >
-              Cancel
-            </Button>
-            <Button type="submit">
-              {step < 4 ? "Next" : "Confirm and Create Airdrop"}
-            </Button>
+          <div className="flex justify-between items-center">
+            <div>
+              {step > 1 && (
+                <Button
+                  onClick={() => {
+                    setStep(step - 1);
+                  }}
+                  type="button"
+                >
+                  Previous
+                </Button>
+              )}
+            </div>
+            <div>
+              {step < 4 ? (
+                <Button type="submit">Next</Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={() => setShowConfirmDialog(true)}
+                >
+                  Send
+                </Button>
+              )}
+            </div>
           </div>
         </form>
       </div>
+
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Airdrop</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to send the airdrop?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSendAirdrop}>
+              Confirm and Send Airdrop
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
