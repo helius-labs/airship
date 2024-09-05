@@ -253,6 +253,7 @@ export default function CreateAirdrop() {
           addresses: recipientList,
           amount: amountValue,
           mintAddress: new PublicKey(selectedToken),
+          worker: false,
         });
 
         const exists = await exist();

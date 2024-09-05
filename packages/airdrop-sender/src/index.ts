@@ -26,11 +26,9 @@ import { getTokenAccounts } from "./services/getTokenAccounts";
 import { getTokensByOwner, Token } from "./services/getTokensByOwner";
 import { isFungibleToken } from "./services/isFungibleToken";
 import { isNFTCollection } from "./services/isNFTCollection";
-import { createWeb } from "./services/createWeb";
 
 export {
   create,
-  createWeb,
   exist,
   start,
   status,

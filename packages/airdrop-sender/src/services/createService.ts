@@ -3,7 +3,12 @@ import { transaction_queue } from "../schema/transaction_queue";
 import { maxAddressesPerTransaction } from "../config/constants";
 import { getTableName, sql } from "drizzle-orm";
 
-addEventListener("message", async (e) => {
+export async function createService(
+  signer: string,
+  addresses: string[],
+  amount: bigint,
+  mintAddress: string
+) {
   const db = await loadDB();
   // Create will overwrite any existing airdrop
   // Delete the existing airdrop queue
@@ -13,5 +18,20 @@ addEventListener("message", async (e) => {
     sql`DELETE FROM sqlite_sequence WHERE name = ${getTableName(transaction_queue)}`
   );
 
-  postMessage("done!" + maxAddressesPerTransaction);
-});
+  const prepared = db
+    .insert(transaction_queue)
+    .values({
+      signer: signer,
+      mint_address: mintAddress,
+      addresses: sql.placeholder("addresses"),
+      amount: amount,
+    })
+    .prepare();
+
+  for (let i = 0; i < addresses.length; i += maxAddressesPerTransaction) {
+    const batch = addresses.slice(i, i + maxAddressesPerTransaction);
+    await prepared.execute({
+      addresses: batch,
+    });
+  }
+}
