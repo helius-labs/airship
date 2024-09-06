@@ -305,7 +305,6 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
 
         if (currentStatus.finalized === currentStatus.total) {
           clearInterval(monitorInterval);
-          console.log("🥳 Airdrop completed!");
           setIsAirdropInProgress(false);
           setIsAirdropComplete(true);
         }

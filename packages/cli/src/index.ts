@@ -12,7 +12,6 @@ import {
   logger,
   getTokensByOwner,
   exist,
-  create,
   AirdropError,
   sleep,
   baseFee,
@@ -22,17 +21,20 @@ import {
   computeUnitLimit,
   normalizeTokenAmount,
   Token,
-  poll,
-  send,
 } from "@repo/airdrop-sender";
 import ora, { Ora } from "ora";
 import { csv } from "./imports/csv";
 import { chapter2 } from "./imports/chapter-2";
 import { nft } from "./imports/nft";
 import { splToken } from "./imports/spl-token";
+import Tinypool from "tinypool";
 
 process.on("SIGINT", exitProgram);
 process.on("SIGTERM", exitProgram);
+
+const pool = new Tinypool({
+  filename: new URL("./worker.js", import.meta.url).href,
+});
 
 async function main() {
   const packageInfo = await getPackageInfo();
@@ -390,12 +392,15 @@ async function createAirdropQueue(
 ) {
   const createSpinner = ora("Creating transaction queue").start();
   try {
-    await create({
-      signer: keypair.publicKey,
-      addresses: addresses,
-      amount: amount,
-      mintAddress: new web3.PublicKey(mintAddress),
-    });
+    await pool.run(
+      {
+        signer: keypair.publicKey.toBase58(),
+        addresses: addresses.map((address) => address.toBase58()),
+        amount: amount,
+        mintAddress: mintAddress,
+      },
+      { name: "create" }
+    );
     createSpinner.succeed("Transaction queue created");
   } catch (error) {
     createSpinner.fail("Failed to create transaction queue");
@@ -413,8 +418,8 @@ async function startAndMonitorAirdrop(keypair: web3.Keypair, url: string) {
   const startSpinner = ora("Starting airdrop");
   try {
     startSpinner.start();
-    await send({ keypair, url });
-    await poll({ url });
+    pool.run({ secretKey: keypair.secretKey, url: url }, { name: "send" });
+    pool.run({ url }, { name: "poll" });
     startSpinner.succeed("Airdrop started");
   } catch (error) {
     handleAirdropError(startSpinner, error);

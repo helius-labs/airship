@@ -106,9 +106,6 @@ export async function poll(params: PollParams) {
           .where(eq(transaction_queue.id, transaction.id));
 
         if (confirmationStatus === "finalized") {
-          console.log(
-            `Transaction [${transaction.id}/${totalTransactionsToSend}] finalized`
-          );
           logger.info(
             `Transaction [${transaction.id}/${totalTransactionsToSend}] finalized`
           );

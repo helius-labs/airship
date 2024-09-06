@@ -74,9 +74,6 @@ export async function send(params: SendParams) {
 
     // No transaction to send. Wait for a second and try again
     if (transactionQueue.length === 0) {
-      console.log(
-        "All transactions sent. Checking for possible retries in 5 seconds..."
-      );
       logger.info(
         "All transactions sent. Checking for possible retries in 5 seconds..."
       );
@@ -104,14 +101,11 @@ export async function send(params: SendParams) {
     // Create a token pool for the mint address if it doesn't exist
     try {
       await createTokenPool(connection, keypair, mintAddress);
-      console.log("Token pool created.");
       logger.info("Token pool created.");
     } catch (error: any) {
       if (error.message.includes("already in use")) {
-        console.log("Token pool already exists. Skipping...");
         logger.info("Token pool already exists. Skipping...");
       } else {
-        console.error("Failed to create token pool:", error);
         logger.error("Failed to create token pool:", error);
       }
     }
@@ -159,10 +153,6 @@ export async function send(params: SendParams) {
             serialised_transaction: bs58.encode(signedTx.serialize()),
           })
           .where(eq(transaction_queue.id, transaction.id));
-
-        console.log(
-          `Transaction [${transaction.id}/${totalTransactionsToSend}] sent: ${signature}`
-        );
         logger.info(
           `Transaction [${transaction.id}/${totalTransactionsToSend}] sent: ${signature}`
         );
@@ -181,10 +171,8 @@ export async function send(params: SendParams) {
               AirdropErrorCode.airdropInsufficientFunds
             );
           }
-          console.error(error.message);
           logger.error(error.message);
         } else {
-          console.error(error);
           logger.error(error);
         }
       }
