@@ -8,7 +8,6 @@ async function loadServerDB(): Promise<drizzleBetterSqlite3.BetterSQLite3Databas
   const { default: Database } = await import("better-sqlite3");
 
   const sqlite = new Database(DB_FILE); // You can pass the file path as an argument
-  sqlite.pragma("journal_mode = WAL");
   const db = drizzleBetterSqlite3.drizzle(sqlite);
   initDB(db);
   return db;
@@ -17,7 +16,10 @@ async function loadServerDB(): Promise<drizzleBetterSqlite3.BetterSQLite3Databas
 async function loadBrowserDB(): Promise<drizzleSqlLocal.SqliteRemoteDatabase> {
   // Browser environment
   const { SQLocalDrizzle } = await import("sqlocal/drizzle");
-  const { driver, batchDriver } = new SQLocalDrizzle(DB_FILE);
+  const { driver, batchDriver } = new SQLocalDrizzle({
+    databasePath: DB_FILE,
+    verbose: true,
+  });
 
   const db = drizzleSqlLocal.drizzle(driver, batchDriver);
   initDB(db);
@@ -32,6 +34,14 @@ export async function loadDB(): Promise<any> {
   }
 }
 
+async function setJournalModeWAL(
+  db:
+    | drizzleBetterSqlite3.BetterSQLite3Database
+    | drizzleSqlLocal.SqliteRemoteDatabase
+) {
+  await db.run(sql`PRAGMA journal_mode = WAL;`);
+}
+
 async function createTransactionQueueTable(
   db:
     | drizzleBetterSqlite3.BetterSQLite3Database
@@ -43,7 +53,7 @@ async function createTransactionQueueTable(
 	\`signer\` text(44) NOT NULL,
 	\`mint_address\` text(44) NOT NULL,
 	\`addresses\` text NOT NULL,
-	\`amount\` blob NOT NULL,
+	\`amount\` text NOT NULL,
 	\`blockhash\` text(44),
 	\`last_valid_block_height\` integer DEFAULT 0,
 	\`serialised_transaction\` text,
@@ -75,6 +85,7 @@ function initDB(
     | drizzleBetterSqlite3.BetterSQLite3Database
     | drizzleSqlLocal.SqliteRemoteDatabase
 ) {
+  setJournalModeWAL(db);
   createTransactionQueueTable(db);
   createIndexes(db);
 }

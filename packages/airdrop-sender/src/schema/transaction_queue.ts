@@ -17,7 +17,7 @@ export const transaction_queue = sqliteTable(
       .notNull()
       .$type<string[]>()
       .default(sql`'[]'`),
-    amount: blob("amount", { mode: "bigint" }).notNull(),
+    amount: text("amount").notNull(),
     blockhash: text("blockhash", { length: 44 }),
     last_valid_block_height: integer("last_valid_block_height")
       .notNull()

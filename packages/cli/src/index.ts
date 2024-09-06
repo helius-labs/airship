@@ -413,7 +413,7 @@ async function startAndMonitorAirdrop(keypair: web3.Keypair, url: string) {
   const startSpinner = ora("Starting airdrop");
   try {
     startSpinner.start();
-    await start({ keypair, url });
+    await start({ keypair, url, worker: true });
     startSpinner.succeed("Airdrop started");
   } catch (error) {
     handleAirdropError(startSpinner, error);

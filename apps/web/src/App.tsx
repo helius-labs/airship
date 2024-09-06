@@ -1,0 +1,57 @@
+import { useState, useEffect } from "react";
+import { CreateAirdrop } from "./components/CreateAirdrop";
+import { AirdropSelection } from "./components/AirdropSelection";
+import { exist } from "@repo/airdrop-sender";
+
+function App() {
+  const [existingAirdrop, setExistingAirdrop] = useState<boolean | null>(null);
+  const [selectedAction, setSelectedAction] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function checkAirdrop() {
+      try {
+        const exists = await exist();
+        setExistingAirdrop(exists);
+      } catch (error) {
+        console.error("Error checking for existing airdrop:", error);
+        setExistingAirdrop(false);
+      }
+    }
+    void checkAirdrop();
+  }, []);
+
+  const handleCreateAirdrop = () => {
+    setSelectedAction("create");
+  };
+
+  const handleResumeAirdrop = () => {
+    setSelectedAction("resume");
+  };
+
+  const handleBackToHome = () => {
+    setSelectedAction(null);
+  };
+
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed"
+      style={{ backgroundImage: "url('/background.jpg')" }}
+    >
+      <div className="w-full max-w-4xl rounded-lg shadow-xl">
+        {selectedAction === "create" ? (
+          <CreateAirdrop onBackToHome={handleBackToHome} />
+        ) : selectedAction === "resume" ? (
+          <div>Resume Airdrop (Not implemented yet)</div>
+        ) : (
+          <AirdropSelection
+            existingAirdrop={existingAirdrop}
+            onCreateAirdrop={handleCreateAirdrop}
+            onResumeAirdrop={handleResumeAirdrop}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default App;
