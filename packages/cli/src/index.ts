@@ -438,26 +438,19 @@ function createProgressBars() {
 
 async function monitorAirdropProgress(multibar: cliProgress.MultiBar) {
   const airdropStatus = await status();
-  const b1 = multibar.create(
-    airdropStatus.totalTransactionsToSend,
-    airdropStatus.totalTransactionsSent,
-    { type: "Transactions sent     " }
-  );
-  const b2 = multibar.create(
-    airdropStatus.totalTransactionsToSend,
-    airdropStatus.totalTransactionsFinalized,
-    { type: "Transactions finalized" }
-  );
+  const b1 = multibar.create(airdropStatus.total, airdropStatus.sent, {
+    type: "Transactions sent     ",
+  });
+  const b2 = multibar.create(airdropStatus.total, airdropStatus.finalized, {
+    type: "Transactions finalized",
+  });
 
   while (true) {
     const currentStatus = await status();
-    b1.update(currentStatus.totalTransactionsSent);
-    b2.update(currentStatus.totalTransactionsFinalized);
+    b1.update(currentStatus.sent);
+    b2.update(currentStatus.finalized);
 
-    if (
-      currentStatus.totalTransactionsFinalized ===
-      currentStatus.totalTransactionsToSend
-    ) {
+    if (currentStatus.finalized === currentStatus.total) {
       multibar.stop();
       console.log(chalk.green("🥳 Airdrop completed!"));
       logger.info("🥳 Airdrop completed!");
