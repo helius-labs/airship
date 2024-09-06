@@ -23,17 +23,12 @@ import {
 import { logger } from "../services/logger";
 import bs58 from "bs58";
 import { SendTransactionError } from "@solana/web3.js";
-import workerpool from "workerpool";
 import { sleep } from "../utils/common";
 
 export async function sendingService(secretKey: Uint8Array, url: string) {
   const db = await loadDB();
 
   const keypair = web3.Keypair.fromSecretKey(secretKey);
-
-  workerpool.workerEmit({
-    status: "in_progress",
-  });
 
   // Fetch total amount of addresses to send
   const totalQueue = await db
@@ -52,9 +47,6 @@ export async function sendingService(secretKey: Uint8Array, url: string) {
     const totalTransactionsFinalized = totalFinalizedQueue[0].count;
 
     if (totalTransactionsFinalized === totalTransactionsToSend) {
-      workerpool.workerEmit({
-        status: "done",
-      });
       break;
     }
 

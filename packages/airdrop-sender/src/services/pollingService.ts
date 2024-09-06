@@ -4,7 +4,6 @@ import { transaction_queue } from "../schema/transaction_queue";
 import { desc, asc, eq, ne, and, count, isNotNull } from "drizzle-orm";
 import { logger } from "../services/logger";
 import { SendTransactionError } from "@solana/web3.js";
-import workerpool from "workerpool";
 import { CommitmentStatus } from "../config/constants";
 
 export async function pollingService(url: string) {
@@ -29,9 +28,6 @@ export async function pollingService(url: string) {
     const totalTransactionsFinalized = totalFinalizedQueue[0].count;
 
     if (totalTransactionsFinalized === totalTransactionsToSend) {
-      workerpool.workerEmit({
-        status: "done",
-      });
       break;
     }
 
