@@ -14,7 +14,6 @@ import {
   exist,
   create,
   AirdropError,
-  start,
   sleep,
   baseFee,
   compressionFee,
@@ -23,6 +22,8 @@ import {
   computeUnitLimit,
   normalizeTokenAmount,
   Token,
+  poll,
+  send,
 } from "@repo/airdrop-sender";
 import ora, { Ora } from "ora";
 import { csv } from "./imports/csv";
@@ -394,7 +395,6 @@ async function createAirdropQueue(
       addresses: addresses,
       amount: amount,
       mintAddress: new web3.PublicKey(mintAddress),
-      worker: true,
     });
     createSpinner.succeed("Transaction queue created");
   } catch (error) {
@@ -413,7 +413,8 @@ async function startAndMonitorAirdrop(keypair: web3.Keypair, url: string) {
   const startSpinner = ora("Starting airdrop");
   try {
     startSpinner.start();
-    await start({ keypair, url, worker: true });
+    await send({ keypair, url });
+    await poll({ url });
     startSpinner.succeed("Airdrop started");
   } catch (error) {
     handleAirdropError(startSpinner, error);
