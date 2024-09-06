@@ -1,10 +1,10 @@
+import * as airdropsender from "@repo/airdrop-sender";
 import { useState, useEffect } from "react";
 import { AlertTriangle, HelpCircle } from "lucide-react";
 import type { Token } from "@repo/airdrop-sender";
 import {
   getTokensByOwner,
   normalizeTokenAmount,
-  create,
   maxAddressesPerTransaction,
   computeUnitPrice,
   computeUnitLimit,
@@ -40,6 +40,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/ui/dialog";
+
+const airdropSenderWorker = new ComlinkWorker<
+  typeof import("../lib/airdropSenderWorker.ts")
+>(new URL("../lib/airdropSenderWorker.js", import.meta.url), {
+  name: "airdropSenderWorker",
+  type: "module",
+});
 
 interface CreateAirdropProps {
   onBackToHome: () => void;
@@ -266,15 +273,28 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
         .split("\n")
         .map((address) => new PublicKey(address.trim()));
 
-      await create({
-        signer: keypair.publicKey,
-        addresses: recipientList,
-        amount: amountValue,
-        mintAddress: new PublicKey(selectedToken),
-        worker: true,
-      });
+      await airdropSenderWorker.create(
+        keypair.publicKey.toBase58(),
+        recipientList.map((r) => r.toBase58()),
+        amountValue,
+        selectedToken
+      );
 
-      // Additional logic for starting the airdrop can be added here
+      airdropSenderWorker.send(privateKey, rpcUrl);
+      airdropSenderWorker.poll(rpcUrl);
+
+      while (true) {
+        const currentStatus = await airdropsender.status();
+        if (
+          currentStatus.totalTransactionsFinalized ===
+          currentStatus.totalTransactionsToSend
+        ) {
+          console.log("🥳 Airdrop completed!");
+          break;
+        }
+
+        await airdropsender.sleep(1000);
+      }
     } catch (error) {
       console.error("Failed to create airdrop:", error);
       alert("Failed to create airdrop. Please try again.");

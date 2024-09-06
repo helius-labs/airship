@@ -1,15 +1,19 @@
 import { useState, useEffect } from "react";
 import { CreateAirdrop } from "./components/CreateAirdrop";
 import { AirdropSelection } from "./components/AirdropSelection";
-import { exist } from "@repo/airdrop-sender";
+import { init, exist } from "@repo/airdrop-sender";
 
 function App() {
   const [existingAirdrop, setExistingAirdrop] = useState<boolean | null>(null);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
 
   useEffect(() => {
-    async function checkAirdrop() {
+    async function initApp() {
       try {
+        // Initialize the airdrop sender
+        await init();
+
+        // Check if an airdrop already exists
         const exists = await exist();
         setExistingAirdrop(exists);
       } catch (error) {
@@ -17,7 +21,7 @@ function App() {
         setExistingAirdrop(false);
       }
     }
-    void checkAirdrop();
+    void initApp();
   }, []);
 
   const handleCreateAirdrop = () => {

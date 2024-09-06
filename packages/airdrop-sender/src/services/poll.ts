@@ -6,7 +6,13 @@ import { logger } from "../services/logger";
 import { SendTransactionError } from "@solana/web3.js";
 import { CommitmentStatus } from "../config/constants";
 
-export async function pollingService(url: string) {
+interface PollParams {
+  url: string;
+}
+
+export async function poll(params: PollParams) {
+  const { url } = params;
+
   const connection = new web3.Connection(url, "confirmed");
 
   const db = await loadDB();

@@ -25,10 +25,15 @@ import bs58 from "bs58";
 import { SendTransactionError } from "@solana/web3.js";
 import { sleep } from "../utils/common";
 
-export async function sendingService(secretKey: Uint8Array, url: string) {
-  const db = await loadDB();
+interface SendParams {
+  keypair: web3.Keypair;
+  url: string;
+}
 
-  const keypair = web3.Keypair.fromSecretKey(secretKey);
+export async function send(params: SendParams) {
+  const { keypair, url } = params;
+
+  const db = await loadDB();
 
   // Fetch total amount of addresses to send
   const totalQueue = await db
