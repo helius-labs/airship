@@ -21,6 +21,7 @@ import {
   computeUnitLimit,
   normalizeTokenAmount,
   Token,
+  init,
 } from "@repo/airdrop-sender";
 import ora, { Ora } from "ora";
 import { csv } from "./imports/csv";
@@ -45,6 +46,10 @@ async function main() {
     validateOptions(options);
 
     const keypair = loadKeypair(options.keypair);
+
+    // Initialize the database
+    await init();
+
     const action = await selectAction();
 
     switch (action) {
