@@ -4,10 +4,15 @@ import { transaction_queue } from "../schema/transaction_queue";
 import { desc, asc, eq, ne, and, count, isNotNull } from "drizzle-orm";
 import { logger } from "../services/logger";
 import { SendTransactionError } from "@solana/web3.js";
-import workerpool from "workerpool";
 import { CommitmentStatus } from "../config/constants";
 
-export async function pollingService(url: string) {
+interface PollParams {
+  url: string;
+}
+
+export async function poll(params: PollParams) {
+  const { url } = params;
+
   const connection = new web3.Connection(url, "confirmed");
 
   const db = await loadDB();
@@ -29,9 +34,6 @@ export async function pollingService(url: string) {
     const totalTransactionsFinalized = totalFinalizedQueue[0].count;
 
     if (totalTransactionsFinalized === totalTransactionsToSend) {
-      workerpool.workerEmit({
-        status: "done",
-      });
       break;
     }
 
@@ -104,9 +106,6 @@ export async function pollingService(url: string) {
           .where(eq(transaction_queue.id, transaction.id));
 
         if (confirmationStatus === "finalized") {
-          console.log(
-            `Transaction [${transaction.id}/${totalTransactionsToSend}] finalized`
-          );
           logger.info(
             `Transaction [${transaction.id}/${totalTransactionsToSend}] finalized`
           );

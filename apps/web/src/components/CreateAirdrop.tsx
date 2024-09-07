@@ -1,10 +1,10 @@
+import * as airdropsender from "@repo/airdrop-sender";
 import { useState, useEffect } from "react";
 import { AlertTriangle, HelpCircle } from "lucide-react";
 import type { Token } from "@repo/airdrop-sender";
 import {
   getTokensByOwner,
   normalizeTokenAmount,
-  create,
   maxAddressesPerTransaction,
   computeUnitPrice,
   computeUnitLimit,
@@ -40,6 +40,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+
+const airdropSenderWorker = new ComlinkWorker<
+  typeof import("../lib/airdropSenderWorker.ts")
+>(new URL("../lib/airdropSenderWorker.js", import.meta.url), {
+  name: "airdropSenderWorker",
+  type: "module",
+});
 
 interface CreateAirdropProps {
   onBackToHome: () => void;
@@ -88,6 +96,13 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
   } | null>(null);
   const [amountValue, setAmountValue] = useState<bigint | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [sendProgress, setSendProgress] = useState(0);
+  const [finalizeProgress, setFinalizeProgress] = useState(0);
+  const [totalTransactions, setTotalTransactions] = useState(0);
+  const [sentTransactions, setSentTransactions] = useState(0);
+  const [finalizedTransactions, setFinalizedTransactions] = useState(0);
+  const [isAirdropInProgress, setIsAirdropInProgress] = useState(false);
+  const [isAirdropComplete, setIsAirdropComplete] = useState(false);
 
   useEffect(() => {
     async function loadTokens() {
@@ -115,9 +130,7 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
     void loadTokens();
   }, [privateKey, rpcUrl]);
 
-  const handlePrivateKeyChange = (
-    e: React.ChangeEvent<HTMLTextAreaElement>
-  ) => {
+  const handlePrivateKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPrivateKey = e.target.value.trim();
     setPrivateKey(newPrivateKey);
     if (newPrivateKey) {
@@ -256,6 +269,10 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
   };
 
   const handleSendAirdrop = async () => {
+    setShowConfirmDialog(false);
+    setIsAirdropInProgress(true);
+    setStep(5); // Move to step 5 when airdrop starts
+
     try {
       if (!amountValue) {
         throw new Error("Amount value is not set");
@@ -266,18 +283,37 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
         .split("\n")
         .map((address) => new PublicKey(address.trim()));
 
-      await create({
-        signer: keypair.publicKey,
-        addresses: recipientList,
-        amount: amountValue,
-        mintAddress: new PublicKey(selectedToken),
-        worker: true,
-      });
+      await airdropSenderWorker.create(
+        keypair.publicKey.toBase58(),
+        recipientList.map((r) => r.toBase58()),
+        amountValue,
+        selectedToken
+      );
 
-      // Additional logic for starting the airdrop can be added here
+      airdropSenderWorker.send(privateKey, rpcUrl);
+      airdropSenderWorker.poll(rpcUrl);
+
+      const monitorInterval = setInterval(async () => {
+        const currentStatus = await airdropsender.status();
+        setSendProgress((currentStatus.sent / currentStatus.total) * 100);
+        setFinalizeProgress(
+          (currentStatus.finalized / currentStatus.total) * 100
+        );
+        setTotalTransactions(currentStatus.total);
+        setSentTransactions(currentStatus.sent);
+        setFinalizedTransactions(currentStatus.finalized);
+
+        if (currentStatus.finalized === currentStatus.total) {
+          clearInterval(monitorInterval);
+          setIsAirdropInProgress(false);
+          setIsAirdropComplete(true);
+        }
+      }, 1000);
     } catch (error) {
       console.error("Failed to create airdrop:", error);
       alert("Failed to create airdrop. Please try again.");
+      setIsAirdropInProgress(false);
+      setStep(4); // Go back to step 4 if there's an error
     }
   };
 
@@ -304,7 +340,7 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
             </Tooltip>
           </TooltipProvider>
         </div>
-        <Textarea
+        <Input
           id="privateKey"
           onChange={handlePrivateKeyChange}
           placeholder="Paste your private key here"
@@ -432,7 +468,7 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
   const renderStep4 = () => (
     <>
       <h2 className="text-2xl font-semibold mb-4">Airdrop Overview</h2>
-      {airdropOverview ? (
+      {airdropOverview && (
         <Table>
           <TableBody>
             <TableRow>
@@ -479,7 +515,44 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
             </TableRow>
           </TableBody>
         </Table>
-      ) : null}
+      )}
+    </>
+  );
+
+  const renderStep5 = () => (
+    <>
+      {isAirdropInProgress && (
+        <>
+          <h2 className="text-2xl font-semibold mb-4">Airdrop Progress</h2>
+          <div className="mt-4">
+            <p>
+              Transactions sent: {Math.round(sendProgress)}% ({sentTransactions}
+              /{totalTransactions})
+            </p>
+            <Progress value={sendProgress} className="w-full" />
+          </div>
+          <div className="mt-4">
+            <p>
+              Transactions finalized: {Math.round(finalizeProgress)}% (
+              {finalizedTransactions}/{totalTransactions})
+            </p>
+            <Progress value={finalizeProgress} className="w-full" />
+          </div>
+        </>
+      )}
+      {isAirdropComplete && (
+        <div className="my-8 text-center">
+          <h3 className="text-3xl font-bold text-green-500 mb-2">
+            🎉 Airdrop Complete! 🎉
+          </h3>
+          <p className="text-xl">
+            Congratulations! Your tokens have been successfully airdropped.
+          </p>
+          <Button onClick={onBackToHome} className="mt-4">
+            Back to Home
+          </Button>
+        </div>
+      )}
     </>
   );
 
@@ -487,41 +560,44 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
     <main className="flex flex-col items-center justify-center min-h-screen">
       <div className="bg-background/95 backdrop-blur-sm rounded-lg p-8 w-full max-w-4xl">
         <div className="w-full">
-          <h1 className="text-3xl font-bold mb-6 text-primary">
-            Create New Airdrop
-          </h1>
+          {!isAirdropComplete && (
+            <h1 className="text-3xl font-bold mb-6 text-primary">
+              {isAirdropInProgress ? "Sending Airdrop" : "Create New Airdrop"}
+            </h1>
+          )}
           <form className="space-y-6" onSubmit={handleSubmit}>
             {step === 1 && renderStep1()}
             {step === 2 && renderStep2()}
             {step === 3 && renderStep3()}
             {step === 4 && renderStep4()}
-            <div className="flex justify-between items-center">
-              <div>
-                {step > 1 && (
-                  <Button
-                    onClick={() => {
-                      setStep(step - 1);
-                    }}
-                    type="button"
-                    variant="outline"
-                  >
-                    Previous
-                  </Button>
-                )}
+            {step === 5 && renderStep5()}
+            {!isAirdropInProgress && !isAirdropComplete && step < 5 && (
+              <div className="flex justify-between items-center">
+                <div>
+                  {step > 1 && (
+                    <Button
+                      onClick={() => setStep(step - 1)}
+                      type="button"
+                      variant="outline"
+                    >
+                      Previous
+                    </Button>
+                  )}
+                </div>
+                <div>
+                  {step < 4 ? (
+                    <Button type="submit">Next</Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={() => setShowConfirmDialog(true)}
+                    >
+                      Send
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div>
-                {step < 4 ? (
-                  <Button type="submit">Next</Button>
-                ) : (
-                  <Button
-                    type="button"
-                    onClick={() => setShowConfirmDialog(true)}
-                  >
-                    Send
-                  </Button>
-                )}
-              </div>
-            </div>
+            )}
           </form>
 
           <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
@@ -547,16 +623,18 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
           </Dialog>
         </div>
       </div>
-      <a
-        href="#"
-        onClick={(e) => {
-          e.preventDefault();
-          onBackToHome();
-        }}
-        className="mt-4 text-primary text-white font-semibold shadow-lg hover:underline"
-      >
-        Back to Home
-      </a>
+      {!isAirdropInProgress && !isAirdropComplete && step < 5 && (
+        <a
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            onBackToHome();
+          }}
+          className="mt-4 text-primary text-white font-semibold shadow-lg hover:underline"
+        >
+          Back to Home
+        </a>
+      )}
     </main>
   );
 }

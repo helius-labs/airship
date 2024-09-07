@@ -15,10 +15,12 @@ import {
   AirdropErrorCode,
 } from "./utils/airdropError";
 
+import { init } from "./services/init";
 import { create } from "./services/create";
 import { exist } from "./services/exist";
+import { send } from "./services/send";
+import { poll } from "./services/poll";
 import { status } from "./services/status";
-import { start } from "./services/start";
 import { logger } from "./services/logger";
 
 import { getCollectionHolders } from "./services/getCollectionHolders";
@@ -28,10 +30,13 @@ import { isFungibleToken } from "./services/isFungibleToken";
 import { isNFTCollection } from "./services/isNFTCollection";
 
 export {
+  init,
   create,
   exist,
-  start,
+  send,
+  poll,
   status,
+  logger,
   csvToPublicKeys,
   isNFTCollection,
   isFungibleToken,
@@ -50,7 +55,6 @@ export {
   AirdropError,
   AirdropErrorMessage,
   AirdropErrorCode,
-  logger,
 };
 
 export type { Token };

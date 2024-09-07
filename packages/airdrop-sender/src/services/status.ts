@@ -10,25 +10,25 @@ export async function status() {
   const totalQueue = await db
     .select({ count: count() })
     .from(transaction_queue);
-  const totalTransactionsToSend = totalQueue[0].count;
+  const total = totalQueue[0].count;
 
   // Fetch total amount of addresses sent
   const totalSentQueue = await db
     .select({ count: count() })
     .from(transaction_queue)
     .where(isNotNull(transaction_queue.signature));
-  const totalTransactionsSent = totalSentQueue[0].count;
+  const sent = totalSentQueue[0].count;
 
   // Fetch total amount of addresses to send
   const totalFinalizedQueue = await db
     .select({ count: count() })
     .from(transaction_queue)
     .where(eq(transaction_queue.commitment_status, CommitmentStatus.Finalized));
-  const totalTransactionsFinalized = totalFinalizedQueue[0].count;
+  const finalized = totalFinalizedQueue[0].count;
 
   return {
-    totalTransactionsToSend,
-    totalTransactionsSent,
-    totalTransactionsFinalized,
+    total,
+    sent,
+    finalized,
   };
 }

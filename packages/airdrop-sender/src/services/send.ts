@@ -23,17 +23,17 @@ import {
 import { logger } from "../services/logger";
 import bs58 from "bs58";
 import { SendTransactionError } from "@solana/web3.js";
-import workerpool from "workerpool";
 import { sleep } from "../utils/common";
 
-export async function sendingService(secretKey: Uint8Array, url: string) {
+interface SendParams {
+  keypair: web3.Keypair;
+  url: string;
+}
+
+export async function send(params: SendParams) {
+  const { keypair, url } = params;
+
   const db = await loadDB();
-
-  const keypair = web3.Keypair.fromSecretKey(secretKey);
-
-  workerpool.workerEmit({
-    status: "in_progress",
-  });
 
   // Fetch total amount of addresses to send
   const totalQueue = await db
@@ -52,9 +52,6 @@ export async function sendingService(secretKey: Uint8Array, url: string) {
     const totalTransactionsFinalized = totalFinalizedQueue[0].count;
 
     if (totalTransactionsFinalized === totalTransactionsToSend) {
-      workerpool.workerEmit({
-        status: "done",
-      });
       break;
     }
 
@@ -77,9 +74,6 @@ export async function sendingService(secretKey: Uint8Array, url: string) {
 
     // No transaction to send. Wait for a second and try again
     if (transactionQueue.length === 0) {
-      console.log(
-        "All transactions sent. Checking for possible retries in 5 seconds..."
-      );
       logger.info(
         "All transactions sent. Checking for possible retries in 5 seconds..."
       );
@@ -107,14 +101,11 @@ export async function sendingService(secretKey: Uint8Array, url: string) {
     // Create a token pool for the mint address if it doesn't exist
     try {
       await createTokenPool(connection, keypair, mintAddress);
-      console.log("Token pool created.");
       logger.info("Token pool created.");
     } catch (error: any) {
       if (error.message.includes("already in use")) {
-        console.log("Token pool already exists. Skipping...");
         logger.info("Token pool already exists. Skipping...");
       } else {
-        console.error("Failed to create token pool:", error);
         logger.error("Failed to create token pool:", error);
       }
     }
@@ -162,10 +153,6 @@ export async function sendingService(secretKey: Uint8Array, url: string) {
             serialised_transaction: bs58.encode(signedTx.serialize()),
           })
           .where(eq(transaction_queue.id, transaction.id));
-
-        console.log(
-          `Transaction [${transaction.id}/${totalTransactionsToSend}] sent: ${signature}`
-        );
         logger.info(
           `Transaction [${transaction.id}/${totalTransactionsToSend}] sent: ${signature}`
         );
@@ -184,10 +171,8 @@ export async function sendingService(secretKey: Uint8Array, url: string) {
               AirdropErrorCode.airdropInsufficientFunds
             );
           }
-          console.error(error.message);
           logger.error(error.message);
         } else {
-          console.error(error);
           logger.error(error);
         }
       }

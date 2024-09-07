@@ -12,9 +12,7 @@ import {
   logger,
   getTokensByOwner,
   exist,
-  create,
   AirdropError,
-  start,
   sleep,
   baseFee,
   compressionFee,
@@ -23,15 +21,21 @@ import {
   computeUnitLimit,
   normalizeTokenAmount,
   Token,
+  init,
 } from "@repo/airdrop-sender";
 import ora, { Ora } from "ora";
 import { csv } from "./imports/csv";
 import { chapter2 } from "./imports/chapter-2";
 import { nft } from "./imports/nft";
 import { splToken } from "./imports/spl-token";
+import Tinypool from "tinypool";
 
 process.on("SIGINT", exitProgram);
 process.on("SIGTERM", exitProgram);
+
+const pool = new Tinypool({
+  filename: new URL("./worker.js", import.meta.url).href,
+});
 
 async function main() {
   const packageInfo = await getPackageInfo();
@@ -42,6 +46,10 @@ async function main() {
     validateOptions(options);
 
     const keypair = loadKeypair(options.keypair);
+
+    // Initialize the database
+    await init();
+
     const action = await selectAction();
 
     switch (action) {
@@ -389,13 +397,15 @@ async function createAirdropQueue(
 ) {
   const createSpinner = ora("Creating transaction queue").start();
   try {
-    await create({
-      signer: keypair.publicKey,
-      addresses: addresses,
-      amount: amount,
-      mintAddress: new web3.PublicKey(mintAddress),
-      worker: true,
-    });
+    await pool.run(
+      {
+        signer: keypair.publicKey.toBase58(),
+        addresses: addresses.map((address) => address.toBase58()),
+        amount: amount,
+        mintAddress: mintAddress,
+      },
+      { name: "create" }
+    );
     createSpinner.succeed("Transaction queue created");
   } catch (error) {
     createSpinner.fail("Failed to create transaction queue");
@@ -413,7 +423,8 @@ async function startAndMonitorAirdrop(keypair: web3.Keypair, url: string) {
   const startSpinner = ora("Starting airdrop");
   try {
     startSpinner.start();
-    await start({ keypair, url, worker: true });
+    pool.run({ secretKey: keypair.secretKey, url: url }, { name: "send" });
+    pool.run({ url }, { name: "poll" });
     startSpinner.succeed("Airdrop started");
   } catch (error) {
     handleAirdropError(startSpinner, error);
@@ -437,26 +448,19 @@ function createProgressBars() {
 
 async function monitorAirdropProgress(multibar: cliProgress.MultiBar) {
   const airdropStatus = await status();
-  const b1 = multibar.create(
-    airdropStatus.totalTransactionsToSend,
-    airdropStatus.totalTransactionsSent,
-    { type: "Transactions sent     " }
-  );
-  const b2 = multibar.create(
-    airdropStatus.totalTransactionsToSend,
-    airdropStatus.totalTransactionsFinalized,
-    { type: "Transactions finalized" }
-  );
+  const b1 = multibar.create(airdropStatus.total, airdropStatus.sent, {
+    type: "Transactions sent     ",
+  });
+  const b2 = multibar.create(airdropStatus.total, airdropStatus.finalized, {
+    type: "Transactions finalized",
+  });
 
   while (true) {
     const currentStatus = await status();
-    b1.update(currentStatus.totalTransactionsSent);
-    b2.update(currentStatus.totalTransactionsFinalized);
+    b1.update(currentStatus.sent);
+    b2.update(currentStatus.finalized);
 
-    if (
-      currentStatus.totalTransactionsFinalized ===
-      currentStatus.totalTransactionsToSend
-    ) {
+    if (currentStatus.finalized === currentStatus.total) {
       multibar.stop();
       console.log(chalk.green("🥳 Airdrop completed!"));
       logger.info("🥳 Airdrop completed!");

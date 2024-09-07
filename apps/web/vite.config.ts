@@ -9,6 +9,7 @@ export default defineConfig({
   plugins: [nodePolyfills(), comlink(), react()],
   worker: {
     plugins: () => [comlink()],
+    format: "es",
   },
   server: {
     headers: {
