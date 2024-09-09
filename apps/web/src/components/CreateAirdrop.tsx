@@ -1,12 +1,5 @@
 import * as airdropsender from "@repo/airdrop-sender";
-import { useState, useEffect, useCallback } from "react";
-import {
-  AlertCircle,
-  AlertTriangle,
-  HelpCircle,
-  Loader2,
-  Upload,
-} from "lucide-react";
+import { useState, useEffect } from "react";
 import type { Token } from "@repo/airdrop-sender";
 import {
   getTokensByOwner,
@@ -23,18 +16,6 @@ import {
 import { Keypair, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import CodeMirror from "@uiw/react-codemirror";
-import { Label } from "../components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
-import { Table, TableBody, TableCell, TableRow } from "../components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -43,14 +24,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
-import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
-import { useDropzone } from "react-dropzone";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../components/ui/popover";
+import Step1 from "./airdrop-steps/Step1";
+import Step2 from "./airdrop-steps/Step2";
+import Step3 from "./airdrop-steps/Step3";
+import Step4 from "./airdrop-steps/Step4";
+import Step5 from "./airdrop-steps/Step5";
 
 const airdropSenderWorker = new ComlinkWorker<
   typeof import("../lib/airdropSenderWorker.ts")
@@ -334,25 +312,6 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
     }
   };
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      const file = acceptedFiles[0];
-      setCsvFile(file);
-    }
-  }, []);
-
-  const recipientsOnChange = useCallback((value, viewUpdate) => {
-    setRecipients(value);
-  }, []);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      "text/csv": [".csv"],
-    },
-    multiple: false,
-  });
-
   const handleImportAddresses = async () => {
     setIsImporting(true);
     setImportError(null);
@@ -410,6 +369,12 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
           break;
       }
 
+      if (addresses.length === 0) {
+        throw new Error(
+          "No addresses found are you using devnet? Please check your input and try again. "
+        );
+      }
+
       setRecipients(addresses.join("\n"));
     } catch (error) {
       console.error("Failed to import addresses:", error);
@@ -423,386 +388,6 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
     }
   };
 
-  const renderStep1 = () => (
-    <>
-      <div className="space-y-2">
-        <div className="flex items-center space-x-2">
-          <Label htmlFor="privateKey">Private key</Label>
-          <Popover>
-            <PopoverTrigger>
-              <HelpCircle className="h-4 w-4" />
-            </PopoverTrigger>
-            <PopoverContent>
-              <p>To export your private key:</p>
-              <ol className="list-decimal list-inside">
-                <li>Open your Solana wallet</li>
-                <li>Go to Settings</li>
-                <li>Find &quot;Export Private Key&quot; option</li>
-                <li>Follow the wallet&apos;s instructions</li>
-              </ol>
-              <p>Never share your private key with others!</p>
-            </PopoverContent>
-          </Popover>
-        </div>
-        <Input
-          id="privateKey"
-          onChange={handlePrivateKeyChange}
-          placeholder="Paste your private key here"
-          required
-          value={privateKey}
-        />
-        {privateKeyError ? (
-          <p className="text-red-500 text-sm">{privateKeyError}</p>
-        ) : null}
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Warning</AlertTitle>
-          <AlertDescription>
-            This private key will be used to cover transaction costs and sign
-            all airdrop transactions. It will be stored in memory only for this
-            session. Please ensure you understand the associated risks.
-          </AlertDescription>
-        </Alert>
-      </div>
-      <div>
-        <Label htmlFor="rpcUrl">RPC URL</Label>
-        <Input
-          id="rpcUrl"
-          onChange={handleRpcUrlChange}
-          placeholder="Enter RPC URL"
-          required
-          value={rpcUrl}
-        />
-        {rpcUrlError ? (
-          <p className="text-red-500 text-sm">{rpcUrlError}</p>
-        ) : null}
-      </div>
-    </>
-  );
-
-  const renderStep2 = () => (
-    <>
-      <div>
-        <Label htmlFor="tokenSelect">Which token do you want to airdrop?</Label>
-        {noTokensMessage ? (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>No Tokens Found</AlertTitle>
-            <AlertDescription>{noTokensMessage}</AlertDescription>
-          </Alert>
-        ) : (
-          <Select
-            value={selectedToken}
-            onValueChange={(value) => {
-              setSelectedToken(value);
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a token" />
-            </SelectTrigger>
-            <SelectContent>
-              {tokens.map((token) => (
-                <SelectItem
-                  key={token.mintAddress.toString()}
-                  value={token.mintAddress.toString()}
-                >
-                  {token.name && token.symbol
-                    ? `${token.name}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })} ${token.symbol}`
-                    : `${token.mintAddress.toString()}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </div>
-      <div className="space-y-4">
-        <Label>Who would you like the airdrop to be sent to?</Label>
-        <RadioGroup
-          value={recipientImportOption}
-          onValueChange={setRecipientImportOption}
-        >
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="saga2" id="saga2" />
-              <Label htmlFor="saga2" className="font-normal cursor-pointer">
-                Solana Mobile - Chapter 2 Preorder Token holders
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="nft" id="nft" />
-              <Label htmlFor="nft" className="font-normal cursor-pointer">
-                NFT/cNFT collection holders
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="spl" id="spl" />
-              <Label htmlFor="spl" className="font-normal cursor-pointer">
-                SPL token holders
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="csv" id="csv" />
-              <Label htmlFor="csv" className="font-normal cursor-pointer">
-                Import from CSV
-              </Label>
-            </div>
-          </div>
-        </RadioGroup>
-      </div>
-      {recipientImportOption === "nft" && (
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="collectionAddress">Collection Address</Label>
-            <Popover>
-              <PopoverTrigger>
-                <HelpCircle className="h-4 w-4" />
-              </PopoverTrigger>
-              <PopoverContent>
-                <p>To find the collection address:</p>
-                <ol className="list-decimal list-inside">
-                  <li>
-                    Go to a Solana explorer (e.g., Solana Explorer or Solscan)
-                  </li>
-                  <li>Search for an NFT from the collection</li>
-                  <li>
-                    Look for &quot;Collection&quot; or &quot;Collection
-                    Address&quot;
-                  </li>
-                  <li>Copy the address associated with the collection</li>
-                </ol>
-              </PopoverContent>
-            </Popover>
-          </div>
-          <Input
-            id="collectionAddress"
-            placeholder="Enter the NFT collection address"
-            value={collectionAddress}
-            onChange={(e) => setCollectionAddress(e.target.value)}
-          />
-        </div>
-      )}
-      {recipientImportOption === "spl" && (
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="mintAddress">SPL Token Mint Address</Label>
-            <Popover>
-              <PopoverTrigger>
-                <HelpCircle className="h-4 w-4" />
-              </PopoverTrigger>
-              <PopoverContent>
-                <p>To find the SPL Token Mint Address:</p>
-                <ol className="list-decimal list-inside">
-                  <li>
-                    Go to a Solana explorer (e.g., Solana Explorer or Solscan)
-                  </li>
-                  <li>Search for the token by its name or symbol</li>
-                  <li>
-                    Look for &quot;Mint Address&quot; or &quot;Token
-                    Address&quot;
-                  </li>
-                  <li>Copy the address associated with the token</li>
-                </ol>
-                <p>
-                  Note: This is different from your personal token account
-                  address.
-                </p>
-              </PopoverContent>
-            </Popover>
-          </div>
-          <Input
-            id="mintAddress"
-            placeholder="Enter the SPL Token Mint Address"
-            value={mintAddress}
-            onChange={(e) => setMintAddress(e.target.value)}
-          />
-        </div>
-      )}
-      {recipientImportOption === "csv" && (
-        <div className="space-y-4">
-          <Label htmlFor="recipients">CSV file</Label>
-          <div
-            {...getRootProps()}
-            className={`border-2 border-dashed rounded-md p-8 text-center cursor-pointer ${
-              isDragActive ? "border-primary" : "border-gray-300"
-            }`}
-          >
-            <input {...getInputProps()} />
-            <Upload className="mx-auto h-12 w-12 text-gray-400" />
-            {csvFile ? (
-              <p className="mt-2">{csvFile.name}</p>
-            ) : (
-              <p className="mt-2">
-                {isDragActive
-                  ? "Drop the CSV file here"
-                  : "Drag and drop a CSV file here, or click to select a file"}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-      <Button onClick={handleImportAddresses} disabled={isImporting}>
-        {isImporting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Importing...
-          </>
-        ) : (
-          "Import"
-        )}
-      </Button>
-      {importError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{importError}</AlertDescription>
-        </Alert>
-      )}
-      <div>
-        <Label htmlFor="recipients">Addresses</Label>
-        <CodeMirror
-          id="recipients"
-          value={recipients}
-          onChange={recipientsOnChange}
-          placeholder="One address per line"
-          theme="dark"
-          height="350px"
-        />
-      </div>
-    </>
-  );
-
-  const renderStep3 = () => (
-    <>
-      <div>
-        <Label htmlFor="amountType">
-          What amount would you like to airdrop?
-        </Label>
-        <Select
-          value={amountType}
-          onValueChange={(value: "fixed" | "percent") => {
-            setAmountType(value);
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select amount type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="fixed">
-              Fixed token amount per address
-            </SelectItem>
-            <SelectItem value="percent">% of total available tokens</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label htmlFor="amount">Amount</Label>
-        <Input
-          id="amount"
-          onChange={(e) => {
-            setAmount(e.target.value);
-          }}
-          placeholder={
-            amountType === "fixed" ? "Enter token amount" : "Enter percentage"
-          }
-          required
-          type="number"
-          value={amount}
-        />
-      </div>
-    </>
-  );
-
-  const renderStep4 = () => (
-    <>
-      <h2 className="text-2xl font-semibold mb-4">Airdrop Overview</h2>
-      {airdropOverview && (
-        <Table>
-          <TableBody>
-            <TableRow>
-              <TableCell className="font-medium w-1/3">RPC URL</TableCell>
-              <TableCell>{airdropOverview.rpcUrl}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">Keypair address</TableCell>
-              <TableCell>{airdropOverview.keypairAddress}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">Token</TableCell>
-              <TableCell>{airdropOverview.token}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">Total addresses</TableCell>
-              <TableCell>{airdropOverview.totalAddresses}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">Amount per address</TableCell>
-              <TableCell>{airdropOverview.amountPerAddress}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">Total amount</TableCell>
-              <TableCell>{airdropOverview.totalAmount}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">
-                Number of transactions
-              </TableCell>
-              <TableCell>{airdropOverview.numberOfTransactions}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">
-                Approximate transaction fee
-              </TableCell>
-              <TableCell>{airdropOverview.approximateTransactionFee}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">
-                Approximate compression fee
-              </TableCell>
-              <TableCell>{airdropOverview.approximateCompressionFee}</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      )}
-    </>
-  );
-
-  const renderStep5 = () => (
-    <>
-      {isAirdropInProgress && (
-        <>
-          <h2 className="text-2xl font-semibold mb-4">Airdrop Progress</h2>
-          <div className="mt-4">
-            <p>
-              Transactions sent: {Math.round(sendProgress)}% ({sentTransactions}
-              /{totalTransactions})
-            </p>
-            <Progress value={sendProgress} className="w-full" />
-          </div>
-          <div className="mt-4">
-            <p>
-              Transactions finalized: {Math.round(finalizeProgress)}% (
-              {finalizedTransactions}/{totalTransactions})
-            </p>
-            <Progress value={finalizeProgress} className="w-full" />
-          </div>
-        </>
-      )}
-      {isAirdropComplete && (
-        <div className="my-8 text-center">
-          <h3 className="text-3xl font-bold text-green-500 mb-2">
-            🎉 Airdrop Complete! 🎉
-          </h3>
-          <p className="text-xl">
-            Congratulations! Your tokens have been successfully airdropped.
-          </p>
-          <Button onClick={onBackToHome} className="mt-4">
-            Back to Home
-          </Button>
-        </div>
-      )}
-    </>
-  );
-
   return (
     <main className="flex flex-col items-center justify-center min-h-screen">
       <div className="bg-background/95 backdrop-blur-sm rounded-lg p-8 w-full max-w-4xl">
@@ -813,15 +398,73 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
             </h1>
           )}
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {step === 1 && renderStep1()}
-            {step === 2 && renderStep2()}
-            {step === 3 && renderStep3()}
-            {step === 4 && renderStep4()}
-            {step === 5 && renderStep5()}
+            {step === 1 && (
+              <Step1
+                privateKey={privateKey}
+                rpcUrl={rpcUrl}
+                privateKeyError={privateKeyError}
+                rpcUrlError={rpcUrlError}
+                handlePrivateKeyChange={handlePrivateKeyChange}
+                handleRpcUrlChange={handleRpcUrlChange}
+              />
+            )}
+            {step === 2 && (
+              <Step2
+                tokens={tokens}
+                selectedToken={selectedToken}
+                setSelectedToken={setSelectedToken}
+                noTokensMessage={noTokensMessage}
+                recipientImportOption={recipientImportOption}
+                setRecipientImportOption={setRecipientImportOption}
+                collectionAddress={collectionAddress}
+                setCollectionAddress={setCollectionAddress}
+                mintAddress={mintAddress}
+                setMintAddress={setMintAddress}
+                csvFile={csvFile}
+                setCsvFile={setCsvFile}
+                recipients={recipients}
+                setRecipients={setRecipients}
+                handleImportAddresses={handleImportAddresses}
+                isImporting={isImporting}
+                importError={importError}
+              />
+            )}
+            {step === 3 && (
+              <Step3
+                amountType={amountType}
+                setAmountType={setAmountType}
+                amount={amount}
+                setAmount={setAmount}
+              />
+            )}
+            {step === 4 && <Step4 airdropOverview={airdropOverview} />}
+            {step === 5 && (
+              <Step5
+                isAirdropInProgress={isAirdropInProgress}
+                isAirdropComplete={isAirdropComplete}
+                sendProgress={sendProgress}
+                finalizeProgress={finalizeProgress}
+                sentTransactions={sentTransactions}
+                finalizedTransactions={finalizedTransactions}
+                totalTransactions={totalTransactions}
+                onBackToHome={onBackToHome}
+              />
+            )}
             {!isAirdropInProgress && !isAirdropComplete && step < 5 && (
               <div className="flex justify-between items-center">
-                <div>
-                  {step > 1 && (
+                {step === 1 && (
+                  <div>
+                    <Button
+                      onClick={onBackToHome}
+                      type="button"
+                      variant="outline"
+                    >
+                      Previous
+                    </Button>
+                  </div>
+                )}
+                {step > 1 && (
+                  <div>
                     <Button
                       onClick={() => setStep(step - 1)}
                       type="button"
@@ -829,8 +472,8 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
                     >
                       Previous
                     </Button>
-                  )}
-                </div>
+                  </div>
+                )}
                 <div>
                   {step < 4 ? (
                     <Button type="submit">Next</Button>
@@ -846,28 +489,6 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
               </div>
             )}
           </form>
-
-          <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Confirm Airdrop</DialogTitle>
-                <DialogDescription>
-                  Are you sure you want to send the airdrop?
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowConfirmDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleSendAirdrop}>
-                  Confirm and Send Airdrop
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
       {!isAirdropInProgress && !isAirdropComplete && step < 5 && (
@@ -882,6 +503,25 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
           Back to Home
         </a>
       )}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Airdrop</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to send this airdrop?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSendAirdrop}>Send Airdrop</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
