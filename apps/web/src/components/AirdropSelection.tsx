@@ -43,7 +43,9 @@ export function AirdropSelection({
           <h1 className="text-4xl font-bold text-primary">Helius Airship</h1>
           <div className="space-y-2">
             {existingAirdrop === null ? (
-              <Loader2 className="h-8 w-8 animate-spin" />
+              <div className="flex justify-center items-center h-24">
+                <Loader2 className="h-12 w-12 animate-spin" />
+              </div>
             ) : (
               <div className="flex flex-col gap-4">
                 <Button onClick={handleCreateAirdrop}>
