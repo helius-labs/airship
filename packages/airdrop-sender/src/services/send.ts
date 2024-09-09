@@ -217,16 +217,22 @@ async function createInstructions(
 
   instructions.push(unitPriceIX);
 
-  // Compress tokens for each airdrop address and add it to the transaction
-  const compressIx = await CompressedTokenProgram.compress({
-    payer: keypair.publicKey, // The payer of the transaction.
-    owner: keypair.publicKey, // owner of the *uncompressed* token account.
-    source: sourceTokenAccount.address, // source (associated) token account address.
-    toAddress: addresses, // address to send the compressed tokens to.
-    amount: addresses.map(() => Number(amount)), // amount of tokens to compress.
-    mint: mintAddress, // Mint address of the token to compress.
-  });
-  instructions.push(compressIx);
+  // Create batches of 5 addresses per instruction to not go over the maximum cross-program invocation instruction size
+  const batches = Math.ceil(addresses.length / 5);
+  for (let i = 0; i < batches; i++) {
+    const batch = addresses.slice(i * 5, (i + 1) * 5);
+
+    // Compress tokens for each airdrop address and add it to the transaction
+    const compressIx = await CompressedTokenProgram.compress({
+      payer: keypair.publicKey, // The payer of the transaction.
+      owner: keypair.publicKey, // owner of the *uncompressed* token account.
+      source: sourceTokenAccount.address, // source (associated) token account address.
+      toAddress: batch, // address to send the compressed tokens to.
+      amount: batch.map(() => Number(amount)), // amount of tokens to compress.
+      mint: mintAddress, // Mint address of the token to compress.
+    });
+    instructions.push(compressIx);
+  }
 
   return instructions;
 }

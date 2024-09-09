@@ -1,6 +1,6 @@
 import * as web3 from "@solana/web3.js";
 
-export const maxAddressesPerTransaction = 5;
+export const maxAddressesPerTransaction = 15;
 
 export const baseFee = 5000;
 export const compressionFee = 300;
@@ -23,5 +23,5 @@ export enum CommitmentStatus {
 }
 
 // Constants
-export const DB_FILE = "airdrop.db";
+export const DB_FILE = "airship.db";
 export const TABLE_NAME = "transaction_queue";

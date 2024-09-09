@@ -53,7 +53,7 @@ export async function poll(params: PollParams) {
         )
       )
       .orderBy(
-        desc(transaction_queue.last_attempted_at),
+        asc(transaction_queue.last_attempted_at),
         asc(transaction_queue.commitment_status)
       );
 
@@ -107,7 +107,7 @@ export async function poll(params: PollParams) {
 
         if (confirmationStatus === "finalized") {
           logger.info(
-            `Transaction [${transaction.id}/${totalTransactionsToSend}] finalized`
+            `Transaction [${transaction.id}/${totalTransactionsToSend}] finalized: ${transaction.signature}`
           );
         }
       } catch (error) {

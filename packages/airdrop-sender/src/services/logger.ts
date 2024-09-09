@@ -14,7 +14,7 @@ const logger = createLogger({
 });
 
 if (typeof process !== "undefined" && isNode(process)) {
-  logger.add(new transports.File({ filename: "airdrop.log" }));
+  logger.add(new transports.File({ filename: "airship.log" }));
 }
 
 export { logger };
