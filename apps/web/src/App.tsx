@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { CreateAirdrop } from "./components/CreateAirdrop";
+import { ResumeAirdrop } from "./components/ResumeAirdrop";
 import { AirdropSelection } from "./components/AirdropSelection";
 import { init, exist } from "@repo/airdrop-sender";
 
@@ -45,7 +46,7 @@ function App() {
         {selectedAction === "create" ? (
           <CreateAirdrop onBackToHome={handleBackToHome} />
         ) : selectedAction === "resume" ? (
-          <div>Resume Airdrop (Not implemented yet)</div>
+          <ResumeAirdrop onBackToHome={handleBackToHome} />
         ) : (
           <AirdropSelection
             existingAirdrop={existingAirdrop}

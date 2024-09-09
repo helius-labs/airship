@@ -29,6 +29,7 @@ import Step2 from "./airdrop-steps/Step2";
 import Step3 from "./airdrop-steps/Step3";
 import Step4 from "./airdrop-steps/Step4";
 import Step5 from "./airdrop-steps/Step5";
+import { isValidPrivateKey, isValidRpcUrl } from "@/lib/utils.ts";
 
 const airdropSenderWorker = new ComlinkWorker<
   typeof import("../lib/airdropSenderWorker.ts")
@@ -39,24 +40,6 @@ const airdropSenderWorker = new ComlinkWorker<
 
 interface CreateAirdropProps {
   onBackToHome: () => void;
-}
-
-function isValidPrivateKey(key: string): boolean {
-  try {
-    Keypair.fromSecretKey(bs58.decode(key));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function isValidRpcUrl(url: string): boolean {
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
