@@ -49,6 +49,7 @@ export default function Step1({
           placeholder="Paste your private key here"
           required
           value={privateKey}
+          type="password"
         />
         {privateKeyError ? (
           <p className="text-red-500 text-sm">{privateKeyError}</p>
