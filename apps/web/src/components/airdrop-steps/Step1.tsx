@@ -23,23 +23,32 @@ export default function Step1({
   handleRpcUrlChange,
 }: Step1Props) {
   return (
-    <>
-      <div className="space-y-2">
+    <div className="space-y-6">
+      <div className="space-y-3">
         <div className="flex items-center space-x-2">
           <Label htmlFor="privateKey">Private key</Label>
           <Popover>
             <PopoverTrigger>
               <HelpCircle className="h-4 w-4" />
             </PopoverTrigger>
-            <PopoverContent>
-              <p>To export your private key:</p>
+            <PopoverContent className="space-y-2">
+              <strong>To export your private key:</strong>
               <ol className="list-decimal list-inside">
-                <li>Open your Solana wallet</li>
-                <li>Go to Settings</li>
-                <li>Find &quot;Export Private Key&quot; option</li>
-                <li>Follow the wallet&apos;s instructions</li>
+                <li>Open your Solana wallet.</li>
+                <li>Create a new wallet.</li>
+                <li>Transfer SOL and tokens to the wallet.</li>
+                <li>
+                  Go to <strong>Settings</strong>.
+                </li>
+                <li>
+                  Select <strong>Export Private Key</strong>.
+                </li>
+                <li>Follow the instructions provided.</li>
               </ol>
-              <p>Never share your private key with others!</p>
+              <p>
+                ⚠️ <strong>Important:</strong> Never share your private key with
+                anyone!
+              </p>
             </PopoverContent>
           </Popover>
         </div>
@@ -51,20 +60,19 @@ export default function Step1({
           value={privateKey}
           type="password"
         />
-        {privateKeyError ? (
-          <p className="text-red-500 text-sm">{privateKeyError}</p>
-        ) : null}
-        <Alert variant="destructive">
+        {privateKeyError && (
+          <p className="text-red-500 text-sm mt-1">{privateKeyError}</p>
+        )}
+        <Alert variant="destructive" className="mt-2">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Warning</AlertTitle>
           <AlertDescription>
-            This private key will be used to cover transaction costs and sign
-            all airdrop transactions. It will be stored in memory only for this
-            session. Please ensure you understand the associated risks.
+            The private key is stored only in your browser's memory and will not
+            persist after this session ends.
           </AlertDescription>
         </Alert>
       </div>
-      <div>
+      <div className="space-y-3">
         <Label htmlFor="rpcUrl">RPC URL</Label>
         <Input
           id="rpcUrl"
@@ -73,10 +81,10 @@ export default function Step1({
           required
           value={rpcUrl}
         />
-        {rpcUrlError ? (
-          <p className="text-red-500 text-sm">{rpcUrlError}</p>
-        ) : null}
+        {rpcUrlError && (
+          <p className="text-red-500 text-sm mt-1">{rpcUrlError}</p>
+        )}
       </div>
-    </>
+    </div>
   );
 }

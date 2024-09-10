@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface AirdropSelectionProps {
   existingAirdrop: boolean | null;
@@ -38,10 +39,14 @@ export function AirdropSelection({
 
   return (
     <main className="flex flex-col items-center justify-center h-screen">
-      <div className="bg-background/95 backdrop-blur-sm rounded-lg p-8 w-full max-w-md">
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-primary">Helius Airship</h1>
-          <div className="space-y-2">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-4xl font-bold text-primary text-center">
+            Helius AirShip
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center space-y-4">
             {existingAirdrop === null ? (
               <div className="flex justify-center items-center h-24">
                 <Loader2 className="h-12 w-12 animate-spin" />
@@ -59,8 +64,8 @@ export function AirdropSelection({
               </div>
             )}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent>

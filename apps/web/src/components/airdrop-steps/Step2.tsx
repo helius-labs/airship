@@ -83,8 +83,8 @@ export default function Step2({
   });
 
   return (
-    <>
-      <div>
+    <div className="space-y-8">
+      <div className="space-y-3">
         <Label htmlFor="tokenSelect">Which token do you want to airdrop?</Label>
         {noTokensMessage ? (
           <Alert variant="destructive">
@@ -117,7 +117,7 @@ export default function Step2({
           </Select>
         )}
       </div>
-      <div className="space-y-4">
+      <div className="space-y-3">
         <Label>Who would you like the airdrop to be sent to?</Label>
         <RadioGroup
           value={recipientImportOption}
@@ -152,7 +152,7 @@ export default function Step2({
         </RadioGroup>
       </div>
       {recipientImportOption === "nft" && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center space-x-2">
             <Label htmlFor="collectionAddress">Collection Address</Label>
             <Popover>
@@ -184,7 +184,7 @@ export default function Step2({
         </div>
       )}
       {recipientImportOption === "spl" && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center space-x-2">
             <Label htmlFor="mintAddress">SPL Token Mint Address</Label>
             <Popover>
@@ -220,7 +220,7 @@ export default function Step2({
         </div>
       )}
       {recipientImportOption === "csv" && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <Label htmlFor="recipients">CSV file</Label>
           <div
             {...getRootProps()}
@@ -242,24 +242,26 @@ export default function Step2({
           </div>
         </div>
       )}
-      <Button onClick={handleImportAddresses} disabled={isImporting}>
-        {isImporting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Importing...
-          </>
-        ) : (
-          "Import"
+      <div className="space-y-3">
+        <Button onClick={handleImportAddresses} disabled={isImporting}>
+          {isImporting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Importing...
+            </>
+          ) : (
+            "Import"
+          )}
+        </Button>
+        {importError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{importError}</AlertDescription>
+          </Alert>
         )}
-      </Button>
-      {importError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{importError}</AlertDescription>
-        </Alert>
-      )}
-      <div>
+      </div>
+      <div className="space-y-3">
         <Label htmlFor="recipients">Addresses</Label>
         <CodeMirror
           id="recipients"
@@ -270,6 +272,6 @@ export default function Step2({
           height="350px"
         />
       </div>
-    </>
+    </div>
   );
 }

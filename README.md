@@ -1,14 +1,14 @@
-# Helius Airship
+# Helius AirShip
 
 ## Overview
 
-**Helius Airship** is an open-source tool that makes token airdrops simple, affordable, and accessible. Whether you're distributing to Saga Chapter 2 holders, NFT/cNFT holders, SPL token holders, or using a CSV file, Helius Airship streamlines the process and cuts costs.
+**Helius AirShip** is an open-source tool that makes token airdrops simple, affordable, and accessible. Whether you're distributing to Saga Chapter 2 holders, NFT/cNFT holders, SPL token holders, or using a CSV file, Helius AirShip streamlines the process and cuts costs.
 
 ## Key Features
 
 ### **Simplified Airdrops**
 
-Designed for projects of all sizes, Helius Airship's interface allows anyone—technical or not—to execute token airdrops with ease.
+Designed for projects of all sizes, Helius AirShip's interface allows anyone—technical or not—to execute token airdrops with ease.
 
 ### **Cost-Effective with ZK Compression**
 

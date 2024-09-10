@@ -126,9 +126,13 @@ export function ResumeAirdrop({ onBackToHome }: ResumeAirdropProps) {
                 handlePrivateKeyChange={handlePrivateKeyChange}
                 handleRpcUrlChange={handleRpcUrlChange}
               />
-              <div className="mt-6 flex justify-end">
+              <div className="mt-6 flex justify-between">
+                <Button onClick={onBackToHome} type="button" variant="outline">
+                  Previous
+                </Button>
                 <Button onClick={handleResumeAirdrop}>Resume Airdrop</Button>
               </div>
+              <div></div>
             </>
           )}
           {step === 2 && (

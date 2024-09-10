@@ -22,8 +22,8 @@ export default function Step3({
   setAmount,
 }: Step3Props) {
   return (
-    <>
-      <div>
+    <div className="space-y-6">
+      <div className="space-y-3">
         <Label htmlFor="amountType">
           What amount would you like to airdrop?
         </Label>
@@ -44,7 +44,7 @@ export default function Step3({
           </SelectContent>
         </Select>
       </div>
-      <div>
+      <div className="space-y-3">
         <Label htmlFor="amount">Amount</Label>
         <Input
           id="amount"
@@ -59,6 +59,6 @@ export default function Step3({
           value={amount}
         />
       </div>
-    </>
+    </div>
   );
 }

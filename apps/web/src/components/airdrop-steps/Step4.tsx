@@ -19,7 +19,6 @@ interface Step4Props {
 export default function Step4({ airdropOverview }: Step4Props) {
   return (
     <>
-      <h2 className="text-2xl font-semibold mb-4">Airdrop Overview</h2>
       {airdropOverview && (
         <Table>
           <TableBody>
