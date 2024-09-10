@@ -17,6 +17,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { normalizeTokenAmount, Token } from "@repo/airdrop-sender";
 import { useDropzone } from "react-dropzone";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Smartphone, Images, Coins, FileSpreadsheet } from "lucide-react";
 
 interface Step2Props {
   tokens: Token[];
@@ -118,37 +119,66 @@ export default function Step2({
         )}
       </div>
       <div className="space-y-3">
-        <Label>Who would you like the airdrop to be sent to?</Label>
+        <Label>How would you like to add addresses?</Label>
         <RadioGroup
           value={recipientImportOption}
           onValueChange={setRecipientImportOption}
+          className="grid grid-cols-1 md:grid-cols-2 gap-4"
         >
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="saga2" id="saga2" />
-              <Label htmlFor="saga2" className="font-normal cursor-pointer">
-                Solana Mobile - Chapter 2 Preorder Token holders
+          {[
+            {
+              value: "saga2",
+              icon: Smartphone,
+              title: "Import Chapter 2 Preorder Token holders",
+              description:
+                "Import Solana Mobile Chapter 2 Preorder Token holders using the DAS API. This can take a few minutes.",
+            },
+            {
+              value: "nft",
+              icon: Images,
+              title: "Import NFT/cNFT Collection holders",
+              description:
+                "Import NFT/cNFT Collection holders using the DAS API. This can take a few minutes.",
+            },
+            {
+              value: "spl",
+              icon: Coins,
+              title: "Import SPL Token holders",
+              description:
+                "Import SPL Token holders using the DAS API. This can take a few minutes. ",
+            },
+            {
+              value: "csv",
+              icon: FileSpreadsheet,
+              title: "Upload a CSV file",
+              description:
+                "Import addresses from a CSV file. 1 address per line.",
+            },
+          ].map((option) => (
+            <div key={option.value} className="relative">
+              <RadioGroupItem
+                value={option.value}
+                id={option.value}
+                className="peer sr-only"
+              />
+              <Label
+                htmlFor={option.value}
+                className="flex items-start rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
+              >
+                <div className="flex h-full">
+                  <option.icon className="h-6 w-6 mr-4 mt-1 flex-shrink-0" />
+                  <div className="flex flex-col justify-start h-full">
+                    <p className="text-sm font-medium leading-none">
+                      {option.title}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {option.description}
+                    </p>
+                  </div>
+                </div>
               </Label>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="nft" id="nft" />
-              <Label htmlFor="nft" className="font-normal cursor-pointer">
-                NFT/cNFT collection holders
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="spl" id="spl" />
-              <Label htmlFor="spl" className="font-normal cursor-pointer">
-                SPL token holders
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="csv" id="csv" />
-              <Label htmlFor="csv" className="font-normal cursor-pointer">
-                Import from CSV
-              </Label>
-            </div>
-          </div>
+          ))}
         </RadioGroup>
       </div>
       {recipientImportOption === "nft" && (
