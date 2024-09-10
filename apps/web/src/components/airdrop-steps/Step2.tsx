@@ -96,6 +96,7 @@ export default function Step2({
     success: boolean;
     count: number;
   } | null>(null);
+  const [csvFileError, setCsvFileError] = useState<string | null>(null);
 
   useEffect(() => {
     setImportError(null);
@@ -139,8 +140,10 @@ export default function Step2({
         break;
       case "csv":
         if (!csvFile) {
-          return "Please import a CSV file";
+          setCsvFileError("Please select a CSV file");
+          return "Please select a CSV file";
         }
+        setCsvFileError(null);
         break;
       // No validation needed for "saga2" option
     }
@@ -239,6 +242,7 @@ export default function Step2({
       if (acceptedFiles.length > 0) {
         const file = acceptedFiles[0];
         setCsvFile(file);
+        setCsvFileError(null); // Clear the error message when a file is uploaded
       }
     },
     [setCsvFile]
@@ -391,7 +395,10 @@ export default function Step2({
             }}
           />
           {collectionAddressError && (
-            <p className="text-sm text-red-500">{collectionAddressError}</p>
+            <div className="flex items-center space-x-2 text-red-500">
+              <AlertCircle className="h-4 w-4" />
+              <p className="text-sm">{collectionAddressError}</p>
+            </div>
           )}
         </div>
       )}
@@ -433,7 +440,10 @@ export default function Step2({
             }}
           />
           {mintAddressError && (
-            <p className="text-sm text-red-500">{mintAddressError}</p>
+            <div className="flex items-center space-x-2 text-red-500">
+              <AlertCircle className="h-4 w-4" />
+              <p className="text-sm">{mintAddressError}</p>
+            </div>
           )}
         </div>
       )}
@@ -446,7 +456,9 @@ export default function Step2({
             className={`border border-dashed rounded-md p-8 transition-colors duration-200 ease-in-out ${
               isDragActive
                 ? "border-primary bg-primary/10"
-                : "border-gray-300 hover:border-primary/50 hover:bg-primary/5"
+                : csvFileError
+                  ? "border-red-50"
+                  : "border-gray-300 hover:border-primary/50 hover:bg-primary/5"
             }`}
           >
             <input {...getInputProps()} />
@@ -488,6 +500,12 @@ export default function Step2({
               </div>
             )}
           </div>
+          {csvFileError && (
+            <div className="flex items-center space-x-2 text-red-500">
+              <AlertCircle className="h-4 w-4" />
+              <p className="text-sm">{csvFileError}</p>
+            </div>
+          )}
         </div>
       )}
 
