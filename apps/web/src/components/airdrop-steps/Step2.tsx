@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { Label } from "../ui/label";
 import {
   Select,
@@ -34,6 +34,15 @@ import {
   saga2PreOrderTokenMintAddress,
 } from "@repo/airdrop-sender";
 import { PublicKey } from "@solana/web3.js";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
 
 interface Step2Props {
   tokens: Token[];
@@ -49,7 +58,7 @@ interface Step2Props {
   csvFile: File | null;
   setCsvFile: (file: File | null) => void;
   recipients: string;
-  rpcUrl: string; // Add this prop
+  rpcUrl: string;
   setRecipients: (value: string) => void;
 }
 
@@ -72,6 +81,11 @@ export default function Step2({
 }: Step2Props) {
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+
+  useEffect(() => {
+    setImportError(null);
+  }, [recipientImportOption]);
 
   const handleImportAddresses = async () => {
     setIsImporting(true);
@@ -132,11 +146,11 @@ export default function Step2({
 
       if (addresses.length === 0) {
         throw new Error(
-          "No addresses found. Are you using devnet? Please check your input and try again."
+          "No addresses found. Are you maybe connected to Devnet? Please check your input and try again."
         );
+      } else {
+        setRecipients(addresses.join("\n"));
       }
-
-      setRecipients(addresses.join("\n"));
     } catch (error) {
       console.error("Failed to import addresses:", error);
       setImportError(
@@ -395,16 +409,50 @@ export default function Step2({
       )}
 
       <div className="space-y-3">
-        <Button onClick={handleImportAddresses} disabled={isImporting}>
-          {isImporting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Importing...
-            </>
-          ) : (
-            "Import"
-          )}
-        </Button>
+        <Dialog
+          open={isConfirmDialogOpen}
+          onOpenChange={setIsConfirmDialogOpen}
+        >
+          <DialogTrigger asChild>
+            <Button
+              onClick={() => setIsConfirmDialogOpen(true)}
+              disabled={isImporting}
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                "Import"
+              )}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Import</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to overwrite the current addresses?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsConfirmDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  setIsConfirmDialogOpen(false);
+                  handleImportAddresses();
+                }}
+              >
+                Confirm Import
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         {importError && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
