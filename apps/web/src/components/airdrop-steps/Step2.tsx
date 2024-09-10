@@ -25,7 +25,13 @@ import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import CodeMirror from "@uiw/react-codemirror";
-import { normalizeTokenAmount, Token } from "@repo/airdrop-sender";
+import {
+  isFungibleToken,
+  isNFTCollection,
+  isSolanaAddress,
+  normalizeTokenAmount,
+  Token,
+} from "@repo/airdrop-sender";
 import { useDropzone } from "react-dropzone";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
@@ -41,7 +47,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "../ui/dialog";
 
 interface Step2Props {
@@ -91,19 +96,39 @@ export default function Step2({
     setImportError(null);
   }, [recipientImportOption]);
 
-  const validateInput = (): string | null => {
+  const validateInput = async (): Promise<string | null> => {
     switch (recipientImportOption) {
       case "nft":
-        if (!collectionAddress) {
+        if (!isSolanaAddress(collectionAddress)) {
           setCollectionAddressError("Please enter a collection address");
           return "Please enter a collection address";
+        }
+        if (
+          !(await isNFTCollection({
+            url: rpcUrl,
+            collectionAddress: new PublicKey(collectionAddress),
+          }))
+        ) {
+          setCollectionAddressError(
+            "Collection not found please check the address"
+          );
+          return "Collection not found please check the address";
         }
         setCollectionAddressError(null);
         break;
       case "spl":
-        if (!mintAddress) {
+        if (!isSolanaAddress(mintAddress)) {
           setMintAddressError("Please enter a mint address");
           return "Please enter a mint address";
+        }
+        if (
+          !(await isFungibleToken({
+            url: rpcUrl,
+            tokenAddress: new PublicKey(mintAddress),
+          }))
+        ) {
+          setMintAddressError("Token not found please check the address");
+          return "Token not found please check the address";
         }
         setMintAddressError(null);
         break;
@@ -117,8 +142,9 @@ export default function Step2({
     return null;
   };
 
-  const handleImportClick = () => {
-    const validationError = validateInput();
+  const handleImportClick = async () => {
+    const validationError = await validateInput();
+    console.log(validationError);
     if (!validationError) {
       setIsConfirmDialogOpen(true);
     }
@@ -127,6 +153,7 @@ export default function Step2({
   const handleImportAddresses = async () => {
     setIsImporting(true);
     setImportError(null);
+    setRecipients("");
     let addresses: string[] = [];
 
     try {
