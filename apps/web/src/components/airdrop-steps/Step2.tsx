@@ -651,7 +651,7 @@ export default function Step2({
           onChange={recipientsOnChange}
           placeholder="One address per line"
           theme="dark"
-          height="300px"
+          height="200px"
         />
       </div>
     </div>
