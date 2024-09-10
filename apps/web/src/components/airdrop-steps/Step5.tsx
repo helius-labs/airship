@@ -25,26 +25,26 @@ export default function Step5({
   return (
     <>
       {isAirdropInProgress && (
-        <>
-          <div className="mt-4">
-            <p>
+        <div className="my-6 space-y-8">
+          <div>
+            <p className="mb-2">
               Transactions sent: {Math.round(sendProgress)}% ({sentTransactions}
               /{totalTransactions})
             </p>
-            <Progress value={sendProgress} className="w-full" />
+            <Progress value={sendProgress} className="w-full h-4" />
           </div>
-          <div className="mt-4">
-            <p>
+          <div>
+            <p className="mb-2">
               Transactions finalized: {Math.round(finalizeProgress)}% (
               {finalizedTransactions}/{totalTransactions})
             </p>
-            <Progress value={finalizeProgress} className="w-full" />
+            <Progress value={finalizeProgress} className="w-full h-4" />
           </div>
-        </>
+        </div>
       )}
       {isAirdropComplete && (
         <div className="my-8 text-center">
-          <h3 className="text-3xl font-bold text-green-500 mb-2">
+          <h3 className="text-3xl font-bold text-primary mb-2">
             🎉 Airdrop Complete! 🎉
           </h3>
           <p className="text-xl">

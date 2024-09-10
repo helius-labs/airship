@@ -298,7 +298,8 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
   };
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen p-4">
+    <main className="flex flex-col items-center justify-top my-12 space-y-12">
+      <img src="/airship-logo.svg" className="max-w-xl" />
       <Card className="w-full max-w-4xl">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-primary">
@@ -446,7 +447,7 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
             e.preventDefault();
             onBackToHome();
           }}
-          className="mt-4 text-primary text-white shadow-lg hover:underline"
+          className="text-primary text-white shadow-lg hover:underline"
         >
           Back to Home
         </a>

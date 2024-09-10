@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface AirdropSelectionProps {
   existingAirdrop: boolean | null;
@@ -38,14 +38,10 @@ export function AirdropSelection({
   };
 
   return (
-    <main className="flex flex-col items-center justify-center h-screen">
+    <main className="flex flex-col items-center justify-center h-screen space-y-12">
+      <img src="/airship-logo.svg" className="max-w-xl" />
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-4xl font-bold text-primary text-center">
-            Helius AirShip
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="text-center space-y-4">
             {existingAirdrop === null ? (
               <div className="flex justify-center items-center h-24">
