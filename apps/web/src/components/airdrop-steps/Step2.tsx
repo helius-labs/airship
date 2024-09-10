@@ -200,7 +200,7 @@ export default function Step2({
           addresses = splAccounts.map((account) => account.owner.toBase58());
           break;
         }
-        case "csv":
+        case "csv": {
           if (!csvFile) {
             throw new Error("Please import a CSV file");
           }
@@ -227,6 +227,7 @@ export default function Step2({
             }
           }
           break;
+        }
       }
 
       if (addresses.length === 0) {

@@ -40,7 +40,7 @@ function App() {
   return (
     <div
       className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed"
-      style={{ backgroundImage: "url('/background.jpg')" }}
+      style={{ backgroundImage: "url('/background.webp')" }}
     >
       <div className="w-full max-w-4xl rounded-lg shadow-xl">
         {selectedAction === "create" ? (
