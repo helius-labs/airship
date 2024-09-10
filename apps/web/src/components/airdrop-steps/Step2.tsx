@@ -20,6 +20,8 @@ import {
   Images,
   Coins,
   FileSpreadsheet,
+  CircleCheck,
+  CircleAlert,
 } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Input } from "../ui/input";
@@ -95,6 +97,7 @@ export default function Step2({
   const [importResult, setImportResult] = useState<{
     success: boolean;
     count: number;
+    rejected: number;
   } | null>(null);
   const [csvFileError, setCsvFileError] = useState<string | null>(null);
 
@@ -163,6 +166,7 @@ export default function Step2({
     setImportResult(null);
     setRecipients("");
     let addresses: string[] = [];
+    let rejectedCount = 0;
 
     try {
       switch (recipientImportOption) {
@@ -200,19 +204,28 @@ export default function Step2({
           if (!csvFile) {
             throw new Error("Please import a CSV file");
           }
-          addresses = await new Promise((resolve, reject) => {
+          const csvContent = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = (e) => {
-              const content = e.target?.result as string;
-              const lines = content
-                .split("\n")
-                .map((line) => line.trim())
-                .filter((line) => line);
-              resolve(lines);
-            };
+            reader.onload = (e) => resolve(e.target?.result as string);
             reader.onerror = (error) => reject(error);
             reader.readAsText(csvFile);
           });
+
+          const lines = csvContent
+            .split("\n")
+            .map((line) => line.trim())
+            .filter((line) => line);
+          addresses = [];
+          rejectedCount = 0;
+
+          for (const line of lines) {
+            try {
+              new PublicKey(line);
+              addresses.push(line);
+            } catch {
+              rejectedCount++;
+            }
+          }
           break;
       }
 
@@ -222,7 +235,11 @@ export default function Step2({
         );
       } else {
         setRecipients(addresses.join("\n"));
-        setImportResult({ success: true, count: addresses.length });
+        setImportResult({
+          success: true,
+          count: addresses.length,
+          rejected: rejectedCount,
+        });
       }
     } catch (error) {
       console.error("Failed to import addresses:", error);
@@ -231,7 +248,7 @@ export default function Step2({
           ? error.message
           : "Failed to import addresses. Please try again."
       );
-      setImportResult({ success: false, count: 0 });
+      setImportResult({ success: false, count: 0, rejected: rejectedCount });
     } finally {
       setIsImporting(false);
     }
@@ -369,18 +386,39 @@ export default function Step2({
               <PopoverTrigger>
                 <HelpCircle className="h-4 w-4" />
               </PopoverTrigger>
-              <PopoverContent>
-                <p>To find the collection address:</p>
+              <PopoverContent className="space-y-2">
+                <strong>To find the collection address:</strong>
                 <ol className="list-decimal list-inside">
                   <li>
-                    Go to a Solana explorer (e.g., Solana Explorer or Solscan)
+                    Go to{" "}
+                    <a
+                      href="https://www.tensor.trade/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary font-medium hover:underline"
+                    >
+                      Tensor
+                    </a>
+                    .
                   </li>
-                  <li>Search for an NFT from the collection</li>
                   <li>
-                    Look for &quot;Collection&quot; or &quot;Collection
-                    Address&quot;
+                    Search for the collection and open the details view of 1 of
+                    the NFTs.
                   </li>
-                  <li>Copy the address associated with the collection</li>
+                  <li>Copy the mint address.</li>
+                  <li>
+                    Go to{" "}
+                    <a
+                      href="https://explorer.solana.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary font-medium hover:underline"
+                    >
+                      Solana Explorer
+                    </a>{" "}
+                    and open the mint address.
+                  </li>
+                  <li>Copy the Verified Collection Address.</li>
                 </ol>
               </PopoverContent>
             </Popover>
@@ -410,8 +448,8 @@ export default function Step2({
               <PopoverTrigger>
                 <HelpCircle className="h-4 w-4" />
               </PopoverTrigger>
-              <PopoverContent>
-                <p>To find the SPL Token Mint Address:</p>
+              <PopoverContent className="space-y-2">
+                <strong>To find the SPL Token Mint Address:</strong>
                 <ol className="list-decimal list-inside">
                   <li>
                     Go to a Solana explorer (e.g., Solana Explorer or Solscan)
@@ -537,19 +575,39 @@ export default function Step2({
                     ? "Import Result"
                     : "Confirm Import"}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="pt-4 space-y-2">
                 {isImporting ? (
-                  <div className="flex items-center justify-center space-x-2">
+                  <div className="flex space-x-2">
                     <Loader2 className="h-6 w-6 animate-spin" />
                     <span>Importing addresses, please wait...</span>
                   </div>
                 ) : importResult ? (
                   importResult.success ? (
-                    `Successfully imported ${importResult.count} addresses.`
+                    <>
+                      <div className="flex items-center space-x-2 text-green-500">
+                        <CircleCheck className="h-4 w-4" />
+                        <p className="text-sm">
+                          Successfully imported {importResult.count} addresses.
+                        </p>
+                      </div>
+                      <p></p>
+                      {importResult.rejected > 0 && (
+                        <div className="flex items-center space-x-2 text-yellow-500">
+                          <CircleAlert className="h-4 w-4" />
+                          <p className="text-sm">
+                            {importResult.rejected} invalid address was not
+                            imported.
+                          </p>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <>
                       {importError && (
-                        <p className="text-red-500">{importError}</p>
+                        <div className="flex items-center space-x-2 text-red-500">
+                          <CircleAlert className="h-4 w-4" />
+                          <p className="text-sm">{importError}</p>
+                        </div>
                       )}
                     </>
                   )
