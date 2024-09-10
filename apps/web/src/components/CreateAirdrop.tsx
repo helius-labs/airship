@@ -9,9 +9,6 @@ import {
   computeUnitLimit,
   baseFee,
   compressionFee,
-  getCollectionHolders,
-  getTokenAccounts,
-  saga2PreOrderTokenMintAddress,
 } from "@repo/airdrop-sender";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
@@ -86,8 +83,6 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
   const [collectionAddress, setCollectionAddress] = useState("");
   const [mintAddress, setMintAddress] = useState("");
   const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [isImporting, setIsImporting] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadTokens() {
@@ -302,82 +297,6 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
     }
   };
 
-  const handleImportAddresses = async () => {
-    setIsImporting(true);
-    setImportError(null);
-    let addresses: string[] = [];
-
-    try {
-      switch (recipientImportOption) {
-        case "saga2": {
-          const saga2Accounts = await getTokenAccounts({
-            tokenMintAddress: saga2PreOrderTokenMintAddress,
-            url: rpcUrl,
-          });
-          addresses = saga2Accounts.map((account) => account.owner.toBase58());
-          break;
-        }
-        case "nft": {
-          if (!collectionAddress) {
-            throw new Error("Please enter a collection address");
-          }
-          const nftHolders = await getCollectionHolders({
-            collectionAddress: new PublicKey(collectionAddress),
-            url: rpcUrl,
-          });
-          addresses = nftHolders.map((holder) => holder.owner.toBase58());
-          break;
-        }
-        case "spl": {
-          if (!mintAddress) {
-            throw new Error("Please enter a mint address");
-          }
-          const splAccounts = await getTokenAccounts({
-            tokenMintAddress: new PublicKey(mintAddress),
-            url: rpcUrl,
-          });
-          addresses = splAccounts.map((account) => account.owner.toBase58());
-          break;
-        }
-        case "csv":
-          if (!csvFile) {
-            throw new Error("Please import a CSV file");
-          }
-          addresses = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              const content = e.target?.result as string;
-              const lines = content
-                .split("\n")
-                .map((line) => line.trim())
-                .filter((line) => line);
-              resolve(lines);
-            };
-            reader.onerror = (error) => reject(error);
-            reader.readAsText(csvFile);
-          });
-          break;
-      }
-
-      if (addresses.length === 0) {
-        throw new Error(
-          "No addresses found are you using devnet? Please check your input and try again. "
-        );
-      }
-
-      setRecipients(addresses.join("\n"));
-    } catch (error) {
-      console.error("Failed to import addresses:", error);
-      setImportError(
-        error instanceof Error
-          ? error.message
-          : "Failed to import addresses. Please try again."
-      );
-    } finally {
-      setIsImporting(false);
-    }
-  };
-
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4">
       <Card className="w-full max-w-4xl">
@@ -433,9 +352,7 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
                     setCsvFile={setCsvFile}
                     recipients={recipients}
                     setRecipients={setRecipients}
-                    handleImportAddresses={handleImportAddresses}
-                    isImporting={isImporting}
-                    importError={importError}
+                    rpcUrl={rpcUrl}
                   />
                 </CardContent>
               </Card>

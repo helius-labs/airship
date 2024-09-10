@@ -8,7 +8,14 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { AlertCircle, AlertTriangle, HelpCircle, Upload } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  HelpCircle,
+  Upload,
+  File,
+  X,
+} from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -249,29 +256,60 @@ export default function Step2({
           />
         </div>
       )}
+
       {recipientImportOption === "csv" && (
         <div className="space-y-3">
           <Label htmlFor="recipients">CSV file</Label>
           <div
             {...getRootProps()}
-            className={`border-2 border-dashed rounded-md p-8 text-center cursor-pointer ${
-              isDragActive ? "border-primary" : "border-gray-300"
+            className={`border-2 border-dashed rounded-md p-8 transition-colors duration-200 ease-in-out ${
+              isDragActive
+                ? "border-primary bg-primary/10"
+                : "border-gray-300 hover:border-primary/50 hover:bg-primary/5"
             }`}
           >
             <input {...getInputProps()} />
-            <Upload className="mx-auto h-12 w-12 text-gray-400" />
             {csvFile ? (
-              <p className="mt-2">{csvFile.name}</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <File className="h-8 w-8 text-primary" />
+                  <span className="text-sm font-medium">{csvFile.name}</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCsvFile(null);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             ) : (
-              <p className="mt-2">
-                {isDragActive
-                  ? "Drop the CSV file here"
-                  : "Drag and drop a CSV file here, or click to select a file"}
-              </p>
+              <div className="text-center">
+                <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                <p className="mt-2 text-sm text-gray-600">
+                  {isDragActive ? (
+                    "Drop the CSV file here"
+                  ) : (
+                    <>
+                      Drag and drop a CSV file here, or{" "}
+                      <span className="text-primary font-medium">
+                        click to select a file
+                      </span>
+                    </>
+                  )}
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  File should contain one address per line
+                </p>
+              </div>
             )}
           </div>
         </div>
       )}
+
       <div className="space-y-3">
         <Button onClick={handleImportAddresses} disabled={isImporting}>
           {isImporting ? (
@@ -292,14 +330,14 @@ export default function Step2({
         )}
       </div>
       <div className="space-y-3">
-        <Label htmlFor="recipients">Addresses</Label>
+        <Label htmlFor="recipients">Imported Addresses</Label>
         <CodeMirror
           id="recipients"
           value={recipients}
           onChange={recipientsOnChange}
           placeholder="One address per line"
           theme="dark"
-          height="350px"
+          height="300px"
         />
       </div>
     </div>

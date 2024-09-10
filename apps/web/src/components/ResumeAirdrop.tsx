@@ -1,13 +1,7 @@
 import { useState, useEffect } from "react";
 import * as airdropsender from "@repo/airdrop-sender";
 import { Button } from "./ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import Step1 from "./airdrop-steps/Step1";
 import Step5 from "./airdrop-steps/Step5";
 import { isValidPrivateKey, isValidRpcUrl } from "@/lib/utils.ts";
