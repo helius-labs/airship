@@ -82,10 +82,47 @@ export default function Step2({
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [collectionAddressError, setCollectionAddressError] = useState<
+    string | null
+  >(null);
+  const [mintAddressError, setMintAddressError] = useState<string | null>(null);
 
   useEffect(() => {
     setImportError(null);
   }, [recipientImportOption]);
+
+  const validateInput = (): string | null => {
+    switch (recipientImportOption) {
+      case "nft":
+        if (!collectionAddress) {
+          setCollectionAddressError("Please enter a collection address");
+          return "Please enter a collection address";
+        }
+        setCollectionAddressError(null);
+        break;
+      case "spl":
+        if (!mintAddress) {
+          setMintAddressError("Please enter a mint address");
+          return "Please enter a mint address";
+        }
+        setMintAddressError(null);
+        break;
+      case "csv":
+        if (!csvFile) {
+          return "Please import a CSV file";
+        }
+        break;
+      // No validation needed for "saga2" option
+    }
+    return null;
+  };
+
+  const handleImportClick = () => {
+    const validationError = validateInput();
+    if (!validationError) {
+      setIsConfirmDialogOpen(true);
+    }
+  };
 
   const handleImportAddresses = async () => {
     setIsImporting(true);
@@ -189,7 +226,7 @@ export default function Step2({
   });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="space-y-3">
         <Label htmlFor="tokenSelect">Which token do you want to airdrop?</Label>
         {noTokensMessage ? (
@@ -314,8 +351,14 @@ export default function Step2({
             id="collectionAddress"
             placeholder="Enter the NFT collection address"
             value={collectionAddress}
-            onChange={(e) => setCollectionAddress(e.target.value)}
+            onChange={(e) => {
+              setCollectionAddress(e.target.value);
+              setCollectionAddressError(null);
+            }}
           />
+          {collectionAddressError && (
+            <p className="text-sm text-red-500">{collectionAddressError}</p>
+          )}
         </div>
       )}
       {recipientImportOption === "spl" && (
@@ -350,8 +393,14 @@ export default function Step2({
             id="mintAddress"
             placeholder="Enter the SPL Token Mint Address"
             value={mintAddress}
-            onChange={(e) => setMintAddress(e.target.value)}
+            onChange={(e) => {
+              setMintAddress(e.target.value);
+              setMintAddressError(null);
+            }}
           />
+          {mintAddressError && (
+            <p className="text-sm text-red-500">{mintAddressError}</p>
+          )}
         </div>
       )}
 
@@ -409,25 +458,24 @@ export default function Step2({
       )}
 
       <div className="space-y-3">
+        <Button
+          onClick={handleImportClick}
+          type="button"
+          disabled={isImporting}
+        >
+          {isImporting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Importing...
+            </>
+          ) : (
+            "Import"
+          )}
+        </Button>
         <Dialog
           open={isConfirmDialogOpen}
           onOpenChange={setIsConfirmDialogOpen}
         >
-          <DialogTrigger asChild>
-            <Button
-              onClick={() => setIsConfirmDialogOpen(true)}
-              disabled={isImporting}
-            >
-              {isImporting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Importing...
-                </>
-              ) : (
-                "Import"
-              )}
-            </Button>
-          </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Confirm Import</DialogTitle>
