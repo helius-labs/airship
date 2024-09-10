@@ -26,7 +26,6 @@ export default function Step5({
     <>
       {isAirdropInProgress && (
         <>
-          <h2 className="text-2xl font-semibold mb-4">Airdrop Progress</h2>
           <div className="mt-4">
             <p>
               Transactions sent: {Math.round(sendProgress)}% ({sentTransactions}

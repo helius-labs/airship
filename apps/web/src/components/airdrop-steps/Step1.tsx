@@ -59,6 +59,7 @@ export default function Step1({
           required
           value={privateKey}
           type="password"
+          autoComplete="off"
         />
         {privateKeyError && (
           <p className="text-red-500 text-sm mt-1">{privateKeyError}</p>

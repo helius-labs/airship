@@ -467,10 +467,7 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
             )}
             {step === 5 && (
               <Card>
-                <CardHeader>
-                  <CardTitle>Step 5: Track Airdrop Progress</CardTitle>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <Step5
                     isAirdropInProgress={isAirdropInProgress}
                     isAirdropComplete={isAirdropComplete}
@@ -532,7 +529,7 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
             e.preventDefault();
             onBackToHome();
           }}
-          className="mt-4 text-primary text-white font-semibold shadow-lg hover:underline"
+          className="mt-4 text-primary text-white shadow-lg hover:underline"
         >
           Back to Home
         </a>
