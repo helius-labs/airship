@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { Label } from "../ui/label";
 import {
   Select,
@@ -15,16 +15,25 @@ import {
   Upload,
   File,
   X,
+  Loader2,
+  Smartphone,
+  Images,
+  Coins,
+  FileSpreadsheet,
 } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Loader2 } from "lucide-react";
 import CodeMirror from "@uiw/react-codemirror";
 import { normalizeTokenAmount, Token } from "@repo/airdrop-sender";
 import { useDropzone } from "react-dropzone";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Smartphone, Images, Coins, FileSpreadsheet } from "lucide-react";
+import {
+  getCollectionHolders,
+  getTokenAccounts,
+  saga2PreOrderTokenMintAddress,
+} from "@repo/airdrop-sender";
+import { PublicKey } from "@solana/web3.js";
 
 interface Step2Props {
   tokens: Token[];
@@ -40,10 +49,8 @@ interface Step2Props {
   csvFile: File | null;
   setCsvFile: (file: File | null) => void;
   recipients: string;
+  rpcUrl: string; // Add this prop
   setRecipients: (value: string) => void;
-  handleImportAddresses: () => Promise<void>;
-  isImporting: boolean;
-  importError: string | null;
 }
 
 export default function Step2({
@@ -60,11 +67,88 @@ export default function Step2({
   csvFile,
   setCsvFile,
   recipients,
+  rpcUrl,
   setRecipients,
-  handleImportAddresses,
-  isImporting,
-  importError,
 }: Step2Props) {
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+
+  const handleImportAddresses = async () => {
+    setIsImporting(true);
+    setImportError(null);
+    let addresses: string[] = [];
+
+    try {
+      switch (recipientImportOption) {
+        case "saga2": {
+          const saga2Accounts = await getTokenAccounts({
+            tokenMintAddress: saga2PreOrderTokenMintAddress,
+            url: rpcUrl,
+          });
+          addresses = saga2Accounts.map((account) => account.owner.toBase58());
+          break;
+        }
+        case "nft": {
+          if (!collectionAddress) {
+            throw new Error("Please enter a collection address");
+          }
+          const nftHolders = await getCollectionHolders({
+            collectionAddress: new PublicKey(collectionAddress),
+            url: rpcUrl,
+          });
+          addresses = nftHolders.map((holder) => holder.owner.toBase58());
+          break;
+        }
+        case "spl": {
+          if (!mintAddress) {
+            throw new Error("Please enter a mint address");
+          }
+          const splAccounts = await getTokenAccounts({
+            tokenMintAddress: new PublicKey(mintAddress),
+            url: rpcUrl,
+          });
+          addresses = splAccounts.map((account) => account.owner.toBase58());
+          break;
+        }
+        case "csv":
+          if (!csvFile) {
+            throw new Error("Please import a CSV file");
+          }
+          addresses = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const content = e.target?.result as string;
+              const lines = content
+                .split("\n")
+                .map((line) => line.trim())
+                .filter((line) => line);
+              resolve(lines);
+            };
+            reader.onerror = (error) => reject(error);
+            reader.readAsText(csvFile);
+          });
+          break;
+      }
+
+      if (addresses.length === 0) {
+        throw new Error(
+          "No addresses found. Are you using devnet? Please check your input and try again."
+        );
+      }
+
+      setRecipients(addresses.join("\n"));
+    } catch (error) {
+      console.error("Failed to import addresses:", error);
+      setImportError(
+        error instanceof Error
+          ? error.message
+          : "Failed to import addresses. Please try again."
+      );
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) {
@@ -262,7 +346,7 @@ export default function Step2({
           <Label htmlFor="recipients">CSV file</Label>
           <div
             {...getRootProps()}
-            className={`border-2 border-dashed rounded-md p-8 transition-colors duration-200 ease-in-out ${
+            className={`border border-dashed rounded-md p-8 transition-colors duration-200 ease-in-out ${
               isDragActive
                 ? "border-primary bg-primary/10"
                 : "border-gray-300 hover:border-primary/50 hover:bg-primary/5"
@@ -272,7 +356,7 @@ export default function Step2({
             {csvFile ? (
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <File className="h-8 w-8 text-primary" />
+                  <File className="h-8 w-8 text-white" />
                   <span className="text-sm font-medium">{csvFile.name}</span>
                 </div>
                 <Button
