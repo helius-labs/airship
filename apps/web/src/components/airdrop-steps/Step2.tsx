@@ -42,6 +42,7 @@ import {
 import { PublicKey } from "@solana/web3.js";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -91,6 +92,10 @@ export default function Step2({
     string | null
   >(null);
   const [mintAddressError, setMintAddressError] = useState<string | null>(null);
+  const [importResult, setImportResult] = useState<{
+    success: boolean;
+    count: number;
+  } | null>(null);
 
   useEffect(() => {
     setImportError(null);
@@ -144,7 +149,6 @@ export default function Step2({
 
   const handleImportClick = async () => {
     const validationError = await validateInput();
-    console.log(validationError);
     if (!validationError) {
       setIsConfirmDialogOpen(true);
     }
@@ -153,6 +157,7 @@ export default function Step2({
   const handleImportAddresses = async () => {
     setIsImporting(true);
     setImportError(null);
+    setImportResult(null);
     setRecipients("");
     let addresses: string[] = [];
 
@@ -214,6 +219,7 @@ export default function Step2({
         );
       } else {
         setRecipients(addresses.join("\n"));
+        setImportResult({ success: true, count: addresses.length });
       }
     } catch (error) {
       console.error("Failed to import addresses:", error);
@@ -222,6 +228,7 @@ export default function Step2({
           ? error.message
           : "Failed to import addresses. Please try again."
       );
+      setImportResult({ success: false, count: 0 });
     } finally {
       setIsImporting(false);
     }
@@ -490,51 +497,75 @@ export default function Step2({
           type="button"
           disabled={isImporting}
         >
-          {isImporting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Importing...
-            </>
-          ) : (
-            "Import"
-          )}
+          Import
         </Button>
         <Dialog
           open={isConfirmDialogOpen}
-          onOpenChange={setIsConfirmDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setImportResult(null);
+              setImportError(null);
+              setIsImporting(false);
+            }
+            setIsConfirmDialogOpen(open);
+          }}
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Confirm Import</DialogTitle>
+              <DialogTitle>
+                {isImporting
+                  ? "Importing Addresses"
+                  : importResult
+                    ? "Import Result"
+                    : "Confirm Import"}
+              </DialogTitle>
               <DialogDescription>
-                Are you sure you want to overwrite the current addresses?
+                {isImporting ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <span>Importing addresses, please wait...</span>
+                  </div>
+                ) : importResult ? (
+                  importResult.success ? (
+                    `Successfully imported ${importResult.count} addresses.`
+                  ) : (
+                    <>
+                      {importError && (
+                        <p className="text-red-500">{importError}</p>
+                      )}
+                    </>
+                  )
+                ) : (
+                  "Are you sure you want to overwrite the current addresses?"
+                )}
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsConfirmDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  setIsConfirmDialogOpen(false);
-                  handleImportAddresses();
-                }}
-              >
-                Confirm Import
-              </Button>
-            </DialogFooter>
+            {!isImporting && !importResult && (
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline" type="button">
+                    Cancel
+                  </Button>
+                </DialogClose>
+
+                <Button
+                  onClick={() => {
+                    handleImportAddresses();
+                  }}
+                >
+                  Confirm Import
+                </Button>
+              </DialogFooter>
+            )}
+            {importResult && (
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button">Close</Button>
+                </DialogClose>
+              </DialogFooter>
+            )}
           </DialogContent>
         </Dialog>
-        {importError && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{importError}</AlertDescription>
-          </Alert>
-        )}
       </div>
       <div className="space-y-3">
         <Label htmlFor="recipients">Imported Addresses</Label>
