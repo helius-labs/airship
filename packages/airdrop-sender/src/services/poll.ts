@@ -1,21 +1,25 @@
 import * as web3 from "@solana/web3.js";
-import { loadDB } from "../services/db";
 import { transaction_queue } from "../schema/transaction_queue";
-import { desc, asc, eq, ne, and, count, isNotNull } from "drizzle-orm";
+import { asc, eq, ne, and, count, isNotNull, or } from "drizzle-orm";
 import { logger } from "../services/logger";
 import { SendTransactionError } from "@solana/web3.js";
 import { CommitmentStatus } from "../config/constants";
 
+// Using db: any instead of db: BetterSQLite3Database | SqliteRemoteDatabase because of typescript limitations
+// https://github.com/drizzle-team/drizzle-orm/issues/1966#issuecomment-1981726977
 interface PollParams {
+  db: any;
   url: string;
 }
 
 export async function poll(params: PollParams) {
-  const { url } = params;
+  const { url, db } = params;
+
+  if (!db) {
+    throw new Error("Database is not loaded");
+  }
 
   const connection = new web3.Connection(url, "confirmed");
-
-  const db = await loadDB();
 
   // Fetch total amount of addresses to send
   const totalQueue = await db
@@ -29,7 +33,10 @@ export async function poll(params: PollParams) {
       .select({ count: count() })
       .from(transaction_queue)
       .where(
-        eq(transaction_queue.commitment_status, CommitmentStatus.Finalized)
+        or(
+          eq(transaction_queue.commitment_status, CommitmentStatus.Confirmed),
+          eq(transaction_queue.commitment_status, CommitmentStatus.Finalized)
+        )
       );
     const totalTransactionsFinalized = totalFinalizedQueue[0].count;
 
@@ -49,6 +56,7 @@ export async function poll(params: PollParams) {
       .where(
         and(
           isNotNull(transaction_queue.signature),
+          ne(transaction_queue.commitment_status, CommitmentStatus.Confirmed),
           ne(transaction_queue.commitment_status, CommitmentStatus.Finalized)
         )
       )
@@ -105,9 +113,12 @@ export async function poll(params: PollParams) {
           })
           .where(eq(transaction_queue.id, transaction.id));
 
-        if (confirmationStatus === "finalized") {
+        if (
+          commitmentStatus === CommitmentStatus.Confirmed ||
+          commitmentStatus === CommitmentStatus.Finalized
+        ) {
           logger.info(
-            `Transaction [${transaction.id}/${totalTransactionsToSend}] finalized: ${transaction.signature}`
+            `Transaction [${transaction.id}/${totalTransactionsToSend}] confirmed: ${transaction.signature}`
           );
         }
       } catch (error) {

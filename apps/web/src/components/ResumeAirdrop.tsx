@@ -5,19 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import Step1 from "./airdrop-steps/Step1";
 import Step5 from "./airdrop-steps/Step5";
 import { isValidPrivateKey, isValidRpcUrl } from "@/lib/utils.ts";
-
-const airdropSenderWorker = new ComlinkWorker<
-  typeof import("../lib/airdropSenderWorker.ts")
->(new URL("../lib/airdropSenderWorker.js", import.meta.url), {
-  name: "airdropSenderWorker",
-  type: "module",
-});
+import { AirdropSenderWorker } from "@/types/AirdropSenderWorker";
 
 interface ResumeAirdropProps {
+  db: airdropsender.BrowserDatabase;
+  airdropSenderWorker: AirdropSenderWorker;
   onBackToHome: () => void;
 }
 
-export function ResumeAirdrop({ onBackToHome }: ResumeAirdropProps) {
+export function ResumeAirdrop({
+  db,
+  airdropSenderWorker,
+  onBackToHome,
+}: ResumeAirdropProps) {
   const [step, setStep] = useState(1);
   const [privateKey, setPrivateKey] = useState("");
   const [rpcUrl, setRpcUrl] = useState("");
@@ -33,7 +33,7 @@ export function ResumeAirdrop({ onBackToHome }: ResumeAirdropProps) {
 
   useEffect(() => {
     async function loadAirdropStatus() {
-      const status = await airdropsender.status();
+      const status = await airdropsender.status({ db });
       setSendProgress((status.sent / status.total) * 100);
       setFinalizeProgress((status.finalized / status.total) * 100);
       setTotalTransactions(status.total);
@@ -41,7 +41,7 @@ export function ResumeAirdrop({ onBackToHome }: ResumeAirdropProps) {
       setFinalizedTransactions(status.finalized);
     }
     void loadAirdropStatus();
-  }, []);
+  }, [db]);
 
   const handlePrivateKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPrivateKey = e.target.value.trim();
@@ -88,7 +88,7 @@ export function ResumeAirdrop({ onBackToHome }: ResumeAirdropProps) {
       airdropSenderWorker.poll(rpcUrl);
 
       const monitorInterval = setInterval(async () => {
-        const currentStatus = await airdropsender.status();
+        const currentStatus = await airdropsender.status({ db });
         setSendProgress((currentStatus.sent / currentStatus.total) * 100);
         setFinalizeProgress(
           (currentStatus.finalized / currentStatus.total) * 100
