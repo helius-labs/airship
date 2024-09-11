@@ -35,7 +35,7 @@ export default function Step5({
           </div>
           <div>
             <p className="mb-2">
-              Transactions finalized: {Math.round(finalizeProgress)}% (
+              Transactions confirmed: {Math.round(finalizeProgress)}% (
               {finalizedTransactions}/{totalTransactions})
             </p>
             <Progress value={finalizeProgress} className="w-full h-4" />

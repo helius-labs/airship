@@ -1,30 +1,42 @@
 import * as drizzleBetterSqlite3 from "drizzle-orm/better-sqlite3";
 import * as drizzleSqlLocal from "drizzle-orm/sqlite-proxy";
 import { DB_FILE } from "../config/constants";
-import { isNode } from "../utils/common";
+import { sql } from "drizzle-orm";
 
-async function loadServerDB(): Promise<drizzleBetterSqlite3.BetterSQLite3Database> {
+export type NodeDatabase = drizzleBetterSqlite3.BetterSQLite3Database;
+export type BrowserDatabase = drizzleSqlLocal.SqliteRemoteDatabase;
+
+export async function loadNodeDB(): Promise<NodeDatabase> {
   const { default: Database } = await import("better-sqlite3");
 
-  const sqlite = new Database(DB_FILE); // You can pass the file path as an argument
+  const sqlite = new Database(DB_FILE);
+  sqlite.exec("PRAGMA journal_mode = WAL;");
+
   return drizzleBetterSqlite3.drizzle(sqlite);
 }
 
-async function loadBrowserDB(): Promise<drizzleSqlLocal.SqliteRemoteDatabase> {
+export async function loadBrowserDB(): Promise<BrowserDatabase> {
   // Browser environment
   const { SQLocalDrizzle } = await import("sqlocal/drizzle");
+
   const { driver, batchDriver } = new SQLocalDrizzle({
     databasePath: DB_FILE,
     verbose: false,
   });
 
-  return drizzleSqlLocal.drizzle(driver, batchDriver);
+  const db = drizzleSqlLocal.drizzle(driver, batchDriver);
+
+  await db.run(sql`PRAGMA journal_mode = WAL;`);
+
+  return db;
 }
 
-export async function loadDB(): Promise<any> {
-  if (typeof process !== "undefined" && isNode(process)) {
-    return loadServerDB();
-  } else {
-    return loadBrowserDB();
-  }
+export async function getDatabaseFile(): Promise<File> {
+  const { SQLocalDrizzle } = await import("sqlocal/drizzle");
+
+  const { getDatabaseFile } = new SQLocalDrizzle({
+    databasePath: DB_FILE,
+  });
+
+  return await getDatabaseFile();
 }

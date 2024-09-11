@@ -8,8 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { getDatabaseFile } from "@repo/airdrop-sender";
 
 interface AirdropSelectionProps {
   existingAirdrop: boolean | null;
@@ -23,6 +24,21 @@ export function AirdropSelection({
   onResumeAirdrop,
 }: AirdropSelectionProps) {
   const [showDialog, setShowDialog] = useState(false);
+  const [showDownloadButton, setShowDownloadButton] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === "0") {
+        setShowDownloadButton((prev) => !prev); // Toggle the state
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const handleCreateAirdrop = () => {
     if (existingAirdrop) {
@@ -35,6 +51,19 @@ export function AirdropSelection({
   const handleConfirmCreate = () => {
     setShowDialog(false);
     onCreateAirdrop();
+  };
+
+  const downloadDB = async () => {
+    const databaseFile = await getDatabaseFile();
+    const fileUrl = URL.createObjectURL(databaseFile);
+
+    const a = document.createElement("a");
+    a.href = fileUrl;
+    a.download = `airship-${new Date().toJSON().slice(0, 10)}.db`;
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(fileUrl);
   };
 
   return (
@@ -56,6 +85,9 @@ export function AirdropSelection({
                   <Button onClick={onResumeAirdrop}>
                     Resume Existing Airdrop
                   </Button>
+                )}
+                {showDownloadButton && (
+                  <Button onClick={downloadDB}>Download Database</Button>
                 )}
               </div>
             )}

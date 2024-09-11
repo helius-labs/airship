@@ -2,7 +2,18 @@ import { useState, useEffect } from "react";
 import { CreateAirdrop } from "./components/CreateAirdrop";
 import { ResumeAirdrop } from "./components/ResumeAirdrop";
 import { AirdropSelection } from "./components/AirdropSelection";
-import { init, exist } from "@repo/airdrop-sender";
+import { init, exist, loadBrowserDB } from "@repo/airdrop-sender";
+
+// Load the airdrop sender worker
+const airdropSenderWorker = new ComlinkWorker<
+  typeof import("./lib/airdropSenderWorker.ts")
+>(new URL("./lib/airdropSenderWorker.js", import.meta.url), {
+  name: "airdropSenderWorker",
+  type: "module",
+});
+
+// Load the database
+const db = await loadBrowserDB();
 
 function App() {
   const [existingAirdrop, setExistingAirdrop] = useState<boolean | null>(null);
@@ -12,10 +23,10 @@ function App() {
     async function initApp() {
       try {
         // Initialize the airdrop sender
-        await init();
+        await init({ db });
 
         // Check if an airdrop already exists
-        const exists = await exist();
+        const exists = await exist({ db });
         setExistingAirdrop(exists);
       } catch (error) {
         console.error("Error checking for existing airdrop:", error);
@@ -44,9 +55,17 @@ function App() {
     >
       <div className="w-full max-w-4xl rounded-lg shadow-xl">
         {selectedAction === "create" ? (
-          <CreateAirdrop onBackToHome={handleBackToHome} />
+          <CreateAirdrop
+            db={db}
+            airdropSenderWorker={airdropSenderWorker}
+            onBackToHome={handleBackToHome}
+          />
         ) : selectedAction === "resume" ? (
-          <ResumeAirdrop onBackToHome={handleBackToHome} />
+          <ResumeAirdrop
+            db={db}
+            airdropSenderWorker={airdropSenderWorker}
+            onBackToHome={handleBackToHome}
+          />
         ) : (
           <AirdropSelection
             existingAirdrop={existingAirdrop}

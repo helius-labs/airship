@@ -22,6 +22,7 @@ import {
   normalizeTokenAmount,
   Token,
   init,
+  loadNodeDB,
 } from "@repo/airdrop-sender";
 import ora, { Ora } from "ora";
 import { csv } from "./imports/csv";
@@ -37,6 +38,9 @@ const pool = new Tinypool({
   filename: new URL("./worker.js", import.meta.url).href,
 });
 
+// Load the database
+const db = await loadNodeDB();
+
 async function main() {
   const packageInfo = await getPackageInfo();
   const program = createCommandProgram(packageInfo);
@@ -48,7 +52,7 @@ async function main() {
     const keypair = loadKeypair(options.keypair);
 
     // Initialize the database
-    await init();
+    await init({ db });
 
     const action = await selectAction();
 
@@ -116,7 +120,7 @@ function loadKeypair(keypairPath: string): web3.Keypair {
 }
 
 async function selectAction() {
-  const airdropExists = await exist();
+  const airdropExists = await exist({ db });
   const choices = [
     { name: "Create a new airdrop", value: "new" },
     { name: "Exit", value: "exit" },
@@ -151,7 +155,7 @@ async function handleNewAirdrop(keypair: web3.Keypair, options: any) {
 }
 
 async function checkAndConfirmOverwrite() {
-  const exists = await exist();
+  const exists = await exist({ db });
   if (exists) {
     const overwrite = await confirm({
       message:
@@ -447,16 +451,16 @@ function createProgressBars() {
 }
 
 async function monitorAirdropProgress(multibar: cliProgress.MultiBar) {
-  const airdropStatus = await status();
+  const airdropStatus = await status({ db });
   const b1 = multibar.create(airdropStatus.total, airdropStatus.sent, {
     type: "Transactions sent     ",
   });
   const b2 = multibar.create(airdropStatus.total, airdropStatus.finalized, {
-    type: "Transactions finalized",
+    type: "Transactions confirmed",
   });
 
   while (true) {
-    const currentStatus = await status();
+    const currentStatus = await status({ db });
     b1.update(currentStatus.sent);
     b2.update(currentStatus.finalized);
 

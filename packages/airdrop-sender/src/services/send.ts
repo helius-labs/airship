@@ -1,5 +1,4 @@
 import * as web3 from "@solana/web3.js";
-import { loadDB } from "../services/db";
 import { transaction_queue } from "../schema/transaction_queue";
 import {
   CommitmentStatus,
@@ -8,7 +7,7 @@ import {
   lookupTableAddress,
   maxAddressesPerTransaction,
 } from "../config/constants";
-import { desc, asc, sql, eq, count, isNull } from "drizzle-orm";
+import { desc, asc, sql, eq, count, isNull, or } from "drizzle-orm";
 import { buildAndSignTx, createRpc, Rpc } from "@lightprotocol/stateless.js";
 import * as splToken from "@solana/spl-token";
 import {
@@ -25,15 +24,20 @@ import bs58 from "bs58";
 import { SendTransactionError } from "@solana/web3.js";
 import { sleep } from "../utils/common";
 
+// Using db: any instead of db: BetterSQLite3Database | SqliteRemoteDatabase because of typescript limitations
+// https://github.com/drizzle-team/drizzle-orm/issues/1966#issuecomment-1981726977
 interface SendParams {
+  db: any;
   keypair: web3.Keypair;
   url: string;
 }
 
 export async function send(params: SendParams) {
-  const { keypair, url } = params;
+  const { keypair, url, db } = params;
 
-  const db = await loadDB();
+  if (!db) {
+    throw new Error("Database is not loaded");
+  }
 
   // Fetch total amount of addresses to send
   const totalQueue = await db
@@ -47,7 +51,10 @@ export async function send(params: SendParams) {
       .select({ count: count() })
       .from(transaction_queue)
       .where(
-        eq(transaction_queue.commitment_status, CommitmentStatus.Finalized)
+        or(
+          eq(transaction_queue.commitment_status, CommitmentStatus.Confirmed),
+          eq(transaction_queue.commitment_status, CommitmentStatus.Finalized)
+        )
       );
     const totalTransactionsFinalized = totalFinalizedQueue[0].count;
 

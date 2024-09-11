@@ -25,3 +25,4 @@ export enum CommitmentStatus {
 // Constants
 export const DB_FILE = "airship.db";
 export const TABLE_NAME = "transaction_queue";
+export const SQLITE_MAX_VARIABLE_NUMBER = 999;

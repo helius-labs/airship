@@ -34,19 +34,20 @@ import Step3 from "./airdrop-steps/Step3";
 import Step4 from "./airdrop-steps/Step4";
 import Step5 from "./airdrop-steps/Step5";
 import { isValidPrivateKey, isValidRpcUrl } from "@/lib/utils.ts";
-
-const airdropSenderWorker = new ComlinkWorker<
-  typeof import("../lib/airdropSenderWorker.ts")
->(new URL("../lib/airdropSenderWorker.js", import.meta.url), {
-  name: "airdropSenderWorker",
-  type: "module",
-});
+import { Loader2 } from "lucide-react";
+import { AirdropSenderWorker } from "@/types/AirdropSenderWorker";
 
 interface CreateAirdropProps {
+  db: airdropsender.BrowserDatabase;
+  airdropSenderWorker: AirdropSenderWorker;
   onBackToHome: () => void;
 }
 
-export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
+export function CreateAirdrop({
+  db,
+  airdropSenderWorker,
+  onBackToHome,
+}: CreateAirdropProps) {
   const [step, setStep] = useState(1);
   const [privateKey, setPrivateKey] = useState("");
   const [rpcUrl, setRpcUrl] = useState("");
@@ -83,6 +84,7 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
   const [collectionAddress, setCollectionAddress] = useState("");
   const [mintAddress, setMintAddress] = useState("");
   const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [isCreatingAirdrop, setIsCreatingAirdrop] = useState(false);
 
   useEffect(() => {
     async function loadTokens() {
@@ -250,8 +252,7 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
 
   const handleSendAirdrop = async () => {
     setShowConfirmDialog(false);
-    setIsAirdropInProgress(true);
-    setStep(5); // Move to step 5 when airdrop starts
+    setIsCreatingAirdrop(true);
 
     try {
       if (!amountValue) {
@@ -270,11 +271,15 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
         selectedToken
       );
 
+      setIsCreatingAirdrop(false);
+      setIsAirdropInProgress(true);
+      setStep(5); // Move to step 5 when airdrop starts
+
       airdropSenderWorker.send(privateKey, rpcUrl);
       airdropSenderWorker.poll(rpcUrl);
 
       const monitorInterval = setInterval(async () => {
-        const currentStatus = await airdropsender.status();
+        const currentStatus = await airdropsender.status({ db });
         setSendProgress((currentStatus.sent / currentStatus.total) * 100);
         setFinalizeProgress(
           (currentStatus.finalized / currentStatus.total) * 100
@@ -292,6 +297,7 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
     } catch (error) {
       console.error("Failed to create airdrop:", error);
       alert("Failed to create airdrop. Please try again.");
+      setIsCreatingAirdrop(false);
       setIsAirdropInProgress(false);
       setStep(4); // Go back to step 4 if there's an error
     }
@@ -303,141 +309,154 @@ export function CreateAirdrop({ onBackToHome }: CreateAirdropProps) {
       <Card className="w-full max-w-4xl">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-primary">
-            {isAirdropInProgress ? "Sending Airdrop" : "Create New Airdrop"}
+            {isCreatingAirdrop
+              ? "Creating Airdrop"
+              : isAirdropInProgress
+                ? "Sending Airdrop"
+                : "Create New Airdrop"}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {step === 1 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Step 1: Setup Your Wallet</CardTitle>
-                  <CardDescription>
-                    To handle transaction fees and automatically sign
-                    transactions, you'll need to provide a private key. For
-                    security, we recommend creating a new wallet just for this
-                    purpose and transferring the necessary tokens and funds to
-                    it.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Step1
-                    privateKey={privateKey}
-                    rpcUrl={rpcUrl}
-                    privateKeyError={privateKeyError}
-                    rpcUrlError={rpcUrlError}
-                    handlePrivateKeyChange={handlePrivateKeyChange}
-                    handleRpcUrlChange={handleRpcUrlChange}
-                  />
-                </CardContent>
-              </Card>
-            )}
-            {step === 2 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Step 2: Choose Token & Import Addresses</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Step2
-                    tokens={tokens}
-                    selectedToken={selectedToken}
-                    setSelectedToken={setSelectedToken}
-                    noTokensMessage={noTokensMessage}
-                    recipientImportOption={recipientImportOption}
-                    setRecipientImportOption={setRecipientImportOption}
-                    collectionAddress={collectionAddress}
-                    setCollectionAddress={setCollectionAddress}
-                    mintAddress={mintAddress}
-                    setMintAddress={setMintAddress}
-                    csvFile={csvFile}
-                    setCsvFile={setCsvFile}
-                    recipients={recipients}
-                    setRecipients={setRecipients}
-                    rpcUrl={rpcUrl}
-                  />
-                </CardContent>
-              </Card>
-            )}
-            {step === 3 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Step 3: Set Airdrop Amount</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Step3
-                    amountType={amountType}
-                    setAmountType={setAmountType}
-                    amount={amount}
-                    setAmount={setAmount}
-                  />
-                </CardContent>
-              </Card>
-            )}
-            {step === 4 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Step 4: Review Your Airdrop</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Step4 airdropOverview={airdropOverview} />
-                </CardContent>
-              </Card>
-            )}
-            {step === 5 && (
-              <Card>
-                <CardContent className="pt-6">
-                  <Step5
-                    isAirdropInProgress={isAirdropInProgress}
-                    isAirdropComplete={isAirdropComplete}
-                    sendProgress={sendProgress}
-                    finalizeProgress={finalizeProgress}
-                    sentTransactions={sentTransactions}
-                    finalizedTransactions={finalizedTransactions}
-                    totalTransactions={totalTransactions}
-                    onBackToHome={onBackToHome}
-                  />
-                </CardContent>
-              </Card>
-            )}
-            {!isAirdropInProgress && !isAirdropComplete && step < 5 && (
-              <div className="flex justify-between items-center">
-                {step === 1 && (
-                  <div>
-                    <Button
-                      onClick={onBackToHome}
-                      type="button"
-                      variant="outline"
-                    >
-                      Previous
-                    </Button>
-                  </div>
-                )}
-                {step > 1 && (
-                  <div>
-                    <Button
-                      onClick={() => setStep(step - 1)}
-                      type="button"
-                      variant="outline"
-                    >
-                      Previous
-                    </Button>
-                  </div>
-                )}
-                <div>
-                  {step < 4 ? (
-                    <Button type="submit">Next</Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      onClick={() => setShowConfirmDialog(true)}
-                    >
-                      Send
-                    </Button>
+          {isCreatingAirdrop ? (
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <Loader2 className="h-12 w-12 animate-spin" />
+              <p>Creating airdrop... Please wait.</p>
+            </div>
+          ) : (
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              {step === 1 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Step 1: Setup Your Wallet</CardTitle>
+                    <CardDescription>
+                      To handle transaction fees and automatically sign
+                      transactions, you'll need to provide a private key. For
+                      security, we recommend creating a new wallet just for this
+                      purpose and transferring the necessary tokens and funds to
+                      it.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Step1
+                      privateKey={privateKey}
+                      rpcUrl={rpcUrl}
+                      privateKeyError={privateKeyError}
+                      rpcUrlError={rpcUrlError}
+                      handlePrivateKeyChange={handlePrivateKeyChange}
+                      handleRpcUrlChange={handleRpcUrlChange}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+              {step === 2 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>
+                      Step 2: Choose Token & Import Addresses
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Step2
+                      tokens={tokens}
+                      selectedToken={selectedToken}
+                      setSelectedToken={setSelectedToken}
+                      noTokensMessage={noTokensMessage}
+                      recipientImportOption={recipientImportOption}
+                      setRecipientImportOption={setRecipientImportOption}
+                      collectionAddress={collectionAddress}
+                      setCollectionAddress={setCollectionAddress}
+                      mintAddress={mintAddress}
+                      setMintAddress={setMintAddress}
+                      csvFile={csvFile}
+                      setCsvFile={setCsvFile}
+                      recipients={recipients}
+                      setRecipients={setRecipients}
+                      rpcUrl={rpcUrl}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+              {step === 3 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Step 3: Set Airdrop Amount</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Step3
+                      amountType={amountType}
+                      setAmountType={setAmountType}
+                      amount={amount}
+                      setAmount={setAmount}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+              {step === 4 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Step 4: Review Your Airdrop</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Step4 airdropOverview={airdropOverview} />
+                  </CardContent>
+                </Card>
+              )}
+              {step === 5 && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <Step5
+                      isAirdropInProgress={isAirdropInProgress}
+                      isAirdropComplete={isAirdropComplete}
+                      sendProgress={sendProgress}
+                      finalizeProgress={finalizeProgress}
+                      sentTransactions={sentTransactions}
+                      finalizedTransactions={finalizedTransactions}
+                      totalTransactions={totalTransactions}
+                      onBackToHome={onBackToHome}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+              {!isAirdropInProgress && !isAirdropComplete && step < 5 && (
+                <div className="flex justify-between items-center">
+                  {step === 1 && (
+                    <div>
+                      <Button
+                        onClick={onBackToHome}
+                        type="button"
+                        variant="outline"
+                      >
+                        Previous
+                      </Button>
+                    </div>
                   )}
+                  {step > 1 && (
+                    <div>
+                      <Button
+                        onClick={() => setStep(step - 1)}
+                        type="button"
+                        variant="outline"
+                      >
+                        Previous
+                      </Button>
+                    </div>
+                  )}
+                  <div>
+                    {step < 4 ? (
+                      <Button type="submit">Next</Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={() => setShowConfirmDialog(true)}
+                      >
+                        Send
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </form>
+              )}
+            </form>
+          )}
         </CardContent>
       </Card>
       {!isAirdropInProgress && !isAirdropComplete && step < 5 && (

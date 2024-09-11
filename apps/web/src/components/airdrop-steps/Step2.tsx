@@ -584,33 +584,29 @@ export default function Step2({
                   </div>
                 ) : importResult ? (
                   importResult.success ? (
-                    <>
+                    <div className="space-y-2">
                       <div className="flex items-center space-x-2 text-green-500">
                         <CircleCheck className="h-4 w-4" />
-                        <p className="text-sm">
+                        <span className="text-sm">
                           Successfully imported {importResult.count} addresses.
-                        </p>
+                        </span>
                       </div>
-                      <p></p>
                       {importResult.rejected > 0 && (
                         <div className="flex items-center space-x-2 text-yellow-500">
                           <CircleAlert className="h-4 w-4" />
-                          <p className="text-sm">
-                            {importResult.rejected} invalid address was not
+                          <span className="text-sm">
+                            {importResult.rejected} invalid address
+                            {importResult.rejected > 1 ? "es were" : " was"} not
                             imported.
-                          </p>
+                          </span>
                         </div>
                       )}
-                    </>
+                    </div>
                   ) : (
-                    <>
-                      {importError && (
-                        <div className="flex items-center space-x-2 text-red-500">
-                          <CircleAlert className="h-4 w-4" />
-                          <p className="text-sm">{importError}</p>
-                        </div>
-                      )}
-                    </>
+                    <div className="flex items-center space-x-2 text-red-500">
+                      <CircleAlert className="h-4 w-4" />
+                      <span className="text-sm">{importError}</span>
+                    </div>
                   )
                 ) : (
                   "Are you sure you want to overwrite the current addresses?"
