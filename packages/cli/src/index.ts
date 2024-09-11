@@ -22,7 +22,7 @@ import {
   normalizeTokenAmount,
   Token,
   init,
-  loadNodeDB,
+  databaseFile,
 } from "@repo/airdrop-sender";
 import ora, { Ora } from "ora";
 import { csv } from "./imports/csv";
@@ -30,6 +30,8 @@ import { chapter2 } from "./imports/chapter-2";
 import { nft } from "./imports/nft";
 import { splToken } from "./imports/spl-token";
 import Tinypool from "tinypool";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import Database from "better-sqlite3";
 
 process.on("SIGINT", exitProgram);
 process.on("SIGTERM", exitProgram);
@@ -39,7 +41,10 @@ const pool = new Tinypool({
 });
 
 // Load the database
-const db = await loadNodeDB();
+const sqlite = new Database(databaseFile);
+sqlite.exec("PRAGMA journal_mode = WAL;");
+
+const db = drizzle(sqlite);
 
 async function main() {
   const packageInfo = await getPackageInfo();

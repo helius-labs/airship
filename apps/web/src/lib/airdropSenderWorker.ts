@@ -2,8 +2,16 @@ import * as airdropsender from "@repo/airdrop-sender";
 import * as web3 from "@solana/web3.js";
 import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
+import { SQLocalDrizzle } from "sqlocal/drizzle";
+import { drizzle } from "drizzle-orm/sqlite-proxy";
+import { databaseFile } from "@repo/airdrop-sender";
 
-const db = await airdropsender.loadBrowserDB();
+const { driver, batchDriver } = new SQLocalDrizzle({
+  databasePath: databaseFile,
+  verbose: false,
+});
+
+const db = drizzle(driver, batchDriver);
 
 export async function create(
   signer: string,

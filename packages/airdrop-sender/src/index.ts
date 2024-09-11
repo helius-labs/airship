@@ -5,6 +5,7 @@ import {
   computeUnitPrice,
   maxAddressesPerTransaction,
   saga2PreOrderTokenMintAddress,
+  databaseFile,
 } from "./config/constants";
 
 import { isSolanaAddress, normalizeTokenAmount, sleep } from "./utils/common";
@@ -28,18 +29,9 @@ import { getTokenAccounts } from "./services/getTokenAccounts";
 import { getTokensByOwner, Token } from "./services/getTokensByOwner";
 import { isFungibleToken } from "./services/isFungibleToken";
 import { isNFTCollection } from "./services/isNFTCollection";
-import {
-  getDatabaseFile,
-  loadNodeDB,
-  loadBrowserDB,
-  NodeDatabase,
-  BrowserDatabase,
-} from "./services/db";
+import { NodeDatabase, BrowserDatabase } from "./services/db";
 
 export {
-  loadNodeDB,
-  loadBrowserDB,
-  getDatabaseFile,
   init,
   create,
   exist,
@@ -65,6 +57,7 @@ export {
   AirdropError,
   AirdropErrorMessage,
   AirdropErrorCode,
+  databaseFile,
 };
 
 export type { Token, NodeDatabase, BrowserDatabase };

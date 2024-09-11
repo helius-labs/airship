@@ -2,7 +2,10 @@ import { useState, useEffect } from "react";
 import { CreateAirdrop } from "./components/CreateAirdrop";
 import { ResumeAirdrop } from "./components/ResumeAirdrop";
 import { AirdropSelection } from "./components/AirdropSelection";
-import { init, exist, loadBrowserDB } from "@repo/airdrop-sender";
+import { init, exist, databaseFile } from "@repo/airdrop-sender";
+import { SQLocalDrizzle } from "sqlocal/drizzle";
+import { drizzle } from "drizzle-orm/sqlite-proxy";
+import { sql } from "drizzle-orm";
 
 // Load the airdrop sender worker
 const airdropSenderWorker = new ComlinkWorker<
@@ -12,16 +15,22 @@ const airdropSenderWorker = new ComlinkWorker<
   type: "module",
 });
 
-// Load the database
-const db = await loadBrowserDB();
-
 function App() {
   const [existingAirdrop, setExistingAirdrop] = useState<boolean | null>(null);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
 
+  const { driver, batchDriver } = new SQLocalDrizzle({
+    databasePath: databaseFile,
+    verbose: false,
+  });
+
+  const db = drizzle(driver, batchDriver);
+
   useEffect(() => {
     async function initApp() {
       try {
+        await db.run(sql`PRAGMA journal_mode = WAL;`);
+
         // Initialize the airdrop sender
         await init({ db });
 
@@ -34,7 +43,7 @@ function App() {
       }
     }
     void initApp();
-  }, []);
+  }, [db]);
 
   const handleCreateAirdrop = () => {
     setSelectedAction("create");

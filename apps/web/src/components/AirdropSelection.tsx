@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { getDatabaseFile } from "@repo/airdrop-sender";
+import { databaseFile } from "@repo/airdrop-sender";
+import { SQLocalDrizzle } from "sqlocal/drizzle";
 
 interface AirdropSelectionProps {
   existingAirdrop: boolean | null;
@@ -54,8 +55,12 @@ export function AirdropSelection({
   };
 
   const downloadDB = async () => {
-    const databaseFile = await getDatabaseFile();
-    const fileUrl = URL.createObjectURL(databaseFile);
+    const { getDatabaseFile } = new SQLocalDrizzle({
+      databasePath: databaseFile,
+    });
+
+    const databaseUrl = await getDatabaseFile();
+    const fileUrl = URL.createObjectURL(databaseUrl);
 
     const a = document.createElement("a");
     a.href = fileUrl;

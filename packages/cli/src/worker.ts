@@ -1,8 +1,12 @@
 import * as airdropsender from "@repo/airdrop-sender";
 import * as web3 from "@solana/web3.js";
-
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import Database from "better-sqlite3";
 // Load the database
-const db = await airdropsender.loadNodeDB();
+const sqlite = new Database(airdropsender.databaseFile);
+sqlite.exec("PRAGMA journal_mode = WAL;");
+
+const db = drizzle(sqlite);
 
 export async function create({
   signer,
