@@ -85,6 +85,10 @@ export function CreateAirdrop({
       recipients: "",
       amountType: "fixed",
       amount: "",
+      recipientImportOption: "saga2",
+      collectionAddress: "",
+      mintAddress: "",
+      csvFile: "",
     },
   });
 
@@ -219,7 +223,6 @@ export function CreateAirdrop({
     }
 
     if (step === 3) {
-      console.log(values);
       try {
         const keypair = Keypair.fromSecretKey(bs58.decode(values.privateKey));
         const recipientList =

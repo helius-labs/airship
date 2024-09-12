@@ -82,6 +82,8 @@ export default function Step2({ form, tokens, rpcUrl }: Step2Props) {
   const [csvFile, setCsvFile] = useState<File | null>(null);
 
   const recipientImportOption = watch("recipientImportOption");
+  const collectionAddress = watch("collectionAddress");
+  const mintAddress = watch("mintAddress");
 
   useEffect(() => {
     setImportError(null);
@@ -90,11 +92,12 @@ export default function Step2({ form, tokens, rpcUrl }: Step2Props) {
   const validateInput = async (): Promise<string | null> => {
     switch (recipientImportOption) {
       case "nft":
-        if (!isSolanaAddress(collectionAddress)) {
+        if (collectionAddress && !isSolanaAddress(collectionAddress)) {
           setCollectionAddressError("Please enter a collection address");
           return "Please enter a collection address";
         }
         if (
+          collectionAddress &&
           !(await isNFTCollection({
             url: rpcUrl,
             collectionAddress: new PublicKey(collectionAddress),
@@ -108,11 +111,12 @@ export default function Step2({ form, tokens, rpcUrl }: Step2Props) {
         setCollectionAddressError(null);
         break;
       case "spl":
-        if (!isSolanaAddress(mintAddress)) {
+        if (mintAddress && !isSolanaAddress(mintAddress)) {
           setMintAddressError("Please enter a mint address");
           return "Please enter a mint address";
         }
         if (
+          mintAddress &&
           !(await isFungibleToken({
             url: rpcUrl,
             tokenAddress: new PublicKey(mintAddress),
