@@ -7,11 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import {
   AlertCircle,
-  AlertTriangle,
-  HelpCircle,
   Upload,
   File,
   X,
@@ -35,7 +32,6 @@ import {
   Token,
 } from "@repo/airdrop-sender";
 import { useDropzone } from "react-dropzone";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
   getCollectionHolders,
   getTokenAccounts,
@@ -51,42 +47,33 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../ui/form";
+import { FormValues } from "@/schemas/formSchema";
+import { UseFormReturn } from "react-hook-form";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 interface Step2Props {
+  form: UseFormReturn<FormValues>;
   tokens: Token[];
-  selectedToken: string;
-  setSelectedToken: (value: string) => void;
-  noTokensMessage: string | null;
-  recipientImportOption: string;
-  setRecipientImportOption: (value: string) => void;
-  collectionAddress: string;
-  setCollectionAddress: (value: string) => void;
-  mintAddress: string;
-  setMintAddress: (value: string) => void;
-  csvFile: File | null;
-  setCsvFile: (file: File | null) => void;
-  recipients: string;
   rpcUrl: string;
-  setRecipients: (value: string) => void;
+  noTokensMessage: string | null;
 }
 
 export default function Step2({
+  form,
   tokens,
-  selectedToken,
-  setSelectedToken,
-  noTokensMessage,
-  recipientImportOption,
-  setRecipientImportOption,
-  collectionAddress,
-  setCollectionAddress,
-  mintAddress,
-  setMintAddress,
-  csvFile,
-  setCsvFile,
-  recipients,
   rpcUrl,
-  setRecipients,
+  noTokensMessage,
 }: Step2Props) {
+  const { control, watch, setValue } = form;
+
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
@@ -100,6 +87,11 @@ export default function Step2({
     rejected: number;
   } | null>(null);
   const [csvFileError, setCsvFileError] = useState<string | null>(null);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+
+  const recipientImportOption = watch("recipientImportOption");
+  const collectionAddress = watch("collectionAddress");
+  const mintAddress = watch("mintAddress");
 
   useEffect(() => {
     setImportError(null);
@@ -108,11 +100,12 @@ export default function Step2({
   const validateInput = async (): Promise<string | null> => {
     switch (recipientImportOption) {
       case "nft":
-        if (!isSolanaAddress(collectionAddress)) {
+        if (collectionAddress && !isSolanaAddress(collectionAddress)) {
           setCollectionAddressError("Please enter a collection address");
           return "Please enter a collection address";
         }
         if (
+          collectionAddress &&
           !(await isNFTCollection({
             url: rpcUrl,
             collectionAddress: new PublicKey(collectionAddress),
@@ -126,11 +119,12 @@ export default function Step2({
         setCollectionAddressError(null);
         break;
       case "spl":
-        if (!isSolanaAddress(mintAddress)) {
+        if (mintAddress && !isSolanaAddress(mintAddress)) {
           setMintAddressError("Please enter a mint address");
           return "Please enter a mint address";
         }
         if (
+          mintAddress &&
           !(await isFungibleToken({
             url: rpcUrl,
             tokenAddress: new PublicKey(mintAddress),
@@ -164,7 +158,7 @@ export default function Step2({
     setIsImporting(true);
     setImportError(null);
     setImportResult(null);
-    setRecipients("");
+    setValue("recipients", "", { shouldValidate: true });
     let addresses: string[] = [];
     let rejectedCount = 0;
 
@@ -235,7 +229,7 @@ export default function Step2({
           "No addresses found. Are you maybe connected to Devnet? Please check your input and try again."
         );
       } else {
-        setRecipients(addresses.join("\n"));
+        setValue("recipients", addresses.join("\n"), { shouldValidate: true });
         setImportResult({
           success: true,
           count: addresses.length,
@@ -255,23 +249,13 @@ export default function Step2({
     }
   };
 
-  const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      if (acceptedFiles.length > 0) {
-        const file = acceptedFiles[0];
-        setCsvFile(file);
-        setCsvFileError(null); // Clear the error message when a file is uploaded
-      }
-    },
-    [setCsvFile]
-  );
-
-  const recipientsOnChange = useCallback(
-    (value: string) => {
-      setRecipients(value);
-    },
-    [setRecipients]
-  );
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      const file = acceptedFiles[0];
+      setCsvFile(file);
+      setCsvFileError(null);
+    }
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -283,208 +267,176 @@ export default function Step2({
 
   return (
     <div className="space-y-6">
-      <div className="space-y-3">
-        <Label htmlFor="tokenSelect">Which token do you want to airdrop?</Label>
-        {noTokensMessage ? (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>No Tokens Found</AlertTitle>
-            <AlertDescription>{noTokensMessage}</AlertDescription>
-          </Alert>
-        ) : (
-          <Select
-            value={selectedToken}
-            onValueChange={(value) => {
-              setSelectedToken(value);
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a token" />
-            </SelectTrigger>
-            <SelectContent>
-              {tokens.map((token) => (
-                <SelectItem
-                  key={token.mintAddress.toString()}
-                  value={token.mintAddress.toString()}
+      <FormField
+        control={control}
+        name="selectedToken"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Which token do you want to airdrop?</FormLabel>
+            <FormControl>
+              {noTokensMessage ? (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>No Tokens Found</AlertTitle>
+                  <AlertDescription>{noTokensMessage}</AlertDescription>
+                </Alert>
+              ) : (
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
                 >
-                  {token.name && token.symbol
-                    ? `${token.name}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })} ${token.symbol}`
-                    : `${token.mintAddress.toString()}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a token" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tokens.map((token) => (
+                      <SelectItem
+                        key={token.mintAddress.toString()}
+                        value={token.mintAddress.toString()}
+                      >
+                        {token.name && token.symbol
+                          ? `${token.name}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })} ${token.symbol}`
+                          : `${token.mintAddress.toString()}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )}
-      </div>
-      <div className="space-y-3">
-        <Label>How would you like to add addresses?</Label>
-        <RadioGroup
-          value={recipientImportOption}
-          onValueChange={setRecipientImportOption}
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
-        >
-          {[
-            {
-              value: "saga2",
-              icon: Smartphone,
-              title: "Import Chapter 2 Preorder Token holders",
-              description:
-                "Import Solana Mobile Chapter 2 Preorder Token holders using the DAS API. This can take a few minutes.",
-            },
-            {
-              value: "nft",
-              icon: Images,
-              title: "Import NFT/cNFT Collection holders",
-              description:
-                "Import NFT/cNFT Collection holders using the DAS API. This can take a few minutes.",
-            },
-            {
-              value: "spl",
-              icon: Coins,
-              title: "Import SPL Token holders",
-              description:
-                "Import SPL Token holders using the DAS API. This can take a few minutes. ",
-            },
-            {
-              value: "csv",
-              icon: FileSpreadsheet,
-              title: "Upload a CSV file",
-              description:
-                "Import addresses from a CSV file. 1 address per line.",
-            },
-          ].map((option) => (
-            <div key={option.value} className="relative">
-              <RadioGroupItem
-                value={option.value}
-                id={option.value}
-                className="peer sr-only"
-              />
-              <Label
-                htmlFor={option.value}
-                className="flex items-start rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
+      />
+
+      <FormField
+        control={control}
+        name="recipientImportOption"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>How would you like to add addresses?</FormLabel>
+            <FormControl>
+              <RadioGroup
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                className="grid grid-cols-1 md:grid-cols-2 gap-4"
               >
-                <div className="flex h-full">
-                  <option.icon className="h-6 w-6 mr-4 mt-1 flex-shrink-0" />
-                  <div className="flex flex-col justify-start h-full">
-                    <p className="text-sm font-medium leading-none">
-                      {option.title}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {option.description}
-                    </p>
+                {[
+                  {
+                    value: "saga2",
+                    icon: Smartphone,
+                    title: "Import Chapter 2 Preorder Token holders",
+                    description:
+                      "Import Solana Mobile Chapter 2 Preorder Token holders using the DAS API. This can take a few minutes.",
+                  },
+                  {
+                    value: "nft",
+                    icon: Images,
+                    title: "Import NFT/cNFT Collection holders",
+                    description:
+                      "Import NFT/cNFT Collection holders using the DAS API. This can take a few minutes.",
+                  },
+                  {
+                    value: "spl",
+                    icon: Coins,
+                    title: "Import SPL Token holders",
+                    description:
+                      "Import SPL Token holders using the DAS API. This can take a few minutes. ",
+                  },
+                  {
+                    value: "csv",
+                    icon: FileSpreadsheet,
+                    title: "Upload a CSV file",
+                    description:
+                      "Import addresses from a CSV file. 1 address per line.",
+                  },
+                ].map((option) => (
+                  <div key={option.value} className="relative">
+                    <RadioGroupItem
+                      value={option.value}
+                      id={option.value}
+                      className="peer sr-only"
+                    />
+                    <Label
+                      htmlFor={option.value}
+                      className="flex items-start rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
+                    >
+                      <div className="flex h-full">
+                        <option.icon className="h-6 w-6 mr-4 mt-1 flex-shrink-0" />
+                        <div className="flex flex-col justify-start h-full">
+                          <p className="text-sm font-medium leading-none">
+                            {option.title}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {option.description}
+                          </p>
+                        </div>
+                      </div>
+                    </Label>
                   </div>
-                </div>
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
-      </div>
+                ))}
+              </RadioGroup>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       {recipientImportOption === "nft" && (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="collectionAddress">Collection Address</Label>
-            <Popover>
-              <PopoverTrigger>
-                <HelpCircle className="h-4 w-4" />
-              </PopoverTrigger>
-              <PopoverContent className="space-y-2">
-                <strong>To find the collection address:</strong>
-                <ol className="list-decimal list-inside">
-                  <li>
-                    Go to{" "}
-                    <a
-                      href="https://www.tensor.trade/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary font-medium hover:underline"
-                    >
-                      Tensor
-                    </a>
-                    .
-                  </li>
-                  <li>
-                    Search for the collection and open the details view of 1 of
-                    the NFTs.
-                  </li>
-                  <li>Copy the mint address.</li>
-                  <li>
-                    Go to{" "}
-                    <a
-                      href="https://explorer.solana.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary font-medium hover:underline"
-                    >
-                      Solana Explorer
-                    </a>{" "}
-                    and open the mint address.
-                  </li>
-                  <li>Copy the Verified Collection Address.</li>
-                </ol>
-              </PopoverContent>
-            </Popover>
-          </div>
-          <Input
-            id="collectionAddress"
-            placeholder="Enter the NFT collection address"
-            value={collectionAddress}
-            onChange={(e) => {
-              setCollectionAddress(e.target.value);
-              setCollectionAddressError(null);
-            }}
-          />
-          {collectionAddressError && (
-            <div className="flex items-center space-x-2 text-red-500">
-              <AlertCircle className="h-4 w-4" />
-              <p className="text-sm">{collectionAddressError}</p>
-            </div>
+        <FormField
+          control={control}
+          name="collectionAddress"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Collection Address</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="Enter the NFT collection address"
+                  onChange={(e) => {
+                    field.onChange(e);
+                    setCollectionAddressError(null);
+                  }}
+                />
+              </FormControl>
+              {collectionAddressError && (
+                <div className="flex items-center space-x-2 text-red-500">
+                  <AlertCircle className="h-4 w-4" />
+                  <p className="text-sm">{collectionAddressError}</p>
+                </div>
+              )}
+              <FormMessage />
+            </FormItem>
           )}
-        </div>
+        />
       )}
+
       {recipientImportOption === "spl" && (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="mintAddress">SPL Token Mint Address</Label>
-            <Popover>
-              <PopoverTrigger>
-                <HelpCircle className="h-4 w-4" />
-              </PopoverTrigger>
-              <PopoverContent className="space-y-2">
-                <strong>To find the SPL Token Mint Address:</strong>
-                <ol className="list-decimal list-inside">
-                  <li>
-                    Go to a Solana explorer (e.g., Solana Explorer or Solscan)
-                  </li>
-                  <li>Search for the token by its name or symbol</li>
-                  <li>
-                    Look for &quot;Mint Address&quot; or &quot;Token
-                    Address&quot;
-                  </li>
-                  <li>Copy the address associated with the token</li>
-                </ol>
-                <p>
-                  Note: This is different from your personal token account
-                  address.
-                </p>
-              </PopoverContent>
-            </Popover>
-          </div>
-          <Input
-            id="mintAddress"
-            placeholder="Enter the SPL Token Mint Address"
-            value={mintAddress}
-            onChange={(e) => {
-              setMintAddress(e.target.value);
-              setMintAddressError(null);
-            }}
-          />
-          {mintAddressError && (
-            <div className="flex items-center space-x-2 text-red-500">
-              <AlertCircle className="h-4 w-4" />
-              <p className="text-sm">{mintAddressError}</p>
-            </div>
+        <FormField
+          control={control}
+          name="mintAddress"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>SPL Token Mint Address</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="Enter the SPL Token Mint Address"
+                  onChange={(e) => {
+                    field.onChange(e);
+                    setMintAddressError(null);
+                  }}
+                />
+              </FormControl>
+              {mintAddressError && (
+                <div className="flex items-center space-x-2 text-red-500">
+                  <AlertCircle className="h-4 w-4" />
+                  <p className="text-sm">{mintAddressError}</p>
+                </div>
+              )}
+              <FormMessage />
+            </FormItem>
           )}
-        </div>
+        />
       )}
 
       {recipientImportOption === "csv" && (
@@ -576,41 +528,46 @@ export default function Step2({
                     ? "Import Result"
                     : "Confirm Import"}
               </DialogTitle>
-              <DialogDescription className="pt-4 space-y-2">
-                {isImporting ? (
-                  <div className="flex space-x-2">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                    <span>Importing addresses, please wait...</span>
-                  </div>
-                ) : importResult ? (
-                  importResult.success ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2 text-green-500">
-                        <CircleCheck className="h-4 w-4" />
-                        <span className="text-sm">
-                          Successfully imported {importResult.count} addresses.
-                        </span>
-                      </div>
-                      {importResult.rejected > 0 && (
-                        <div className="flex items-center space-x-2 text-yellow-500">
-                          <CircleAlert className="h-4 w-4" />
+              <DialogDescription asChild>
+                <div className="pt-4 space-y-2">
+                  {isImporting ? (
+                    <div className="flex space-x-2">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span>Importing addresses, please wait...</span>
+                    </div>
+                  ) : importResult ? (
+                    importResult.success ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2 text-green-500">
+                          <CircleCheck className="h-4 w-4" />
                           <span className="text-sm">
-                            {importResult.rejected} invalid address
-                            {importResult.rejected > 1 ? "es were" : " was"} not
-                            imported.
+                            Successfully imported {importResult.count}{" "}
+                            addresses.
                           </span>
                         </div>
-                      )}
-                    </div>
+                        {importResult.rejected > 0 && (
+                          <div className="flex items-center space-x-2 text-yellow-500">
+                            <CircleAlert className="h-4 w-4" />
+                            <span className="text-sm">
+                              {importResult.rejected} invalid address
+                              {importResult.rejected > 1
+                                ? "es were"
+                                : " was"}{" "}
+                              not imported.
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2 text-red-500">
+                        <CircleAlert className="h-4 w-4" />
+                        <span className="text-sm">{importError}</span>
+                      </div>
+                    )
                   ) : (
-                    <div className="flex items-center space-x-2 text-red-500">
-                      <CircleAlert className="h-4 w-4" />
-                      <span className="text-sm">{importError}</span>
-                    </div>
-                  )
-                ) : (
-                  "Are you sure you want to overwrite the current addresses?"
-                )}
+                    "Are you sure you want to overwrite the current addresses?"
+                  )}
+                </div>
               </DialogDescription>
             </DialogHeader>
             {!isImporting && !importResult && (
@@ -640,17 +597,26 @@ export default function Step2({
           </DialogContent>
         </Dialog>
       </div>
-      <div className="space-y-3">
-        <Label htmlFor="recipients">Imported Addresses</Label>
-        <CodeMirror
-          id="recipients"
-          value={recipients}
-          onChange={recipientsOnChange}
-          placeholder="One address per line"
-          theme="dark"
-          height="200px"
-        />
-      </div>
+
+      <FormField
+        control={control}
+        name="recipients"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Imported Addresses</FormLabel>
+            <FormControl>
+              <CodeMirror
+                value={field.value}
+                onChange={(value) => field.onChange(value)}
+                placeholder="One address per line"
+                theme="dark"
+                height="200px"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 }
