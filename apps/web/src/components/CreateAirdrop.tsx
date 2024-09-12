@@ -53,8 +53,6 @@ export function CreateAirdrop({
 }: CreateAirdropProps) {
   const [step, setStep] = useState(1);
   const [tokens, setTokens] = useState<Token[]>([]);
-  const [selectedToken, setSelectedToken] = useState<string>("");
-  const [recipients, setRecipients] = useState("");
   const [noTokensMessage, setNoTokensMessage] = useState<string | null>(null);
   const [airdropOverview, setAirdropOverview] = useState<{
     keypairAddress: string;
@@ -76,11 +74,6 @@ export function CreateAirdrop({
   const [finalizedTransactions, setFinalizedTransactions] = useState(0);
   const [isAirdropInProgress, setIsAirdropInProgress] = useState(false);
   const [isAirdropComplete, setIsAirdropComplete] = useState(false);
-  const [recipientImportOption, setRecipientImportOption] =
-    useState<string>("saga2");
-  const [collectionAddress, setCollectionAddress] = useState("");
-  const [mintAddress, setMintAddress] = useState("");
-  const [csvFile, setCsvFile] = useState<File | null>(null);
   const [isCreatingAirdrop, setIsCreatingAirdrop] = useState(false);
 
   const form = useForm<FormValues>({
@@ -98,6 +91,8 @@ export function CreateAirdrop({
   const { watch } = form;
   const privateKey = watch("privateKey");
   const rpcUrl = watch("rpcUrl");
+  const selectedToken = watch("selectedToken");
+  const recipients = watch("recipients");
 
   useEffect(() => {
     async function loadTokens() {
@@ -228,12 +223,12 @@ export function CreateAirdrop({
       try {
         const keypair = Keypair.fromSecretKey(bs58.decode(values.privateKey));
         const recipientList =
-          recipients
+          values.recipients
             ?.split("\n")
             .map((address) => new PublicKey(address.trim())) || [];
 
         const selectedTokenInfo = tokens.find(
-          (t) => t.mintAddress.toString() === selectedToken
+          (t) => t.mintAddress.toString() === values.selectedToken
         );
 
         if (!selectedTokenInfo) {
@@ -330,23 +325,7 @@ export function CreateAirdrop({
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <Step2
-                        tokens={tokens}
-                        selectedToken={selectedToken}
-                        setSelectedToken={setSelectedToken}
-                        noTokensMessage={noTokensMessage}
-                        recipientImportOption={recipientImportOption}
-                        setRecipientImportOption={setRecipientImportOption}
-                        collectionAddress={collectionAddress}
-                        setCollectionAddress={setCollectionAddress}
-                        mintAddress={mintAddress}
-                        setMintAddress={setMintAddress}
-                        csvFile={csvFile}
-                        setCsvFile={setCsvFile}
-                        recipients={recipients}
-                        setRecipients={setRecipients}
-                        rpcUrl={rpcUrl}
-                      />
+                      <Step2 form={form} tokens={tokens} rpcUrl={rpcUrl} />
                     </CardContent>
                   </Card>
                 )}
