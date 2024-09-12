@@ -1,15 +1,7 @@
 import * as airdropsender from "@repo/airdrop-sender";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Token } from "@repo/airdrop-sender";
-import {
-  getTokensByOwner,
-  normalizeTokenAmount,
-  maxAddressesPerTransaction,
-  computeUnitPrice,
-  computeUnitLimit,
-  baseFee,
-  compressionFee,
-} from "@repo/airdrop-sender";
+import { getTokensByOwner } from "@repo/airdrop-sender";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 import { Button } from "../components/ui/button";
@@ -38,7 +30,7 @@ import { AirdropSenderWorker } from "@/types/AirdropSenderWorker";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
-import { formSchema, FormValues } from "@/schemas/formSchema";
+import { FormValues, validationSchema } from "@/schemas/formSchema";
 
 interface CreateAirdropProps {
   db: airdropsender.BrowserDatabase;
@@ -54,18 +46,8 @@ export function CreateAirdrop({
   const [step, setStep] = useState(1);
   const [tokens, setTokens] = useState<Token[]>([]);
   const [noTokensMessage, setNoTokensMessage] = useState<string | null>(null);
-  const [airdropOverview, setAirdropOverview] = useState<{
-    keypairAddress: string;
-    token: string;
-    totalAddresses: number;
-    amountPerAddress: string;
-    totalAmount: string;
-    numberOfTransactions: number;
-    approximateTransactionFee: string;
-    approximateCompressionFee: string;
-    rpcUrl: string;
-  } | null>(null);
   const [amountValue, setAmountValue] = useState<bigint | null>(null);
+  const [recipientList, setRecipientList] = useState<string[]>([]);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [sendProgress, setSendProgress] = useState(0);
   const [finalizeProgress, setFinalizeProgress] = useState(0);
@@ -76,15 +58,17 @@ export function CreateAirdrop({
   const [isAirdropComplete, setIsAirdropComplete] = useState(false);
   const [isCreatingAirdrop, setIsCreatingAirdrop] = useState(false);
 
+  const currentValidationSchema = validationSchema[step - 1];
+
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(currentValidationSchema),
     defaultValues: {
       privateKey: "",
       rpcUrl: "",
       selectedToken: "",
       recipients: "",
       amountType: "fixed",
-      amount: "",
+      amount: 0,
       recipientImportOption: "saga2",
       collectionAddress: "",
       mintAddress: "",
@@ -93,10 +77,36 @@ export function CreateAirdrop({
   });
 
   const { watch } = form;
-  const privateKey = watch("privateKey");
-  const rpcUrl = watch("rpcUrl");
-  const selectedToken = watch("selectedToken");
-  const recipients = watch("recipients");
+  const { privateKey, rpcUrl, selectedToken, recipients, amount, amountType } =
+    watch();
+
+  const calculateAmountValue = useCallback(() => {
+    const selectedTokenInfo = tokens.find(
+      (t) => t.mintAddress.toString() === selectedToken
+    );
+
+    if (!selectedTokenInfo || !amount) {
+      return null;
+    }
+
+    if (recipientList.length === 0) {
+      return null;
+    }
+
+    if (amountType === "fixed") {
+      return BigInt(Math.floor(amount * 10 ** selectedTokenInfo.decimals));
+    } else {
+      // Percent
+      const totalAmount = BigInt(selectedTokenInfo.amount);
+      const calculatedAmount =
+        (totalAmount * BigInt(Math.floor(amount * 100))) / BigInt(10000);
+      return calculatedAmount / BigInt(recipientList.length);
+    }
+  }, [tokens, selectedToken, amount, amountType, recipientList]);
+
+  useEffect(() => {
+    setAmountValue(calculateAmountValue());
+  }, [calculateAmountValue]);
 
   useEffect(() => {
     async function loadTokens() {
@@ -124,45 +134,6 @@ export function CreateAirdrop({
     void loadTokens();
   }, [privateKey, rpcUrl]);
 
-  const calculateAirdropOverview = (
-    keypair: Keypair,
-    selectedTokenInfo: Token,
-    recipientList: PublicKey[],
-    amountValue: bigint,
-    rpcUrl: string
-  ) => {
-    const numberOfTransactions = BigInt(
-      Math.ceil(recipientList.length / Number(maxAddressesPerTransaction))
-    );
-    const transactionFee =
-      BigInt(baseFee) +
-      (BigInt(computeUnitLimit) * BigInt(computeUnitPrice)) / BigInt(1e9);
-
-    const totalAmount = amountValue * BigInt(recipientList.length);
-
-    return {
-      keypairAddress: keypair.publicKey.toBase58(),
-      token: selectedTokenInfo.name || selectedTokenInfo.mintAddress.toString(),
-      totalAddresses: recipientList.length,
-      amountPerAddress: normalizeTokenAmount(
-        amountValue.toString(),
-        selectedTokenInfo.decimals
-      ).toLocaleString("en-US", {
-        maximumFractionDigits: selectedTokenInfo.decimals,
-      }),
-      totalAmount: normalizeTokenAmount(
-        totalAmount.toString(),
-        selectedTokenInfo.decimals
-      ).toLocaleString("en-US", {
-        maximumFractionDigits: selectedTokenInfo.decimals,
-      }),
-      numberOfTransactions: Number(numberOfTransactions),
-      approximateTransactionFee: `${Number(numberOfTransactions * transactionFee) / 1e9} SOL`,
-      approximateCompressionFee: `${Number(BigInt(recipientList.length) * BigInt(compressionFee)) / 1e9} SOL`,
-      rpcUrl: rpcUrl,
-    };
-  };
-
   const handleSendAirdrop = async () => {
     setShowConfirmDialog(false);
     setIsCreatingAirdrop(true);
@@ -173,13 +144,10 @@ export function CreateAirdrop({
       }
 
       const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
-      const recipientList = recipients
-        .split("\n")
-        .map((address) => new PublicKey(address.trim()));
 
       await airdropSenderWorker.create(
         keypair.publicKey.toBase58(),
-        recipientList.map((r) => r.toBase58()),
+        recipientList,
         amountValue,
         selectedToken
       );
@@ -216,60 +184,19 @@ export function CreateAirdrop({
     }
   };
 
-  const onSubmit = async (values: FormValues) => {
-    if (step < 3) {
-      setStep(step + 1);
-      return;
+  const onSubmit = async () => {
+    if (step === 2) {
+      // TODO: validate addresses
+      const recipientList = recipients
+        .split("\n")
+        .filter(Boolean)
+        .map((address) => new PublicKey(address.trim()).toBase58());
+
+      setRecipientList(recipientList);
     }
 
-    if (step === 3) {
-      try {
-        const keypair = Keypair.fromSecretKey(bs58.decode(values.privateKey));
-        const recipientList =
-          values.recipients
-            ?.split("\n")
-            .map((address) => new PublicKey(address.trim())) || [];
-
-        const selectedTokenInfo = tokens.find(
-          (t) => t.mintAddress.toString() === values.selectedToken
-        );
-
-        if (!selectedTokenInfo) {
-          throw new Error("Selected token not found");
-        }
-
-        let calculatedAmountValue: bigint;
-        if (values.amountType === "fixed") {
-          const fixedAmount = parseFloat(values.amount || "0");
-          calculatedAmountValue = BigInt(
-            Math.floor(fixedAmount * 10 ** selectedTokenInfo.decimals)
-          );
-        } else {
-          // Percent
-          const percentAmount = parseFloat(values.amount || "0");
-          const totalAmount = BigInt(selectedTokenInfo.amount);
-          const calculatedAmount =
-            (totalAmount * BigInt(Math.floor(percentAmount * 100))) /
-            BigInt(10000);
-          calculatedAmountValue =
-            calculatedAmount / BigInt(recipientList.length);
-        }
-
-        setAmountValue(calculatedAmountValue);
-
-        const overview = calculateAirdropOverview(
-          keypair,
-          selectedTokenInfo,
-          recipientList,
-          calculatedAmountValue,
-          values.rpcUrl
-        );
-        setAirdropOverview(overview);
-        setStep(4);
-      } catch (error) {
-        console.error("Failed to calculate airdrop overview:", error);
-        alert("Failed to calculate airdrop overview. Please try again.");
-      }
+    if (step < 4) {
+      setStep(step + 1);
       return;
     }
 
@@ -328,7 +255,12 @@ export function CreateAirdrop({
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <Step2 form={form} tokens={tokens} rpcUrl={rpcUrl} />
+                      <Step2
+                        form={form}
+                        tokens={tokens}
+                        rpcUrl={rpcUrl}
+                        noTokensMessage={noTokensMessage}
+                      />
                     </CardContent>
                   </Card>
                 )}
@@ -348,7 +280,12 @@ export function CreateAirdrop({
                       <CardTitle>Step 4: Review Your Airdrop</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <Step4 airdropOverview={airdropOverview} />
+                      <Step4
+                        form={form}
+                        tokens={tokens}
+                        recipientList={recipientList}
+                        amountValue={amountValue ?? BigInt(0)}
+                      />
                     </CardContent>
                   </Card>
                 )}

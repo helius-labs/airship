@@ -1,6 +1,23 @@
+import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableRow } from "../ui/table";
+import { UseFormReturn } from "react-hook-form";
+import { FormValues } from "@/schemas/formSchema";
+import {
+  Token,
+  normalizeTokenAmount,
+  maxAddressesPerTransaction,
+  computeUnitPrice,
+  computeUnitLimit,
+  baseFee,
+  compressionFee,
+} from "@repo/airdrop-sender";
+import { Keypair } from "@solana/web3.js";
+import bs58 from "bs58";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { AlertTriangle } from "lucide-react";
+import { Skeleton } from "../ui/skeleton"; // Import the Skeleton component
 
-interface AirdropOverview {
+interface AirdropOverviewInterface {
   keypairAddress: string;
   token: string;
   totalAddresses: number;
@@ -13,10 +30,113 @@ interface AirdropOverview {
 }
 
 interface Step4Props {
-  airdropOverview: AirdropOverview | null;
+  form: UseFormReturn<FormValues>;
+  tokens: Token[];
+  recipientList: string[];
+  amountValue: bigint;
 }
 
-export default function Step4({ airdropOverview }: Step4Props) {
+export default function Step4({
+  form,
+  tokens,
+  recipientList,
+  amountValue,
+}: Step4Props) {
+  const [airdropOverview, setAirdropOverview] =
+    useState<AirdropOverviewInterface | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isCalculating, setIsCalculating] = useState(true);
+
+  const { privateKey, selectedToken, rpcUrl } = form.getValues();
+
+  useEffect(() => {
+    const calculateAirdropOverview = async () => {
+      setIsCalculating(true);
+      setError(null);
+
+      try {
+        const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
+        const selectedTokenInfo = tokens.find(
+          (t) => t.mintAddress.toString() === selectedToken
+        );
+
+        if (!selectedTokenInfo) {
+          throw new Error("Selected token not found");
+        }
+
+        const numberOfTransactions = BigInt(
+          Math.ceil(recipientList.length / Number(maxAddressesPerTransaction))
+        );
+        const transactionFee =
+          BigInt(baseFee) +
+          (BigInt(computeUnitLimit) * BigInt(computeUnitPrice)) / BigInt(1e9);
+
+        const totalAmount = amountValue * BigInt(recipientList.length);
+
+        const overview = {
+          keypairAddress: keypair.publicKey.toBase58(),
+          token:
+            selectedTokenInfo.name || selectedTokenInfo.mintAddress.toString(),
+          totalAddresses: recipientList.length,
+          amountPerAddress: normalizeTokenAmount(
+            amountValue.toString(),
+            selectedTokenInfo.decimals
+          ).toLocaleString("en-US", {
+            maximumFractionDigits: selectedTokenInfo.decimals,
+          }),
+          totalAmount: normalizeTokenAmount(
+            totalAmount.toString(),
+            selectedTokenInfo.decimals
+          ).toLocaleString("en-US", {
+            maximumFractionDigits: selectedTokenInfo.decimals,
+          }),
+          numberOfTransactions: Number(numberOfTransactions),
+          approximateTransactionFee: `${Number(numberOfTransactions * transactionFee) / 1e9} SOL`,
+          approximateCompressionFee: `${Number(BigInt(recipientList.length) * BigInt(compressionFee)) / 1e9} SOL`,
+          rpcUrl: rpcUrl,
+        };
+
+        setAirdropOverview(overview);
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error("Failed to calculate airdrop overview:", error);
+          setError(`Failed to calculate airdrop overview: ${error.message}`);
+        }
+        setAirdropOverview(null);
+      } finally {
+        setIsCalculating(false);
+      }
+    };
+
+    calculateAirdropOverview();
+  }, [amountValue, privateKey, recipientList, rpcUrl, selectedToken, tokens]);
+
+  if (isCalculating) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-4 w-5/6" />
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-4 w-5/6" />
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <>
       {airdropOverview && (

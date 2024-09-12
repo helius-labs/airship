@@ -56,14 +56,22 @@ import {
 } from "../ui/form";
 import { FormValues } from "@/schemas/formSchema";
 import { UseFormReturn } from "react-hook-form";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 interface Step2Props {
   form: UseFormReturn<FormValues>;
   tokens: Token[];
   rpcUrl: string;
+  noTokensMessage: string | null;
 }
 
-export default function Step2({ form, tokens, rpcUrl }: Step2Props) {
+export default function Step2({
+  form,
+  tokens,
+  rpcUrl,
+  noTokensMessage,
+}: Step2Props) {
   const { control, watch, setValue } = form;
 
   const [isImporting, setIsImporting] = useState(false);
@@ -266,23 +274,34 @@ export default function Step2({ form, tokens, rpcUrl }: Step2Props) {
           <FormItem>
             <FormLabel>Which token do you want to airdrop?</FormLabel>
             <FormControl>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a token" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tokens.map((token) => (
-                    <SelectItem
-                      key={token.mintAddress.toString()}
-                      value={token.mintAddress.toString()}
-                    >
-                      {token.name && token.symbol
-                        ? `${token.name}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })} ${token.symbol}`
-                        : `${token.mintAddress.toString()}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {noTokensMessage ? (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>No Tokens Found</AlertTitle>
+                  <AlertDescription>{noTokensMessage}</AlertDescription>
+                </Alert>
+              ) : (
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a token" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tokens.map((token) => (
+                      <SelectItem
+                        key={token.mintAddress.toString()}
+                        value={token.mintAddress.toString()}
+                      >
+                        {token.name && token.symbol
+                          ? `${token.name}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })} ${token.symbol}`
+                          : `${token.mintAddress.toString()}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -509,41 +528,46 @@ export default function Step2({ form, tokens, rpcUrl }: Step2Props) {
                     ? "Import Result"
                     : "Confirm Import"}
               </DialogTitle>
-              <DialogDescription className="pt-4 space-y-2">
-                {isImporting ? (
-                  <div className="flex space-x-2">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                    <span>Importing addresses, please wait...</span>
-                  </div>
-                ) : importResult ? (
-                  importResult.success ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2 text-green-500">
-                        <CircleCheck className="h-4 w-4" />
-                        <span className="text-sm">
-                          Successfully imported {importResult.count} addresses.
-                        </span>
-                      </div>
-                      {importResult.rejected > 0 && (
-                        <div className="flex items-center space-x-2 text-yellow-500">
-                          <CircleAlert className="h-4 w-4" />
+              <DialogDescription asChild>
+                <div className="pt-4 space-y-2">
+                  {isImporting ? (
+                    <div className="flex space-x-2">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span>Importing addresses, please wait...</span>
+                    </div>
+                  ) : importResult ? (
+                    importResult.success ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2 text-green-500">
+                          <CircleCheck className="h-4 w-4" />
                           <span className="text-sm">
-                            {importResult.rejected} invalid address
-                            {importResult.rejected > 1 ? "es were" : " was"} not
-                            imported.
+                            Successfully imported {importResult.count}{" "}
+                            addresses.
                           </span>
                         </div>
-                      )}
-                    </div>
+                        {importResult.rejected > 0 && (
+                          <div className="flex items-center space-x-2 text-yellow-500">
+                            <CircleAlert className="h-4 w-4" />
+                            <span className="text-sm">
+                              {importResult.rejected} invalid address
+                              {importResult.rejected > 1
+                                ? "es were"
+                                : " was"}{" "}
+                              not imported.
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2 text-red-500">
+                        <CircleAlert className="h-4 w-4" />
+                        <span className="text-sm">{importError}</span>
+                      </div>
+                    )
                   ) : (
-                    <div className="flex items-center space-x-2 text-red-500">
-                      <CircleAlert className="h-4 w-4" />
-                      <span className="text-sm">{importError}</span>
-                    </div>
-                  )
-                ) : (
-                  "Are you sure you want to overwrite the current addresses?"
-                )}
+                    "Are you sure you want to overwrite the current addresses?"
+                  )}
+                </div>
               </DialogDescription>
             </DialogHeader>
             {!isImporting && !importResult && (

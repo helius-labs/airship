@@ -6,7 +6,7 @@ import Step1 from "./airdrop-steps/Step1";
 import Step5 from "./airdrop-steps/Step5";
 import { AirdropSenderWorker } from "@/types/AirdropSenderWorker";
 import { useForm } from "react-hook-form";
-import { formSchema, FormValues } from "@/schemas/formSchema";
+import { FormValues, validationSchema } from "@/schemas/formSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 
@@ -30,15 +30,13 @@ export function ResumeAirdrop({
   const [finalizedTransactions, setFinalizedTransactions] = useState(0);
   const [totalTransactions, setTotalTransactions] = useState(0);
 
+  const currentValidationSchema = validationSchema[step - 1];
+
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(currentValidationSchema),
     defaultValues: {
       privateKey: "",
       rpcUrl: "",
-      selectedToken: "",
-      recipients: "",
-      amountType: "fixed",
-      amount: "",
     },
   });
 
