@@ -1,64 +1,75 @@
-import { Label } from "../ui/label";
+import { UseFormReturn } from "react-hook-form";
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Input } from "../ui/input";
+} from "@/components/ui/select";
+import { FormValues } from "@/schemas/formSchema";
 
 interface Step3Props {
-  amountType: string;
-  setAmountType: (value: "fixed" | "percent") => void;
-  amount: string;
-  setAmount: (value: string) => void;
+  form: UseFormReturn<FormValues>;
 }
 
-export default function Step3({
-  amountType,
-  setAmountType,
-  amount,
-  setAmount,
-}: Step3Props) {
+export default function Step3({ form }: Step3Props) {
   return (
     <div className="space-y-6">
-      <div className="space-y-3">
-        <Label htmlFor="amountType">
-          What amount would you like to airdrop?
-        </Label>
-        <Select
-          value={amountType}
-          onValueChange={(value: "fixed" | "percent") => {
-            setAmountType(value);
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select amount type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="fixed">
-              Fixed token amount per address
-            </SelectItem>
-            <SelectItem value="percent">% of total available tokens</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-3">
-        <Label htmlFor="amount">Amount</Label>
-        <Input
-          id="amount"
-          onChange={(e) => {
-            setAmount(e.target.value);
-          }}
-          placeholder={
-            amountType === "fixed" ? "Enter token amount" : "Enter percentage"
-          }
-          required
-          type="number"
-          value={amount}
-        />
-      </div>
+      <FormField
+        control={form.control}
+        name="amountType"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>What amount would you like to airdrop?</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select amount type" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="fixed">
+                  Fixed token amount per address
+                </SelectItem>
+                <SelectItem value="percent">
+                  % of total available tokens
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="amount"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Amount</FormLabel>
+            <FormControl>
+              <Input
+                {...field}
+                placeholder={
+                  form.watch("amountType") === "fixed"
+                    ? "Enter token amount"
+                    : "Enter percentage"
+                }
+                type="number"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 }

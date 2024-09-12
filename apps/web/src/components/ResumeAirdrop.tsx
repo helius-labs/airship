@@ -4,8 +4,11 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import Step1 from "./airdrop-steps/Step1";
 import Step5 from "./airdrop-steps/Step5";
-import { isValidPrivateKey, isValidRpcUrl } from "@/lib/utils.ts";
 import { AirdropSenderWorker } from "@/types/AirdropSenderWorker";
+import { useForm } from "react-hook-form";
+import { formSchema, FormValues } from "@/schemas/formSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form } from "@/components/ui/form";
 
 interface ResumeAirdropProps {
   db: airdropsender.BrowserDatabase;
@@ -19,10 +22,6 @@ export function ResumeAirdrop({
   onBackToHome,
 }: ResumeAirdropProps) {
   const [step, setStep] = useState(1);
-  const [privateKey, setPrivateKey] = useState("");
-  const [rpcUrl, setRpcUrl] = useState("");
-  const [privateKeyError, setPrivateKeyError] = useState<string | null>(null);
-  const [rpcUrlError, setRpcUrlError] = useState<string | null>(null);
   const [isAirdropInProgress, setIsAirdropInProgress] = useState(false);
   const [isAirdropComplete, setIsAirdropComplete] = useState(false);
   const [sendProgress, setSendProgress] = useState(0);
@@ -30,6 +29,18 @@ export function ResumeAirdrop({
   const [sentTransactions, setSentTransactions] = useState(0);
   const [finalizedTransactions, setFinalizedTransactions] = useState(0);
   const [totalTransactions, setTotalTransactions] = useState(0);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      privateKey: "",
+      rpcUrl: "",
+      selectedToken: "",
+      recipients: "",
+      amountType: "fixed",
+      amount: "",
+    },
+  });
 
   useEffect(() => {
     async function loadAirdropStatus() {
@@ -43,45 +54,11 @@ export function ResumeAirdrop({
     void loadAirdropStatus();
   }, [db]);
 
-  const handlePrivateKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newPrivateKey = e.target.value.trim();
-    setPrivateKey(newPrivateKey);
-    if (newPrivateKey) {
-      if (isValidPrivateKey(newPrivateKey)) {
-        setPrivateKeyError(null);
-      } else {
-        setPrivateKeyError("Invalid private key format");
-      }
-    } else {
-      setPrivateKeyError(null);
-    }
-  };
-
-  const handleRpcUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newRpcUrl = e.target.value;
-    setRpcUrl(newRpcUrl);
-    if (newRpcUrl) {
-      if (isValidRpcUrl(newRpcUrl)) {
-        setRpcUrlError(null);
-      } else {
-        setRpcUrlError("Invalid RPC URL format");
-      }
-    } else {
-      setRpcUrlError(null);
-    }
-  };
-
-  const handleResumeAirdrop = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
-    if (!isValidPrivateKey(privateKey) || !isValidRpcUrl(rpcUrl)) {
-      if (!isValidPrivateKey(privateKey))
-        setPrivateKeyError("Private key is required");
-      if (!isValidRpcUrl(rpcUrl)) setRpcUrlError("Invalid RPC URL format");
-      return;
-    }
-
+  const onSubmit = async (values: FormValues) => {
     setIsAirdropInProgress(true);
     setStep(2);
+
+    const { privateKey, rpcUrl } = values;
 
     try {
       airdropSenderWorker.send(privateKey, rpcUrl);
@@ -121,45 +98,44 @@ export function ResumeAirdrop({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form className="space-y-6" onSubmit={handleResumeAirdrop}>
-            {step === 1 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Step 1: Setup Your Wallet</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Step1
-                    privateKey={privateKey}
-                    rpcUrl={rpcUrl}
-                    privateKeyError={privateKeyError}
-                    rpcUrlError={rpcUrlError}
-                    handlePrivateKeyChange={handlePrivateKeyChange}
-                    handleRpcUrlChange={handleRpcUrlChange}
-                  />
-                </CardContent>
-              </Card>
-            )}
-            {step === 2 && (
-              <Step5
-                isAirdropInProgress={isAirdropInProgress}
-                isAirdropComplete={isAirdropComplete}
-                sendProgress={sendProgress}
-                finalizeProgress={finalizeProgress}
-                sentTransactions={sentTransactions}
-                finalizedTransactions={finalizedTransactions}
-                totalTransactions={totalTransactions}
-                onBackToHome={onBackToHome}
-              />
-            )}
-            {step === 1 && (
-              <div className="flex justify-between items-center">
-                <Button onClick={onBackToHome} type="button" variant="outline">
-                  Previous
-                </Button>
-                <Button type="submit">Resume Airdrop</Button>
-              </div>
-            )}
-          </form>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {step === 1 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Step 1: Setup Your Wallet</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Step1 form={form} />
+                  </CardContent>
+                </Card>
+              )}
+              {step === 2 && (
+                <Step5
+                  isAirdropInProgress={isAirdropInProgress}
+                  isAirdropComplete={isAirdropComplete}
+                  sendProgress={sendProgress}
+                  finalizeProgress={finalizeProgress}
+                  sentTransactions={sentTransactions}
+                  finalizedTransactions={finalizedTransactions}
+                  totalTransactions={totalTransactions}
+                  onBackToHome={onBackToHome}
+                />
+              )}
+              {step === 1 && (
+                <div className="flex justify-between items-center">
+                  <Button
+                    onClick={onBackToHome}
+                    type="button"
+                    variant="outline"
+                  >
+                    Previous
+                  </Button>
+                  <Button type="submit">Resume Airdrop</Button>
+                </div>
+              )}
+            </form>
+          </Form>
         </CardContent>
       </Card>
       {!isAirdropInProgress && !isAirdropComplete && (
