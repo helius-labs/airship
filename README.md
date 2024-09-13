@@ -19,12 +19,28 @@ Reduce the high costs of large-scale airdrops with ZK Compression technology, wh
 - **Web Version**: User-friendly for smaller airdrops, handling up to 200,000 recipients.
 - **CLI Version**: A command-line interface for advanced users, offering the scalability needed for larger distributions.
 
-## Airship CLI
+## Web Version
+
+You can use the web version of Helius AirShip [here](https://airship.helius.xyz).
+
+### Run locally from source
+
+```bash
+git clone https://github.com/helius-labs/airship.git
+cd airship
+pnpm install
+cd apps/web
+pnpm preview
+```
+
+Open http://localhost:4173/
+
+## CLI Version
 
 ### Requirements
 
 - Ensure you have Node >= v20.9.0 installed on your machine.
-- You will need an RPC that supports both ZK Compression and the DAS API. If you don't have one, you can get one for free at https://www.helius.dev/
+- You will need an RPC that supports both ZK Compression and the DAS API. If you don't have one, you can get one for free at https://www.helius.dev
 - You will need a valid Solana filesystem wallet. If you don't have one yet, visit the [Solana documentation](https://docs.solanalabs.com/cli/wallets/file-system) for details. The CLI will use this wallet for signing transactions, covering transaction fees, and as the owner of the token you wish to distribute.
 
 ### Installation
