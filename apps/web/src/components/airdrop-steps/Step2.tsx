@@ -277,13 +277,7 @@ export default function Step2({
           <FormItem>
             <FormLabel>Which token do you want to airdrop?</FormLabel>
             <FormControl>
-              {noTokensMessage ? (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>No Tokens Found</AlertTitle>
-                  <AlertDescription>{noTokensMessage}</AlertDescription>
-                </Alert>
-              ) : (
+              <>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
@@ -302,9 +296,25 @@ export default function Step2({
                           : `${token.mintAddress.toString()}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })}`}
                       </SelectItem>
                     ))}
+                    {noTokensMessage && (
+                      <SelectItem value="error" disabled>
+                        <Alert variant="destructive">
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertTitle>Error</AlertTitle>
+                          <AlertDescription>{noTokensMessage}</AlertDescription>
+                        </Alert>
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
-              )}
+                {noTokensMessage && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{noTokensMessage}</AlertDescription>
+                  </Alert>
+                )}
+              </>
             </FormControl>
             <FormMessage />
           </FormItem>

@@ -186,13 +186,29 @@ export function CreateAirdrop({
 
   const onSubmit = async () => {
     if (step === 2) {
-      // TODO: validate addresses
-      const recipientList = recipients
-        .split("\n")
-        .filter(Boolean)
-        .map((address) => new PublicKey(address.trim()).toBase58());
+      const lines = recipients.split("\n").filter(Boolean);
+      const validatedRecipients: string[] = [];
+      let errorMessage: string | null = null;
 
-      setRecipientList(recipientList);
+      for (let i = 0; i < lines.length; i++) {
+        const trimmedAddress = lines[i].trim();
+        try {
+          const publicKey = new PublicKey(trimmedAddress);
+          validatedRecipients.push(publicKey.toBase58());
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (error) {
+          errorMessage = `Invalid address on line ${i + 1}: ${trimmedAddress}`;
+          break;
+        }
+      }
+
+      if (errorMessage) {
+        form.setError("recipients", { type: "manual", message: errorMessage });
+        return;
+      } else {
+        setRecipientList(validatedRecipients);
+        form.clearErrors("recipients");
+      }
     }
 
     if (step < 4) {
