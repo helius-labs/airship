@@ -87,6 +87,9 @@ importers:
       lucide-react:
         specifier: ^0.424.0
         version: 0.424.0(react@18.3.1)
+      papaparse:
+        specifier: ^5.4.1
+        version: 5.4.1
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -118,6 +121,9 @@ importers:
       '@types/node':
         specifier: ^22.5.4
         version: 22.5.4
+      '@types/papaparse':
+        specifier: ^5.3.7
+        version: 5.3.14
       '@types/react':
         specifier: ^18.3.3
         version: 18.3.5

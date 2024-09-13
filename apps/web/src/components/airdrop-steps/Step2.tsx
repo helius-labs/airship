@@ -58,6 +58,7 @@ import { FormValues } from "@/schemas/formSchema";
 import { UseFormReturn } from "react-hook-form";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertTriangle } from "lucide-react";
+import Papa from "papaparse";
 
 interface Step2Props {
   form: UseFormReturn<FormValues>;
@@ -198,28 +199,30 @@ export default function Step2({
           if (!csvFile) {
             throw new Error("Please import a CSV file");
           }
-          const csvContent = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target?.result as string);
-            reader.onerror = (error) => reject(error);
-            reader.readAsText(csvFile);
-          });
+          const parseResult = await new Promise<Papa.ParseResult<string[]>>(
+            (resolve, reject) => {
+              Papa.parse(csvFile, {
+                complete: resolve,
+                error: reject,
+                skipEmptyLines: true,
+              });
+            }
+          );
 
-          const lines = csvContent
-            .split("\n")
-            .map((line) => line.trim())
-            .filter((line) => line);
           addresses = [];
           rejectedCount = 0;
 
-          for (const line of lines) {
-            try {
-              new PublicKey(line);
-              addresses.push(line);
-            } catch {
-              rejectedCount++;
+          parseResult.data.forEach((row) => {
+            if (row.length > 0) {
+              const address = row[0].trim();
+              try {
+                new PublicKey(address);
+                addresses.push(address);
+              } catch {
+                rejectedCount++;
+              }
             }
-          }
+          });
           break;
         }
       }
