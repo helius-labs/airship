@@ -21,7 +21,13 @@ Reduce the high costs of large-scale airdrops with ZK Compression technology, wh
 
 ## Web Version
 
-You can use the web version of Helius AirShip [here](https://airship.helius.xyz).
+### Requirements
+
+- You will need an RPC that supports both ZK Compression and the DAS API. If you don't have one, you can get one for free at https://www.helius.dev
+
+### Public Web Version
+
+You can find public web version of Helius AirShip [here](https://airship.helius.xyz).
 
 ### Run locally from source
 
