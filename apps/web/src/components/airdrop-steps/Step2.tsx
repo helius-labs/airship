@@ -282,7 +282,7 @@ export default function Step2({
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger ref={field.ref}>
                     <SelectValue placeholder="Select a token" />
                   </SelectTrigger>
                   <SelectContent>

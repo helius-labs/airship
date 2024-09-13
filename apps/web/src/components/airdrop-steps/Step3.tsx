@@ -31,7 +31,7 @@ export default function Step3({ form }: Step3Props) {
             <FormLabel>What amount would you like to airdrop?</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
-                <SelectTrigger>
+                <SelectTrigger ref={field.ref}>
                   <SelectValue placeholder="Select amount type" />
                 </SelectTrigger>
               </FormControl>
