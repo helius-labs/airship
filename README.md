@@ -12,7 +12,7 @@ Designed for projects of all sizes, Helius AirShip's interface allows anyone—t
 
 ### **Cost-Effective with ZK Compression**
 
-Reduce the high costs of large-scale airdrops with ZK Compression technology, which minimizes data usage and lowers expenses. More about ZK Compression [here](https://www.zkcompression.com/).
+Reduce the high costs of large-scale airdrops with ZK Compression technology, which minimizes account usage and lowers expenses. More about ZK Compression [here](https://www.zkcompression.com/).
 
 ### **Two Versions Available**
 
