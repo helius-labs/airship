@@ -16,5 +16,5 @@ Reduce the high costs of large-scale airdrops with ZK Compression technology, wh
 
 ### **Two Versions Available**
 
-- **Web Version**: User-friendly for smaller airdrops, handling up to 50,000 recipients.
+- **Web Version**: User-friendly for smaller airdrops, handling up to 200,000 recipients.
 - **CLI Version**: A command-line interface for advanced users, offering the scalability needed for larger distributions.

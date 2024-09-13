@@ -2,8 +2,7 @@ import * as airdropsender from "@repo/airdrop-sender";
 import { useState, useEffect, useCallback } from "react";
 import type { Token } from "@repo/airdrop-sender";
 import { getTokensByOwner } from "@repo/airdrop-sender";
-import { Keypair, PublicKey } from "@solana/web3.js";
-import bs58 from "bs58";
+import { PublicKey } from "@solana/web3.js";
 import { Button } from "../components/ui/button";
 import {
   Dialog,
@@ -31,6 +30,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { FormValues, validationSchema } from "@/schemas/formSchema";
+import { getKeypairFromPrivateKey } from "@/lib/utils";
 
 interface CreateAirdropProps {
   db: airdropsender.BrowserDatabase;
@@ -112,7 +112,7 @@ export function CreateAirdrop({
     async function loadTokens() {
       if (!privateKey || !rpcUrl) return;
       try {
-        const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
+        const keypair = getKeypairFromPrivateKey(privateKey);
         const ownerAddress = keypair.publicKey;
         const loadedTokens = await getTokensByOwner({
           ownerAddress,
@@ -143,7 +143,7 @@ export function CreateAirdrop({
         throw new Error("Amount value is not set");
       }
 
-      const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
+      const keypair = getKeypairFromPrivateKey(privateKey);
 
       await airdropSenderWorker.create(
         keypair.publicKey.toBase58(),

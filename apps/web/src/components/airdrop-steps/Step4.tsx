@@ -11,11 +11,10 @@ import {
   baseFee,
   compressionFee,
 } from "@repo/airdrop-sender";
-import { Keypair } from "@solana/web3.js";
-import bs58 from "bs58";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { Skeleton } from "../ui/skeleton"; // Import the Skeleton component
+import { getKeypairFromPrivateKey } from "@/lib/utils";
 
 interface AirdropOverviewInterface {
   keypairAddress: string;
@@ -55,7 +54,7 @@ export default function Step4({
       setError(null);
 
       try {
-        const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
+        const keypair = getKeypairFromPrivateKey(privateKey);
         const selectedTokenInfo = tokens.find(
           (t) => t.mintAddress.toString() === selectedToken
         );

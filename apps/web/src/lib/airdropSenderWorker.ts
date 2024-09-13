@@ -1,10 +1,9 @@
 import * as airdropsender from "@repo/airdrop-sender";
 import * as web3 from "@solana/web3.js";
-import { Keypair } from "@solana/web3.js";
-import bs58 from "bs58";
 import { SQLocalDrizzle } from "sqlocal/drizzle";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 import { databaseFile } from "@repo/airdrop-sender";
+import { getKeypairFromPrivateKey } from "./utils";
 
 const { driver, batchDriver } = new SQLocalDrizzle({
   databasePath: databaseFile,
@@ -29,7 +28,7 @@ export async function create(
 }
 
 export async function send(privateKey: string, url: string) {
-  const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
+  const keypair = getKeypairFromPrivateKey(privateKey);
 
   await airdropsender.send({
     db,

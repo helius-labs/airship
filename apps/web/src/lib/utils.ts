@@ -7,11 +7,28 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function getKeypairFromPrivateKey(key: string): Keypair {
+  let secretKey: Uint8Array;
+
+  if (
+    key.startsWith("[") &&
+    key.endsWith("]") &&
+    Array.isArray(JSON.parse(key))
+  ) {
+    secretKey = Uint8Array.from(JSON.parse(key));
+  } else {
+    secretKey = bs58.decode(key);
+  }
+
+  return Keypair.fromSecretKey(secretKey);
+}
+
 export function isValidPrivateKey(key: string): boolean {
   try {
-    Keypair.fromSecretKey(bs58.decode(key));
+    getKeypairFromPrivateKey(key);
     return true;
-  } catch {
+  } catch (error) {
+    console.log(error);
     return false;
   }
 }
