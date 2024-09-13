@@ -35,7 +35,7 @@ Reduce the high costs of large-scale airdrops with ZK Compression technology, wh
 npm install -g helius-airship
 ```
 
-#### Build from source us pnpm
+#### Build from source using pnpm
 
 ```bash
 git clone https://github.com/helius-labs/airship.git
