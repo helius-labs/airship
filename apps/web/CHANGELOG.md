@@ -1,6 +1,6 @@
-# helius-airship
+# web
 
-## 0.7.0
+## 0.4.0
 
 ### Minor Changes
 
@@ -10,9 +10,3 @@
 
 - Updated dependencies
   - helius-airship-core@0.4.0
-
-## 0.6.0
-
-### Minor Changes
-
-- First public release
