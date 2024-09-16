@@ -1,5 +1,11 @@
 # helius-airship
 
+## 0.7.1
+
+### Patch Changes
+
+- Fix no such file or directory error
+
 ## 0.7.0
 
 ### Minor Changes
