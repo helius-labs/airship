@@ -2,7 +2,6 @@
 import { Command } from "commander";
 import { number, select, confirm, input } from "@inquirer/prompts";
 import * as cliProgress from "cli-progress";
-import { getPackageInfo } from "./utils/get-package-info";
 import chalk from "chalk";
 import * as web3 from "@solana/web3.js";
 import fs from "fs-extra";
@@ -47,8 +46,7 @@ sqlite.exec("PRAGMA journal_mode = WAL;");
 const db = drizzle(sqlite);
 
 async function main() {
-  const packageInfo = await getPackageInfo();
-  const program = createCommandProgram(packageInfo);
+  const program = createCommandProgram();
 
   program.action(async () => {
     const options = program.opts();
@@ -76,7 +74,7 @@ async function main() {
   program.parse();
 }
 
-function createCommandProgram(packageInfo: any) {
+function createCommandProgram() {
   return new Command()
     .name("airdrop")
     .description("Airdrop tokens using ZK Compression")
@@ -86,7 +84,7 @@ function createCommandProgram(packageInfo: any) {
       "URL for Solana's JSON RPC with ZK Compression support"
     )
     .version(
-      packageInfo.version || "1.0.0",
+      "0.7.0",
       "-v, --version",
       "display the version number"
     );
