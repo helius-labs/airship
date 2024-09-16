@@ -21,7 +21,7 @@
   "type": "module",
   "exports": "./dist/index.js",
   "bin": {
-    "airship": "./dist/index.js"
+    "helius-airship": "./dist/index.js"
   },
   "scripts": {
     "dev": "tsup --watch",
