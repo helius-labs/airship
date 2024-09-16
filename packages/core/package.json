@@ -1,8 +1,8 @@
 {
-  "name": "@repo/core",
+  "name": "helius-airship-core",
   "type": "module",
   "version": "0.3.0",
-  "description": "AirShip core library",
+  "description": "Helius AirShip core library",
   "license": "MIT",
   "author": {
     "name": "Helius",

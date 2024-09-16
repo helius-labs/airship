@@ -1,4 +1,4 @@
-import * as airdropsender from "@repo/core";
+import * as airdropsender from "helius-airship-core";
 import * as web3 from "@solana/web3.js";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";

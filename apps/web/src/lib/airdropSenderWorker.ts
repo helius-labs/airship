@@ -1,8 +1,8 @@
-import * as airdropsender from "@repo/core";
+import * as airdropsender from "helius-airship-core";
 import * as web3 from "@solana/web3.js";
 import { SQLocalDrizzle } from "sqlocal/drizzle";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
-import { databaseFile } from "@repo/core";
+import { databaseFile } from "helius-airship-core";
 import { getKeypairFromPrivateKey } from "./utils";
 
 const { driver, batchDriver } = new SQLocalDrizzle({

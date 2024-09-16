@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import * as airdropsender from "@repo/core";
+import * as airdropsender from "helius-airship-core";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import Step1 from "./airdrop-steps/Step1";

@@ -1,7 +1,7 @@
 {
   "name": "helius-airship",
   "version": "0.6.0",
-  "description": "ZK-Compressed Airdrop Tool for Solana",
+  "description": "Helius AirShip is an open-source tool that simplifies and reduces the cost of Solana token airdrops",
   "publishConfig": {
     "access": "public"
   },
@@ -17,17 +17,16 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
   },
   "bin": {
     "helius-airship": "./dist/index.js"
   },
   "dependencies": {
     "@inquirer/prompts": "^5.3.8",
-    "@repo/core": "workspace:*",
+    "helius-airship-core": "workspace:*",
     "@solana/web3.js": "^1.95.3",
     "better-sqlite3": "^11.2.1",
     "bs58": "^6.0.0",
@@ -43,15 +42,14 @@
     "tinypool": "^1.0.1"
   },
   "devDependencies": {
-    "@liuli-util/vite-plugin-node": "^0.9.0",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/better-sqlite3": "^7.6.11",
     "@types/cli-progress": "^3.11.6",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.5.0",
+    "tsup": "^8.2.4",
     "type-fest": "^4.25.0",
-    "typescript": "^5.5.4",
-    "vite": "^5.4.1"
+    "typescript": "^5.5.4"
   }
 }

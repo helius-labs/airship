@@ -30,13 +30,13 @@ import {
   isSolanaAddress,
   normalizeTokenAmount,
   Token,
-} from "@repo/core";
+} from "helius-airship-core";
 import { useDropzone } from "react-dropzone";
 import {
   getCollectionHolders,
   getTokenAccounts,
   saga2PreOrderTokenMintAddress,
-} from "@repo/core";
+} from "helius-airship-core";
 import { PublicKey } from "@solana/web3.js";
 import {
   Dialog,

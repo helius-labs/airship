@@ -5,7 +5,7 @@ import {
   isFungibleToken,
   isSolanaAddress,
   logger,
-} from "@repo/core";
+} from "helius-airship-core";
 import { input } from "@inquirer/prompts";
 import * as web3 from "@solana/web3.js";
 import { PublicKey } from "@solana/web3.js";

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { databaseFile } from "@repo/core";
+import { databaseFile } from "helius-airship-core";
 import { SQLocalDrizzle } from "sqlocal/drizzle";
 
 interface AirdropSelectionProps {

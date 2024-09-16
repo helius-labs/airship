@@ -5,7 +5,7 @@ import {
   AirdropErrorCode,
   csvToPublicKeys,
   logger,
-} from "@repo/core";
+} from "helius-airship-core";
 import fs from "fs-extra";
 import fileSelector from "inquirer-file-selector";
 import { PublicKey } from "@solana/web3.js";
