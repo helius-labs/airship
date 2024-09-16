@@ -5,7 +5,7 @@ import {
   AirdropErrorCode,
   csvToPublicKeys,
   logger,
-} from "@repo/airdrop-sender";
+} from "@repo/core";
 import fs from "fs-extra";
 import fileSelector from "inquirer-file-selector";
 import { PublicKey } from "@solana/web3.js";

@@ -19,7 +19,7 @@ import {
   AirdropErrorCode,
   AirdropErrorMessage,
 } from "../utils/airdropError";
-import { logger } from "../services/logger";
+import { logger } from "./logger";
 import bs58 from "bs58";
 import { SendTransactionError } from "@solana/web3.js";
 import { sleep } from "../utils/common";

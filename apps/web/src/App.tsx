@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { CreateAirdrop } from "./components/CreateAirdrop";
 import { ResumeAirdrop } from "./components/ResumeAirdrop";
 import { AirdropSelection } from "./components/AirdropSelection";
-import { init, exist, databaseFile } from "@repo/airdrop-sender";
+import { init, exist, databaseFile } from "@repo/core";
 import { SQLocalDrizzle } from "sqlocal/drizzle";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 import { sql } from "drizzle-orm";

@@ -4,7 +4,7 @@ import {
   getTokenAccounts,
   logger,
   saga2PreOrderTokenMintAddress,
-} from "@repo/airdrop-sender";
+} from "@repo/core";
 import { PublicKey } from "@solana/web3.js";
 
 export async function chapter2(url: string): Promise<PublicKey[]> {

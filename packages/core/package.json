@@ -1,9 +1,8 @@
 {
-  "name": "@repo/airdrop-sender",
+  "name": "@repo/core",
   "type": "module",
   "version": "0.3.0",
-  "private": true,
-  "description": "Airdrop sender tool for Solana using ZK Compression",
+  "description": "AirShip core library",
   "license": "MIT",
   "author": {
     "name": "Helius",
@@ -12,7 +11,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/helius/airdrop.git",
-    "directory": "packages/airdrop-sender"
+    "directory": "packages/core"
   },
   "files": [
     "dist"
@@ -22,10 +21,7 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
-    "typecheck": "tsc --noEmit",
-    "generate": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate",
-    "studio": "drizzle-kit studio"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@lightprotocol/compressed-token": "^0.11.0",

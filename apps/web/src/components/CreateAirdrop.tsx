@@ -1,7 +1,7 @@
-import * as airdropsender from "@repo/airdrop-sender";
+import * as airdropsender from "@repo/core";
 import { useState, useEffect, useCallback } from "react";
-import type { Token } from "@repo/airdrop-sender";
-import { getTokensByOwner } from "@repo/airdrop-sender";
+import type { Token } from "@repo/core";
+import { getTokensByOwner } from "@repo/core";
 import { PublicKey } from "@solana/web3.js";
 import { Button } from "../components/ui/button";
 import {

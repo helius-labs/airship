@@ -20,7 +20,7 @@ export async function getTokensByOwner(
 ): Promise<Token[]> {
   const { ownerAddress, url } = params;
 
-  const response = await fetch(url, {
+  const response: any = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

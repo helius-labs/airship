@@ -23,7 +23,7 @@ import {
   Token,
   init,
   databaseFile,
-} from "@repo/airdrop-sender";
+} from "@repo/core";
 import ora, { Ora } from "ora";
 import { csv } from "./imports/csv";
 import { chapter2 } from "./imports/chapter-2";

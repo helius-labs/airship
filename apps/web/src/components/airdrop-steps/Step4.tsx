@@ -10,7 +10,7 @@ import {
   computeUnitLimit,
   baseFee,
   compressionFee,
-} from "@repo/airdrop-sender";
+} from "@repo/core";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { Skeleton } from "../ui/skeleton"; // Import the Skeleton component

@@ -1,7 +1,7 @@
 import * as web3 from "@solana/web3.js";
 import { transaction_queue } from "../schema/transaction_queue";
 import { asc, eq, ne, and, count, isNotNull, or } from "drizzle-orm";
-import { logger } from "../services/logger";
+import { logger } from "./logger";
 import { SendTransactionError } from "@solana/web3.js";
 import { CommitmentStatus } from "../config/constants";
 

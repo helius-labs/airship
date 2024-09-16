@@ -30,13 +30,13 @@ import {
   isSolanaAddress,
   normalizeTokenAmount,
   Token,
-} from "@repo/airdrop-sender";
+} from "@repo/core";
 import { useDropzone } from "react-dropzone";
 import {
   getCollectionHolders,
   getTokenAccounts,
   saga2PreOrderTokenMintAddress,
-} from "@repo/airdrop-sender";
+} from "@repo/core";
 import { PublicKey } from "@solana/web3.js";
 import {
   Dialog,

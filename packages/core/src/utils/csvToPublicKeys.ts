@@ -5,8 +5,8 @@ import {
   AirdropError,
   AirdropErrorCode,
   AirdropErrorMessage,
-} from "../utils/airdropError";
-import { isSolanaAddress } from "../utils/common";
+} from "./airdropError";
+import { isSolanaAddress } from "./common";
 
 interface Row {
   address: string;

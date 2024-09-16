@@ -5,7 +5,7 @@ import {
   isNFTCollection,
   isSolanaAddress,
   logger,
-} from "@repo/airdrop-sender";
+} from "@repo/core";
 import { PublicKey } from "@solana/web3.js";
 import { input } from "@inquirer/prompts";
 import * as web3 from "@solana/web3.js";
