@@ -27,7 +27,7 @@ Reduce the high costs of large-scale airdrops with ZK Compression technology, wh
 
 ### Public Web Version
 
-You can find public web version of Helius AirShip [here](https://airship.helius.xyz).
+You can find public web version of Helius AirShip [here](https://airship.helius.dev).
 
 ### Run locally from source
 
