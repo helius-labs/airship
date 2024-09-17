@@ -3,7 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { CreateAirdrop } from "./components/CreateAirdrop";
 import { ResumeAirdrop } from "./components/ResumeAirdrop";
 import { AirdropSelection } from "./components/AirdropSelection";
-import { WalletPage } from "./components/WalletPage";
+import { DecompressPage } from "./components/DecompressPage";
 import { init, exist, databaseFile } from "helius-airship-core";
 import { SQLocalDrizzle } from "sqlocal/drizzle";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
@@ -66,7 +66,7 @@ function App() {
       >
         <div className="w-full max-w-4xl rounded-lg shadow-xl">
           <Routes>
-            <Route path="/wallet" element={<WalletPage />} />
+            <Route path="/decompress" element={<DecompressPage />} />
             <Route
               path="/"
               element={

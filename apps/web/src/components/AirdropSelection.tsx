@@ -93,8 +93,8 @@ export function AirdropSelection({
                     Resume Existing Airdrop
                   </Button>
                 )}
-                <Button onClick={() => navigate("/wallet")}>
-                  Wallet
+                <Button onClick={() => navigate("/decompress")}>
+                  Decompress Tokens
                 </Button>
                 {showDownloadButton && (
                   <Button onClick={downloadDB}>Download Database</Button>

@@ -26,7 +26,7 @@ export async function getCollectionHolders(
       },
       body: JSON.stringify({
         jsonrpc: "2.0",
-        id: "helius-airdrop-sender",
+        id: "helius-airdrop-core",
         method: "getAssetsByGroup",
         params: {
           groupKey: "collection",

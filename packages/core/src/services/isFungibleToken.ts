@@ -17,7 +17,7 @@ export async function isFungibleToken(
     },
     body: JSON.stringify({
       jsonrpc: "2.0",
-      id: "helius-airdrop-sender",
+      id: "helius-airdrop-core",
       method: "getAsset",
       params: {
         id: tokenAddress.toBase58(),
