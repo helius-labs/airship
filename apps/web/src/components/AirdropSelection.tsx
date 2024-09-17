@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { databaseFile } from "helius-airship-core";
 import { SQLocalDrizzle } from "sqlocal/drizzle";
+import { useNavigate } from "react-router-dom";
 
 interface AirdropSelectionProps {
   existingAirdrop: boolean | null;
@@ -26,6 +27,7 @@ export function AirdropSelection({
 }: AirdropSelectionProps) {
   const [showDialog, setShowDialog] = useState(false);
   const [showDownloadButton, setShowDownloadButton] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -91,6 +93,9 @@ export function AirdropSelection({
                     Resume Existing Airdrop
                   </Button>
                 )}
+                <Button onClick={() => navigate("/wallet")}>
+                  Wallet
+                </Button>
                 {showDownloadButton && (
                   <Button onClick={downloadDB}>Download Database</Button>
                 )}

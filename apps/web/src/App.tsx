@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import { Route, Routes } from "react-router-dom";
 import { CreateAirdrop } from "./components/CreateAirdrop";
 import { ResumeAirdrop } from "./components/ResumeAirdrop";
 import { AirdropSelection } from "./components/AirdropSelection";
+import { WalletPage } from "./components/WalletPage";
 import { init, exist, databaseFile } from "helius-airship-core";
 import { SQLocalDrizzle } from "sqlocal/drizzle";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
@@ -58,32 +60,40 @@ function App() {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed"
-      style={{ backgroundImage: "url('/background.jpg')" }}
-    >
-      <div className="w-full max-w-4xl rounded-lg shadow-xl">
-        {selectedAction === "create" ? (
-          <CreateAirdrop
-            db={db}
-            airdropSenderWorker={airdropSenderWorker}
-            onBackToHome={handleBackToHome}
-          />
-        ) : selectedAction === "resume" ? (
-          <ResumeAirdrop
-            db={db}
-            airdropSenderWorker={airdropSenderWorker}
-            onBackToHome={handleBackToHome}
-          />
-        ) : (
-          <AirdropSelection
-            existingAirdrop={existingAirdrop}
-            onCreateAirdrop={handleCreateAirdrop}
-            onResumeAirdrop={handleResumeAirdrop}
-          />
-        )}
+      <div
+        className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed"
+        style={{ backgroundImage: "url('/background.jpg')" }}
+      >
+        <div className="w-full max-w-4xl rounded-lg shadow-xl">
+          <Routes>
+            <Route path="/wallet" element={<WalletPage />} />
+            <Route
+              path="/"
+              element={
+                selectedAction === "create" ? (
+                  <CreateAirdrop
+                    db={db}
+                    airdropSenderWorker={airdropSenderWorker}
+                    onBackToHome={handleBackToHome}
+                  />
+                ) : selectedAction === "resume" ? (
+                  <ResumeAirdrop
+                    db={db}
+                    airdropSenderWorker={airdropSenderWorker}
+                    onBackToHome={handleBackToHome}
+                  />
+                ) : (
+                  <AirdropSelection
+                    existingAirdrop={existingAirdrop}
+                    onCreateAirdrop={handleCreateAirdrop}
+                    onResumeAirdrop={handleResumeAirdrop}
+                  />
+                )
+              }
+            />
+          </Routes>
+        </div>
       </div>
-    </div>
   );
 }
 
