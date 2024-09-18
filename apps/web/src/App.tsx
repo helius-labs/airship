@@ -10,10 +10,18 @@ import { drizzle } from "drizzle-orm/sqlite-proxy";
 import { sql } from "drizzle-orm";
 
 // Load the airdrop sender worker
-const airdropSenderWorker = new ComlinkWorker<
-  typeof import("./lib/airdropSenderWorker.ts")
->(new URL("./lib/airdropSenderWorker.js", import.meta.url), {
-  name: "airdropSenderWorker",
+const createWorker = new ComlinkWorker<
+  typeof import("./workers/create.ts")
+>(new URL("./workers/create.ts", import.meta.url), {
+  name: "createWorker",
+  type: "module",
+});
+
+const sendWorker = new Worker(new URL("./workers/send.ts", import.meta.url), {
+  type: "module",
+});
+
+const pollWorker = new Worker(new URL("./workers/poll.ts", import.meta.url), {
   type: "module",
 });
 
@@ -60,40 +68,43 @@ function App() {
   };
 
   return (
-      <div
-        className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed"
-        style={{ backgroundImage: "url('/background.jpg')" }}
-      >
-        <div className="w-full max-w-4xl rounded-lg shadow-xl">
-          <Routes>
-            <Route path="/decompress" element={<DecompressPage />} />
-            <Route
-              path="/"
-              element={
-                selectedAction === "create" ? (
-                  <CreateAirdrop
-                    db={db}
-                    airdropSenderWorker={airdropSenderWorker}
-                    onBackToHome={handleBackToHome}
-                  />
-                ) : selectedAction === "resume" ? (
-                  <ResumeAirdrop
-                    db={db}
-                    airdropSenderWorker={airdropSenderWorker}
-                    onBackToHome={handleBackToHome}
-                  />
-                ) : (
-                  <AirdropSelection
-                    existingAirdrop={existingAirdrop}
-                    onCreateAirdrop={handleCreateAirdrop}
-                    onResumeAirdrop={handleResumeAirdrop}
-                  />
-                )
-              }
-            />
-          </Routes>
-        </div>
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed"
+      style={{ backgroundImage: "url('/background.jpg')" }}
+    >
+      <div className="w-full max-w-4xl rounded-lg shadow-xl">
+        <Routes>
+          <Route path="/decompress" element={<DecompressPage />} />
+          <Route
+            path="/"
+            element={
+              selectedAction === "create" ? (
+                <CreateAirdrop
+                  db={db}
+                  createWorker={createWorker}
+                  sendWorker={sendWorker}
+                  pollWorker={pollWorker}
+                  onBackToHome={handleBackToHome}
+                />
+              ) : selectedAction === "resume" ? (
+                <ResumeAirdrop
+                  db={db}
+                  sendWorker={sendWorker}
+                  pollWorker={pollWorker}
+                  onBackToHome={handleBackToHome}
+                />
+              ) : (
+                <AirdropSelection
+                  existingAirdrop={existingAirdrop}
+                  onCreateAirdrop={handleCreateAirdrop}
+                  onResumeAirdrop={handleResumeAirdrop}
+                />
+              )
+            }
+          />
+        </Routes>
       </div>
+    </div>
   );
 }
 

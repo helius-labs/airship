@@ -3,7 +3,6 @@ import * as web3 from "@solana/web3.js";
 import { SQLocalDrizzle } from "sqlocal/drizzle";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 import { databaseFile } from "helius-airship-core";
-import { getKeypairFromPrivateKey } from "./utils";
 
 const { driver, batchDriver } = new SQLocalDrizzle({
   databasePath: databaseFile,
@@ -25,18 +24,4 @@ export async function create(
     amount,
     mintAddress: new web3.PublicKey(mintAddress),
   });
-}
-
-export async function send(privateKey: string, url: string) {
-  const keypair = getKeypairFromPrivateKey(privateKey);
-
-  await airdropsender.send({
-    db,
-    keypair,
-    url,
-  });
-}
-
-export async function poll(url: string) {
-  await airdropsender.poll({ db, url });
 }

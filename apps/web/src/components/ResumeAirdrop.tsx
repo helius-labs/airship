@@ -4,22 +4,25 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import Step1 from "./airdrop-steps/Step1";
 import Step5 from "./airdrop-steps/Step5";
-import { AirdropSenderWorker } from "@/types/AirdropSenderWorker";
 import { useForm } from "react-hook-form";
 import { FormValues, validationSchema } from "@/schemas/formSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface ResumeAirdropProps {
   db: airdropsender.BrowserDatabase;
-  airdropSenderWorker: AirdropSenderWorker;
+  sendWorker: Worker;
+  pollWorker: Worker;
   onBackToHome: () => void;
 }
 
 export function ResumeAirdrop({
   db,
-  airdropSenderWorker,
   onBackToHome,
+  sendWorker,
+  pollWorker,
 }: ResumeAirdropProps) {
   const [step, setStep] = useState(1);
   const [isAirdropInProgress, setIsAirdropInProgress] = useState(false);
@@ -29,6 +32,7 @@ export function ResumeAirdrop({
   const [sentTransactions, setSentTransactions] = useState(0);
   const [finalizedTransactions, setFinalizedTransactions] = useState(0);
   const [totalTransactions, setTotalTransactions] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   const currentValidationSchema = validationSchema[step - 1];
 
@@ -39,6 +43,14 @@ export function ResumeAirdrop({
       rpcUrl: "",
     },
   });
+
+  const handleError = (errorMessage: string) => {
+    setError(errorMessage);
+    setIsAirdropInProgress(false);
+    // Stop both workers
+    sendWorker.terminate();
+    pollWorker.terminate();
+  };
 
   useEffect(() => {
     async function loadAirdropStatus() {
@@ -55,34 +67,48 @@ export function ResumeAirdrop({
   const onSubmit = async (values: FormValues) => {
     setIsAirdropInProgress(true);
     setStep(2);
+    setError(null); // Clear any previous errors
 
     const { privateKey, rpcUrl } = values;
 
     try {
-      airdropSenderWorker.send(privateKey, rpcUrl);
-      airdropSenderWorker.poll(rpcUrl);
+      sendWorker.onmessage = (event) => {
+        if (event.data.error) {
+          handleError(`${event.data.error}`);
+        }
+      };
+      sendWorker.postMessage({ privateKey, rpcUrl });
+
+      pollWorker.onmessage = (event) => {
+        if (event.data.error) {
+          handleError(`${event.data.error}`);
+        }
+      };
+      pollWorker.postMessage({ rpcUrl });
 
       const monitorInterval = setInterval(async () => {
-        const currentStatus = await airdropsender.status({ db });
-        setSendProgress((currentStatus.sent / currentStatus.total) * 100);
-        setFinalizeProgress(
-          (currentStatus.finalized / currentStatus.total) * 100
-        );
-        setTotalTransactions(currentStatus.total);
-        setSentTransactions(currentStatus.sent);
-        setFinalizedTransactions(currentStatus.finalized);
+        try {
+          const currentStatus = await airdropsender.status({ db });
+          setSendProgress((currentStatus.sent / currentStatus.total) * 100);
+          setFinalizeProgress(
+            (currentStatus.finalized / currentStatus.total) * 100
+          );
+          setTotalTransactions(currentStatus.total);
+          setSentTransactions(currentStatus.sent);
+          setFinalizedTransactions(currentStatus.finalized);
 
-        if (currentStatus.finalized === currentStatus.total) {
+          if (currentStatus.finalized === currentStatus.total) {
+            clearInterval(monitorInterval);
+            setIsAirdropInProgress(false);
+            setIsAirdropComplete(true);
+          }
+        } catch (error) {
           clearInterval(monitorInterval);
-          setIsAirdropInProgress(false);
-          setIsAirdropComplete(true);
+          handleError(`Error monitoring airdrop status: ${error}`);
         }
       }, 1000);
     } catch (error) {
-      console.error("Failed to resume airdrop:", error);
-      alert("Failed to resume airdrop. Please try again.");
-      setIsAirdropInProgress(false);
-      setStep(1);
+      handleError(`Failed to resume airdrop: ${error}`);
     }
   };
 
@@ -96,6 +122,13 @@ export function ResumeAirdrop({
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {step === 1 && (
