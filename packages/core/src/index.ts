@@ -6,6 +6,7 @@ import {
   maxAddressesPerTransaction,
   saga2PreOrderTokenMintAddress,
   databaseFile,
+  MICRO_LAMPORTS_PER_LAMPORT,
 } from "./config/constants";
 
 import { isSolanaAddress, normalizeTokenAmount, sleep } from "./utils/common";
@@ -57,6 +58,7 @@ export {
   AirdropError,
   AirdropErrorMessage,
   AirdropErrorCode,
+  MICRO_LAMPORTS_PER_LAMPORT,
   databaseFile,
 };
 

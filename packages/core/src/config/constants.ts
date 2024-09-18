@@ -1,9 +1,10 @@
 import * as web3 from "@solana/web3.js";
-
+export const MICRO_LAMPORTS_PER_LAMPORT = 1_000_000;
 export const maxAddressesPerTransaction = 15;
-
 export const baseFee = 5000;
-export const compressionFee = 300;
+// Compression fee per compress instruction is 1500 lamports
+// In total we need 3 compress instructions per transaction to send 15 addresses
+export const compressionFee = 1500 * 3;
 export const computeUnitLimit = 500_000;
 // Compute unit price is micro lamports
 export const computeUnitPrice = 10_000;

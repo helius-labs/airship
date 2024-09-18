@@ -22,6 +22,7 @@ import {
   Token,
   init,
   databaseFile,
+  MICRO_LAMPORTS_PER_LAMPORT,
 } from "helius-airship-core";
 import ora, { Ora } from "ora";
 import { csv } from "./imports/csv";
@@ -341,11 +342,13 @@ async function confirmAirdrop(
   amount: bigint,
   tokens: Token[]
 ) {
-  const numberOfTransactions = Math.ceil(
-    addresses.length / maxAddressesPerTransaction
+  const numberOfTransactions = BigInt(
+    Math.ceil(addresses.length / Number(maxAddressesPerTransaction))
   );
 
-  const transactionFee = baseFee + (computeUnitLimit * computeUnitPrice) / 1e9;
+  const transactionFee =
+  BigInt(baseFee) +
+  ((BigInt(computeUnitLimit) * BigInt(computeUnitPrice)) / BigInt(MICRO_LAMPORTS_PER_LAMPORT));
 
   const token = tokens.find((token) => {
     return token.mintAddress.toBase58() === mintAddress;
@@ -377,11 +380,11 @@ async function confirmAirdrop(
     ["Number of transactions", numberOfTransactions],
     [
       "Approximate transaction fee",
-      `${(numberOfTransactions * transactionFee) / 1e9} SOL`,
+     `${(Number(numberOfTransactions * transactionFee) / 1e9).toFixed(9)} SOL`,
     ],
     [
       "Approximate compression fee",
-      `${(addresses.length * compressionFee) / 1e9} SOL`,
+      `${(Number(numberOfTransactions * BigInt(compressionFee)) / 1e9).toFixed(9)} SOL`,
     ]
   );
 

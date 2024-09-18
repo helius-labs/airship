@@ -10,6 +10,7 @@ import {
   computeUnitLimit,
   baseFee,
   compressionFee,
+  MICRO_LAMPORTS_PER_LAMPORT,
 } from "helius-airship-core";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertTriangle } from "lucide-react";
@@ -68,7 +69,7 @@ export default function Step4({
         );
         const transactionFee =
           BigInt(baseFee) +
-          (BigInt(computeUnitLimit) * BigInt(computeUnitPrice)) / BigInt(1e9);
+          ((BigInt(computeUnitLimit) * BigInt(computeUnitPrice)) / BigInt(MICRO_LAMPORTS_PER_LAMPORT));
 
         const totalAmount = amountValue * BigInt(recipientList.length);
 
@@ -91,7 +92,7 @@ export default function Step4({
           }),
           numberOfTransactions: Number(numberOfTransactions),
           approximateTransactionFee: `${(Number(numberOfTransactions * transactionFee) / 1e9).toFixed(9)} SOL`,
-          approximateCompressionFee: `${(Number(BigInt(recipientList.length) * BigInt(compressionFee)) / 1e9).toFixed(9)} SOL`,
+          approximateCompressionFee: `${(Number(numberOfTransactions * BigInt(compressionFee)) / 1e9).toFixed(9)} SOL`,
           rpcUrl: rpcUrl,
         };
 
