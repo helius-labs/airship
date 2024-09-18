@@ -21,6 +21,15 @@ import {
 } from './ui/alert-dialog';
 import { Link } from 'react-router-dom';
 
+// Add this enum at the top of your file, outside the component
+enum DialogState {
+  Idle,
+  ConfirmingTransaction,
+  Processing,
+  Success,
+  Error
+}
+
 const connection: Rpc = createRpc(import.meta.env.VITE_RPC_ENDPOINT, import.meta.env.VITE_RPC_ENDPOINT);
 
 export function DecompressPage() {
@@ -29,6 +38,7 @@ export function DecompressPage() {
   const [isLoading, setIsLoading] = useState(false); // New state for loading
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [alertDialogContent, setAlertDialogContent] = useState<{ title: string; message: string | ReactNode }>({ title: '', message: '' });
+  const [dialogState, setDialogState] = useState<DialogState>(DialogState.Idle);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,7 +67,11 @@ export function DecompressPage() {
       const amount = inputCompressedTokenAccount.parsed.amount;
 
       setAlertDialogOpen(true);
-      setAlertDialogContent({ title: 'Decompressing Token', message: 'Please confirm the transaction...' });
+      setDialogState(DialogState.ConfirmingTransaction);
+      setAlertDialogContent({
+        title: 'Confirm Transaction',
+        message: 'Please confirm the transaction in your wallet...'
+      });
 
       // Set the compute unit limit and add it to the transaction
       const unitLimitIX = ComputeBudgetProgram.setComputeUnitLimit({
@@ -132,6 +146,7 @@ export function DecompressPage() {
 
       const signedTx = await signTransaction(tx);
 
+      setDialogState(DialogState.Processing);
       setAlertDialogContent({
         title: 'Confirming Transaction',
         message: (
@@ -148,11 +163,11 @@ export function DecompressPage() {
       const accounts = await connection.getCompressedTokenAccountsByOwner(publicKey);
       setCompressedTokenAccounts(accounts.items);
 
+      setDialogState(DialogState.Success);
       setAlertDialogContent({
-        title: 'Success',
+        title: 'Token decompressed successfully!',
         message: (
           <>
-            <p className="mb-2">Token decompressed successfully!</p>
             <p>Signature:&nbsp;
               <a
                 href={`https://xray.helius.xyz/tx/${txId}`}
@@ -169,9 +184,10 @@ export function DecompressPage() {
 
     } catch (error) {
       console.error("Error decompressing token:", error);
+      setDialogState(DialogState.Error);
       setAlertDialogContent({
-        title: 'Error',
-        message: `Decompression failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        title: 'Decompress cancelled',
+        message: `${error instanceof Error ? error.message : 'Unknown error'}`
       });
     }
   };
@@ -238,9 +254,14 @@ export function DecompressPage() {
               {alertDialogContent.message}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {alertDialogContent.title !== 'Decompressing Token' && alertDialogContent.title !== 'Confirming Transaction' && (
+          {(dialogState === DialogState.Success || dialogState === DialogState.Error) && (
             <AlertDialogFooter>
-              <Button onClick={() => setAlertDialogOpen(false)}>Close</Button>
+              <Button onClick={() => {
+                setAlertDialogOpen(false);
+                setDialogState(DialogState.Idle);
+              }}>
+                Close
+              </Button>
             </AlertDialogFooter>
           )}
         </AlertDialogContent>
