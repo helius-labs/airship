@@ -229,7 +229,7 @@ export function CreateAirdrop({
           <CardTitle className="text-3xl font-bold text-primary">
             {isCreatingAirdrop
               ? "Creating Airdrop"
-              : isAirdropInProgress
+              : isAirdropInProgress || isAirdropComplete
                 ? "Sending Airdrop"
                 : "Create New Airdrop"}
           </CardTitle>

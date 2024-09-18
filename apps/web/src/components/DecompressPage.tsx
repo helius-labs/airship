@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
-import { Link } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from './ui/wallet-multi-button';
 import { bn, buildTx, createRpc, ParsedTokenAccount, Rpc, sendAndConfirmTx } from '@lightprotocol/stateless.js';
@@ -11,8 +10,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress } from '@solana/spl-token';
 import { ComputeBudgetProgram, TransactionInstruction } from '@solana/web3.js';
-import { Loader2 } from 'lucide-react'; // Import a loading icon
-import { toast } from 'sonner'; // Import Sonner
+import { Loader2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
+import { Link } from 'react-router-dom';
 
 const connection: Rpc = createRpc(import.meta.env.VITE_RPC_ENDPOINT, import.meta.env.VITE_RPC_ENDPOINT);
 
@@ -20,6 +27,8 @@ export function DecompressPage() {
   const { publicKey, connected, signTransaction } = useWallet();
   const [compressedTokenAccounts, setCompressedTokenAccounts] = useState<ParsedTokenAccount[]>([]);
   const [isLoading, setIsLoading] = useState(false); // New state for loading
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+  const [alertDialogContent, setAlertDialogContent] = useState<{ title: string; message: string | ReactNode }>({ title: '', message: '' });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -47,98 +56,123 @@ export function DecompressPage() {
       const mint = inputCompressedTokenAccount.parsed.mint;
       const amount = inputCompressedTokenAccount.parsed.amount;
 
-      toast.promise(
-        async () => {
-          // Set the compute unit limit and add it to the transaction
-          const unitLimitIX = ComputeBudgetProgram.setComputeUnitLimit({
-            units: computeUnitLimit,
-          });
+      setAlertDialogOpen(true);
+      setAlertDialogContent({ title: 'Decompressing Token', message: 'Please confirm the transaction...' });
 
-          const instructions: TransactionInstruction[] = [unitLimitIX];
+      // Set the compute unit limit and add it to the transaction
+      const unitLimitIX = ComputeBudgetProgram.setComputeUnitLimit({
+        units: computeUnitLimit,
+      });
 
-          // Set the compute unit limit and add it to the transaction
-          const unitPriceIX = ComputeBudgetProgram.setComputeUnitPrice({
-            microLamports: computeUnitPrice,
-          });
+      const instructions: TransactionInstruction[] = [unitLimitIX];
 
-          instructions.push(unitPriceIX);
+      // Set the compute unit limit and add it to the transaction
+      const unitPriceIX = ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: computeUnitPrice,
+      });
 
-          // Calculate ATA
-          const ata = await getAssociatedTokenAddress(
-            mint,
-            publicKey,
-          );
+      instructions.push(unitPriceIX);
 
-          if (!ata) {
-            // Create an associated token account for the user if it doesn't exist
-            const createAtaInstruction = await createAssociatedTokenAccountInstruction(
-              publicKey,
-              ata,
-              publicKey,
-              mint,
-            );
-
-            instructions.push(createAtaInstruction);
-          }
-
-          // Fetch the latest compressed token account state
-          const compressedTokenAccounts =
-            await connection.getCompressedTokenAccountsByOwner(publicKey, {
-              mint,
-            });
-
-          // Select accounts to transfer from based on the transfer amount
-          const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(
-            compressedTokenAccounts.items,
-            amount,
-          );
-
-          // Fetch recent validity proof
-          const proof = await connection.getValidityProof(
-            inputAccounts.map(account => bn(account.compressedAccount.hash)),
-          );
-
-          // Create the decompress instruction
-          const decompressInstruction = await CompressedTokenProgram.decompress({
-            payer: publicKey,
-            inputCompressedTokenAccounts: inputAccounts,
-            toAddress: ata,
-            amount,
-            recentInputStateRootIndices: proof.rootIndices,
-            recentValidityProof: proof.compressedProof,
-          });
-
-          instructions.push(decompressInstruction);
-
-          const {
-            value: blockhashCtx,
-          } = await connection.getLatestBlockhashAndContext();
-
-          const tx = buildTx(
-            instructions,
-            publicKey,
-            blockhashCtx.blockhash,
-          );
-
-          const signedTx = await signTransaction(tx);
-
-          const txId = await sendAndConfirmTx(connection, signedTx);
-
-          // Refresh the list of compressed tokens
-          const accounts = await connection.getCompressedTokenAccountsByOwner(publicKey);
-          setCompressedTokenAccounts(accounts.items);
-
-          return txId; // Return the transaction ID for the success message
-        },
-        {
-          loading: 'Confirm Transaction',
-          success: (txId) => `Token decompressed successfully! Transaction ID: ${txId}`,
-          error: (err) => `Error decompressing token: ${err.message}`,
-        }
+      // Calculate ATA
+      const ata = await getAssociatedTokenAddress(
+        mint,
+        publicKey,
       );
+
+      if (!ata) {
+        // Create an associated token account for the user if it doesn't exist
+        const createAtaInstruction = await createAssociatedTokenAccountInstruction(
+          publicKey,
+          ata,
+          publicKey,
+          mint,
+        );
+
+        instructions.push(createAtaInstruction);
+      }
+
+      // Fetch the latest compressed token account state
+      const compressedTokenAccounts =
+        await connection.getCompressedTokenAccountsByOwner(publicKey, {
+          mint,
+        });
+
+      // Select accounts to transfer from based on the transfer amount
+      const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(
+        compressedTokenAccounts.items,
+        amount,
+      );
+
+      // Fetch recent validity proof
+      const proof = await connection.getValidityProof(
+        inputAccounts.map(account => bn(account.compressedAccount.hash)),
+      );
+
+      // Create the decompress instruction
+      const decompressInstruction = await CompressedTokenProgram.decompress({
+        payer: publicKey,
+        inputCompressedTokenAccounts: inputAccounts,
+        toAddress: ata,
+        amount,
+        recentInputStateRootIndices: proof.rootIndices,
+        recentValidityProof: proof.compressedProof,
+      });
+
+      instructions.push(decompressInstruction);
+
+      const {
+        value: blockhashCtx,
+      } = await connection.getLatestBlockhashAndContext();
+
+      const tx = buildTx(
+        instructions,
+        publicKey,
+        blockhashCtx.blockhash,
+      );
+
+      const signedTx = await signTransaction(tx);
+
+      setAlertDialogContent({
+        title: 'Confirming Transaction',
+        message: (
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Please wait while the transaction is being confirmed...</span>
+          </div>
+        )
+      });
+
+      const txId = await sendAndConfirmTx(connection, signedTx);
+
+      // Refresh the list of compressed tokens
+      const accounts = await connection.getCompressedTokenAccountsByOwner(publicKey);
+      setCompressedTokenAccounts(accounts.items);
+
+      setAlertDialogContent({
+        title: 'Success',
+        message: (
+          <>
+            <p className="mb-2">Token decompressed successfully!</p>
+            <p>Signature:&nbsp;
+              <a
+                href={`https://xray.helius.xyz/tx/${txId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary font-semibold underline hover:underline"
+              >
+                {txId.slice(0, 4) + '...' + txId.slice(-4)}
+              </a>
+            </p>
+          </>
+        )
+      });
+
     } catch (error) {
       console.error("Error decompressing token:", error);
-      toast.error(`Decompression failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setAlertDialogContent({
+        title: 'Error',
+        message: `Decompression failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
     }
   };
 
@@ -196,6 +230,21 @@ export function DecompressPage() {
       >
         Back to Home
       </Link>
+      <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{alertDialogContent.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {alertDialogContent.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {alertDialogContent.title !== 'Decompressing Token' && alertDialogContent.title !== 'Confirming Transaction' && (
+            <AlertDialogFooter>
+              <Button onClick={() => setAlertDialogOpen(false)}>Close</Button>
+            </AlertDialogFooter>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

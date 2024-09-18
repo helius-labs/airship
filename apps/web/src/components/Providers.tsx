@@ -5,7 +5,6 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { ThemeProvider } from "@/providers/ThemeProvider";
-import { Toaster } from "@/components/ui/sonner"
 
 interface ProvidersProps {
     children: React.ReactNode;
@@ -44,7 +43,6 @@ export function Providers({ children }: ProvidersProps) {
                     <WalletModalProvider>
                         <Router>
                             {children}
-                            <Toaster />
                         </Router>
                     </WalletModalProvider>
                 </WalletProvider>

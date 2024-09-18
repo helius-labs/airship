@@ -90,8 +90,8 @@ export default function Step4({
             maximumFractionDigits: selectedTokenInfo.decimals,
           }),
           numberOfTransactions: Number(numberOfTransactions),
-          approximateTransactionFee: `${Number(numberOfTransactions * transactionFee) / 1e9} SOL`,
-          approximateCompressionFee: `${Number(BigInt(recipientList.length) * BigInt(compressionFee)) / 1e9} SOL`,
+          approximateTransactionFee: `${(Number(numberOfTransactions * transactionFee) / 1e9).toFixed(9)} SOL`,
+          approximateCompressionFee: `${(Number(BigInt(recipientList.length) * BigInt(compressionFee)) / 1e9).toFixed(9)} SOL`,
           rpcUrl: rpcUrl,
         };
 
