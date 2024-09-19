@@ -9,16 +9,16 @@ import { SQLocalDrizzle } from "sqlocal/drizzle";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 import { sql } from "drizzle-orm";
 
+const { driver, batchDriver } = new SQLocalDrizzle({
+  databasePath: databaseFile,
+  verbose: false,
+});
+
+const db = drizzle(driver, batchDriver);
+
 function App() {
   const [existingAirdrop, setExistingAirdrop] = useState<boolean | null>(null);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
-
-  const { driver, batchDriver } = new SQLocalDrizzle({
-    databasePath: databaseFile,
-    verbose: false,
-  });
-
-  const db = drizzle(driver, batchDriver);
 
   useEffect(() => {
     async function initApp() {

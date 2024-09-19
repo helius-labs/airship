@@ -42,7 +42,7 @@
     "react-dropzone": "^14.2.3",
     "react-hook-form": "^7.53.0",
     "react-router-dom": "^6.26.2",
-    "sqlocal": "^0.11.1",
+    "sqlocal": "^0.11.3",
     "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.23.8"

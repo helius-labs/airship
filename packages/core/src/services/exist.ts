@@ -1,5 +1,3 @@
-import { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
-import { SqliteRemoteDatabase } from "drizzle-orm/sqlite-proxy";
 import { transaction_queue } from "../schema/transaction_queue";
 
 // Using db: any instead of db: BetterSQLite3Database | SqliteRemoteDatabase because of typescript limitations

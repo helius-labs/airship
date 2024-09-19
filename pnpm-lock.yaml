@@ -121,8 +121,8 @@ importers:
         specifier: ^6.26.2
         version: 6.26.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       sqlocal:
-        specifier: ^0.11.1
-        version: 0.11.1(bufferutil@4.0.8)(drizzle-orm@0.33.0(@types/better-sqlite3@7.6.11)(@types/react@18.3.5)(@types/sql.js@1.4.9)(better-sqlite3@11.2.1)(react@18.3.1)(sql.js@1.11.0))(utf-8-validate@5.0.10)
+        specifier: ^0.11.3
+        version: 0.11.3(bufferutil@4.0.8)(drizzle-orm@0.33.0(@types/better-sqlite3@7.6.11)(@types/react@18.3.5)(@types/sql.js@1.4.9)(better-sqlite3@11.2.1)(react@18.3.1)(sql.js@1.11.0))(utf-8-validate@5.0.10)
       tailwind-merge:
         specifier: ^2.4.0
         version: 2.5.2
@@ -6148,8 +6148,8 @@ packages:
   sql.js@1.11.0:
     resolution: {integrity: sha512-GsLUDU3vhOo14Pd5ME0y2te49JQyby6HuoCuadevEV+CGgTUjmYRrm7B7lhRyzOgrmcWmspUfyjNb6sOAEqdsA==}
 
-  sqlocal@0.11.1:
-    resolution: {integrity: sha512-vg0j6WGleDvBJlG3p3hEVZ01j+X83O8kZMTao01g7XoIJUB6dmFEWu5ePY5Rhg36J61zP5/+hhSUQi7GD4+/PA==}
+  sqlocal@0.11.3:
+    resolution: {integrity: sha512-OX8wrB5K3MFPCZvc0FfqjpXwrbk+kkePnEJiXBlmFl0D1qLhrKMMaefVbjoZIWV9okpI2WFWIf9B3H57SRu7ag==}
     peerDependencies:
       drizzle-orm: '*'
       kysely: '*'
@@ -13925,7 +13925,7 @@ snapshots:
   sql.js@1.11.0:
     optional: true
 
-  sqlocal@0.11.1(bufferutil@4.0.8)(drizzle-orm@0.33.0(@types/better-sqlite3@7.6.11)(@types/react@18.3.5)(@types/sql.js@1.4.9)(better-sqlite3@11.2.1)(react@18.3.1)(sql.js@1.11.0))(utf-8-validate@5.0.10):
+  sqlocal@0.11.3(bufferutil@4.0.8)(drizzle-orm@0.33.0(@types/better-sqlite3@7.6.11)(@types/react@18.3.5)(@types/sql.js@1.4.9)(better-sqlite3@11.2.1)(react@18.3.1)(sql.js@1.11.0))(utf-8-validate@5.0.10):
     dependencies:
       '@sqlite.org/sqlite-wasm': 3.46.0-build2
       coincident: 1.2.3(bufferutil@4.0.8)(utf-8-validate@5.0.10)

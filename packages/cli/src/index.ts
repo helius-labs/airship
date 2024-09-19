@@ -444,7 +444,6 @@ async function startAndMonitorAirdrop(keypair: web3.Keypair, url: string) {
     });
 
     mcSend.port2.on('message', (message: any) => {
-      console.log(message);
       if (message.error) {
         handleAirdropError(startSpinner, new Error(message.error));
       }
