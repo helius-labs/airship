@@ -1,7 +1,7 @@
 {
   "name": "helius-airship-core",
   "type": "module",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Helius AirShip core library",
   "license": "MIT",
   "author": {

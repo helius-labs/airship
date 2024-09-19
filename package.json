@@ -7,8 +7,7 @@
     "type-check": "turbo type-check",
     "clean": "turbo clean",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "publish-packages": "turbo run build && changeset version && changeset publish",
-    "cli:start": "pnpm --filter=helius-airship start"
+    "publish-packages": "turbo run build && changeset version && changeset publish"
   },
   "devDependencies": {
     "prettier": "^3.2.5",

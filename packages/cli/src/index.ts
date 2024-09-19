@@ -86,7 +86,7 @@ function createCommandProgram() {
       "URL for Solana's JSON RPC with ZK Compression support"
     )
     .version(
-      "0.7.0",
+      "0.8.0",
       "-v, --version",
       "display the version number"
     );

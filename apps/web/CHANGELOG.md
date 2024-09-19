@@ -1,5 +1,16 @@
 # web
 
+## 0.5.0
+
+### Minor Changes
+
+- Improved worker error handling
+
+### Patch Changes
+
+- Updated dependencies
+  - helius-airship-core@0.5.0
+
 ## 0.4.0
 
 ### Minor Changes
