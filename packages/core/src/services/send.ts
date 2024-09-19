@@ -166,17 +166,8 @@ export async function send(params: SendParams) {
       } catch (error) {
         if (error instanceof SendTransactionError) {
           if (error.logs?.includes("Program log: Error: insufficient funds")) {
-            logger.error(
-              AirdropErrorMessage.airdropInsufficientFunds +
-                ": " +
-                keypair.publicKey.toBase58()
-            );
-            throw new AirdropError(
-              AirdropErrorMessage.airdropInsufficientFunds +
-                ": " +
-                keypair.publicKey.toBase58(),
-              AirdropErrorCode.airdropInsufficientFunds
-            );
+            logger.error(AirdropErrorMessage.airdropInsufficientFunds);
+            throw new AirdropError(AirdropErrorMessage.airdropInsufficientFunds, AirdropErrorCode.airdropInsufficientFunds);
           }
           logger.error(error.message);
         } else {

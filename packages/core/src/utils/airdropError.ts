@@ -17,7 +17,7 @@ export enum AirdropErrorMessage {
   aidrdopCSVInvalid = "CSV file is invalid",
   airdopAddressInvalid = "Address is invalid",
   airdropMaxAddressesPerTransaction = `Max addresses per transaction is ${maxAddressesPerTransaction}`,
-  airdropInsufficientFunds = "Insufficient funds, please add funds to address",
+  airdropInsufficientFunds = "Insufficient funds. Please add enough SOL and tokens, then restart the airdrop using the resume option.",
   airdropAllTransactionsSend = "All transactions are send waiting for confirmation",
   airdropAllFinalized = "All transactions are finalized",
 }

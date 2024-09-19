@@ -25,22 +25,32 @@ import Step3 from "./airdrop-steps/Step3";
 import Step4 from "./airdrop-steps/Step4";
 import Step5 from "./airdrop-steps/Step5";
 import { Loader2 } from "lucide-react";
-import { AirdropSenderWorker } from "@/types/AirdropSenderWorker";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { FormValues, validationSchema } from "@/schemas/formSchema";
 import { getKeypairFromPrivateKey } from "@/lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface CreateAirdropProps {
   db: airdropsender.BrowserDatabase;
-  airdropSenderWorker: AirdropSenderWorker;
   onBackToHome: () => void;
 }
 
+// Load the airdrop sender worker
+const createWorker = new ComlinkWorker<
+  typeof import("../workers/create.ts")
+>(new URL("../workers/create.ts", import.meta.url), {
+  name: "createWorker",
+  type: "module",
+});
+
+let sendWorker: Worker | undefined = undefined;
+let pollWorker: Worker | undefined = undefined;
+
 export function CreateAirdrop({
   db,
-  airdropSenderWorker,
   onBackToHome,
 }: CreateAirdropProps) {
   const [step, setStep] = useState(1);
@@ -57,6 +67,7 @@ export function CreateAirdrop({
   const [isAirdropInProgress, setIsAirdropInProgress] = useState(false);
   const [isAirdropComplete, setIsAirdropComplete] = useState(false);
   const [isCreatingAirdrop, setIsCreatingAirdrop] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const currentValidationSchema = validationSchema[step - 1];
 
@@ -134,9 +145,21 @@ export function CreateAirdrop({
     void loadTokens();
   }, [privateKey, rpcUrl]);
 
+  const handleError = (errorMessage: string) => {
+    setError(errorMessage);
+    setIsAirdropInProgress(false);
+    setIsCreatingAirdrop(false);
+    // Stop both workers
+    sendWorker?.terminate();
+    sendWorker = undefined;
+    pollWorker?.terminate();
+    pollWorker = undefined;
+  };
+
   const handleSendAirdrop = async () => {
     setShowConfirmDialog(false);
     setIsCreatingAirdrop(true);
+    setError(null); // Clear any previous errors
 
     try {
       if (!amountValue) {
@@ -145,7 +168,7 @@ export function CreateAirdrop({
 
       const keypair = getKeypairFromPrivateKey(privateKey);
 
-      await airdropSenderWorker.create(
+      await createWorker.create(
         keypair.publicKey.toBase58(),
         recipientList,
         amountValue,
@@ -156,31 +179,55 @@ export function CreateAirdrop({
       setIsAirdropInProgress(true);
       setStep(5); // Move to step 5 when airdrop starts
 
-      airdropSenderWorker.send(privateKey, rpcUrl);
-      airdropSenderWorker.poll(rpcUrl);
+      if (typeof (sendWorker) === "undefined") {
+        sendWorker = new Worker(new URL("../workers/send.ts", import.meta.url), {
+          type: "module",
+        });
+      }
+
+      sendWorker.onmessage = (event) => {
+        if (event.data.error) {
+          handleError(`${event.data.error}`);
+        }
+      };
+      sendWorker.postMessage({ privateKey, rpcUrl });
+
+      if (typeof (pollWorker) === "undefined") {
+        pollWorker = new Worker(new URL("../workers/poll.ts", import.meta.url), {
+          type: "module",
+        });
+      }
+
+      pollWorker.onmessage = (event) => {
+        if (event.data.error) {
+          handleError(`${event.data.error}`);
+        }
+      };
+      pollWorker.postMessage({ rpcUrl });
 
       const monitorInterval = setInterval(async () => {
-        const currentStatus = await airdropsender.status({ db });
-        setSendProgress((currentStatus.sent / currentStatus.total) * 100);
-        setFinalizeProgress(
-          (currentStatus.finalized / currentStatus.total) * 100
-        );
-        setTotalTransactions(currentStatus.total);
-        setSentTransactions(currentStatus.sent);
-        setFinalizedTransactions(currentStatus.finalized);
+        try {
+          const currentStatus = await airdropsender.status({ db });
+          setSendProgress((currentStatus.sent / currentStatus.total) * 100);
+          setFinalizeProgress(
+            (currentStatus.finalized / currentStatus.total) * 100
+          );
+          setTotalTransactions(currentStatus.total);
+          setSentTransactions(currentStatus.sent);
+          setFinalizedTransactions(currentStatus.finalized);
 
-        if (currentStatus.finalized === currentStatus.total) {
+          if (currentStatus.finalized === currentStatus.total) {
+            clearInterval(monitorInterval);
+            setIsAirdropInProgress(false);
+            setIsAirdropComplete(true);
+          }
+        } catch (error) {
           clearInterval(monitorInterval);
-          setIsAirdropInProgress(false);
-          setIsAirdropComplete(true);
+          handleError(`Error monitoring airdrop status: ${error}`);
         }
       }, 1000);
     } catch (error) {
-      console.error("Failed to create airdrop:", error);
-      alert("Failed to create airdrop. Please try again.");
-      setIsCreatingAirdrop(false);
-      setIsAirdropInProgress(false);
-      setStep(4); // Go back to step 4 if there's an error
+      handleError(`Failed to create airdrop: ${error}`);
     }
   };
 
@@ -235,7 +282,15 @@ export function CreateAirdrop({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isCreatingAirdrop ? (
+          {error ? (
+            <>
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            </>
+          ) : isCreatingAirdrop ? (
             <div className="flex flex-col items-center justify-center space-y-4">
               <Loader2 className="h-12 w-12 animate-spin" />
               <p>Creating airdrop... Please wait.</p>
@@ -348,7 +403,7 @@ export function CreateAirdrop({
           )}
         </CardContent>
       </Card>
-      {!isAirdropInProgress && !isAirdropComplete && step < 5 && (
+      {(!isAirdropInProgress && !isAirdropComplete && step < 5) || error ? (
         <a
           href="#"
           onClick={(e) => {
@@ -359,7 +414,7 @@ export function CreateAirdrop({
         >
           Back to Home
         </a>
-      )}
+      ) : null}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent>
           <DialogHeader>

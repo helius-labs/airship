@@ -9,14 +9,6 @@ import { SQLocalDrizzle } from "sqlocal/drizzle";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 import { sql } from "drizzle-orm";
 
-// Load the airdrop sender worker
-const airdropSenderWorker = new ComlinkWorker<
-  typeof import("./lib/airdropSenderWorker.ts")
->(new URL("./lib/airdropSenderWorker.js", import.meta.url), {
-  name: "airdropSenderWorker",
-  type: "module",
-});
-
 function App() {
   const [existingAirdrop, setExistingAirdrop] = useState<boolean | null>(null);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
@@ -60,40 +52,38 @@ function App() {
   };
 
   return (
-      <div
-        className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed"
-        style={{ backgroundImage: "url('/background.jpg')" }}
-      >
-        <div className="w-full max-w-4xl rounded-lg shadow-xl">
-          <Routes>
-            <Route path="/decompress" element={<DecompressPage />} />
-            <Route
-              path="/"
-              element={
-                selectedAction === "create" ? (
-                  <CreateAirdrop
-                    db={db}
-                    airdropSenderWorker={airdropSenderWorker}
-                    onBackToHome={handleBackToHome}
-                  />
-                ) : selectedAction === "resume" ? (
-                  <ResumeAirdrop
-                    db={db}
-                    airdropSenderWorker={airdropSenderWorker}
-                    onBackToHome={handleBackToHome}
-                  />
-                ) : (
-                  <AirdropSelection
-                    existingAirdrop={existingAirdrop}
-                    onCreateAirdrop={handleCreateAirdrop}
-                    onResumeAirdrop={handleResumeAirdrop}
-                  />
-                )
-              }
-            />
-          </Routes>
-        </div>
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed"
+      style={{ backgroundImage: "url('/background.jpg')" }}
+    >
+      <div className="w-full max-w-4xl rounded-lg shadow-xl">
+        <Routes>
+          <Route path="/decompress" element={<DecompressPage />} />
+          <Route
+            path="/"
+            element={
+              selectedAction === "create" ? (
+                <CreateAirdrop
+                  db={db}
+                  onBackToHome={handleBackToHome}
+                />
+              ) : selectedAction === "resume" ? (
+                <ResumeAirdrop
+                  db={db}
+                  onBackToHome={handleBackToHome}
+                />
+              ) : (
+                <AirdropSelection
+                  existingAirdrop={existingAirdrop}
+                  onCreateAirdrop={handleCreateAirdrop}
+                  onResumeAirdrop={handleResumeAirdrop}
+                />
+              )
+            }
+          />
+        </Routes>
       </div>
+    </div>
   );
 }
 
