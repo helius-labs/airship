@@ -25,7 +25,6 @@ import Step3 from "./airdrop-steps/Step3";
 import Step4 from "./airdrop-steps/Step4";
 import Step5 from "./airdrop-steps/Step5";
 import { Loader2 } from "lucide-react";
-import { ComlinkWorker } from "@/types/ComlinkWorker";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
@@ -36,17 +35,22 @@ import { AlertCircle } from "lucide-react";
 
 interface CreateAirdropProps {
   db: airdropsender.BrowserDatabase;
-  createWorker: ComlinkWorker;
-  sendWorker: Worker;
-  pollWorker: Worker;
   onBackToHome: () => void;
 }
 
+// Load the airdrop sender worker
+const createWorker = new ComlinkWorker<
+  typeof import("../workers/create.ts")
+>(new URL("../workers/create.ts", import.meta.url), {
+  name: "createWorker",
+  type: "module",
+});
+
+let sendWorker: Worker | undefined = undefined;
+let pollWorker: Worker | undefined = undefined;
+
 export function CreateAirdrop({
   db,
-  createWorker,
-  sendWorker,
-  pollWorker,
   onBackToHome,
 }: CreateAirdropProps) {
   const [step, setStep] = useState(1);
@@ -146,8 +150,10 @@ export function CreateAirdrop({
     setIsAirdropInProgress(false);
     setIsCreatingAirdrop(false);
     // Stop both workers
-    sendWorker.terminate();
-    pollWorker.terminate();
+    sendWorker?.terminate();
+    sendWorker = undefined;
+    pollWorker?.terminate();
+    pollWorker = undefined;
   };
 
   const handleSendAirdrop = async () => {
@@ -173,12 +179,24 @@ export function CreateAirdrop({
       setIsAirdropInProgress(true);
       setStep(5); // Move to step 5 when airdrop starts
 
+      if (typeof (sendWorker) === "undefined") {
+        sendWorker = new Worker(new URL("../workers/send.ts", import.meta.url), {
+          type: "module",
+        });
+      }
+
       sendWorker.onmessage = (event) => {
         if (event.data.error) {
           handleError(`${event.data.error}`);
         }
       };
       sendWorker.postMessage({ privateKey, rpcUrl });
+
+      if (typeof (pollWorker) === "undefined") {
+        pollWorker = new Worker(new URL("../workers/poll.ts", import.meta.url), {
+          type: "module",
+        });
+      }
 
       pollWorker.onmessage = (event) => {
         if (event.data.error) {
@@ -264,14 +282,15 @@ export function CreateAirdrop({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {error && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          {isCreatingAirdrop ? (
+          {error ? (
+            <>
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            </>
+          ) : isCreatingAirdrop ? (
             <div className="flex flex-col items-center justify-center space-y-4">
               <Loader2 className="h-12 w-12 animate-spin" />
               <p>Creating airdrop... Please wait.</p>
@@ -384,7 +403,7 @@ export function CreateAirdrop({
           )}
         </CardContent>
       </Card>
-      {!isAirdropInProgress && !isAirdropComplete && step < 5 && (
+      {(!isAirdropInProgress && !isAirdropComplete && step < 5) || error ? (
         <a
           href="#"
           onClick={(e) => {
@@ -395,7 +414,7 @@ export function CreateAirdrop({
         >
           Back to Home
         </a>
-      )}
+      ) : null}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent>
           <DialogHeader>

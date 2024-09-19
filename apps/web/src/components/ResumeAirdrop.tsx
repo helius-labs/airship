@@ -13,16 +13,15 @@ import { AlertCircle } from "lucide-react";
 
 interface ResumeAirdropProps {
   db: airdropsender.BrowserDatabase;
-  sendWorker: Worker;
-  pollWorker: Worker;
   onBackToHome: () => void;
 }
+
+let sendWorker: Worker | undefined = undefined;
+let pollWorker: Worker | undefined = undefined;
 
 export function ResumeAirdrop({
   db,
   onBackToHome,
-  sendWorker,
-  pollWorker,
 }: ResumeAirdropProps) {
   const [step, setStep] = useState(1);
   const [isAirdropInProgress, setIsAirdropInProgress] = useState(false);
@@ -48,8 +47,10 @@ export function ResumeAirdrop({
     setError(errorMessage);
     setIsAirdropInProgress(false);
     // Stop both workers
-    sendWorker.terminate();
-    pollWorker.terminate();
+    sendWorker?.terminate();
+    sendWorker = undefined;
+    pollWorker?.terminate();
+    pollWorker = undefined;
   };
 
   useEffect(() => {
@@ -72,12 +73,25 @@ export function ResumeAirdrop({
     const { privateKey, rpcUrl } = values;
 
     try {
+
+      if (typeof (sendWorker) === "undefined") {
+        sendWorker = new Worker(new URL("../workers/send.ts", import.meta.url), {
+          type: "module",
+        });
+      }
+
       sendWorker.onmessage = (event) => {
         if (event.data.error) {
           handleError(`${event.data.error}`);
         }
       };
       sendWorker.postMessage({ privateKey, rpcUrl });
+
+      if (typeof (pollWorker) === "undefined") {
+        pollWorker = new Worker(new URL("../workers/poll.ts", import.meta.url), {
+          type: "module",
+        });
+      }
 
       pollWorker.onmessage = (event) => {
         if (event.data.error) {

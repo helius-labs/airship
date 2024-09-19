@@ -9,22 +9,6 @@ import { SQLocalDrizzle } from "sqlocal/drizzle";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 import { sql } from "drizzle-orm";
 
-// Load the airdrop sender worker
-const createWorker = new ComlinkWorker<
-  typeof import("./workers/create.ts")
->(new URL("./workers/create.ts", import.meta.url), {
-  name: "createWorker",
-  type: "module",
-});
-
-const sendWorker = new Worker(new URL("./workers/send.ts", import.meta.url), {
-  type: "module",
-});
-
-const pollWorker = new Worker(new URL("./workers/poll.ts", import.meta.url), {
-  type: "module",
-});
-
 function App() {
   const [existingAirdrop, setExistingAirdrop] = useState<boolean | null>(null);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
@@ -81,16 +65,11 @@ function App() {
               selectedAction === "create" ? (
                 <CreateAirdrop
                   db={db}
-                  createWorker={createWorker}
-                  sendWorker={sendWorker}
-                  pollWorker={pollWorker}
                   onBackToHome={handleBackToHome}
                 />
               ) : selectedAction === "resume" ? (
                 <ResumeAirdrop
                   db={db}
-                  sendWorker={sendWorker}
-                  pollWorker={pollWorker}
                   onBackToHome={handleBackToHome}
                 />
               ) : (
