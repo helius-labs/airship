@@ -136,54 +136,66 @@ export function ResumeAirdrop({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {error && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+          {error ? (
+            <>
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+              <div className="flex justify-center">
+                <Button onClick={onBackToHome} className="mt-1">
+                  Back to Home
+                </Button>
+              </div>
+            </>
+          ) : (
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {step === 1 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Step 1: Setup Your Wallet</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Step1 form={form} />
+                    </CardContent>
+                  </Card>
+                )}
+                {step === 2 && (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <Step5
+                        isAirdropInProgress={isAirdropInProgress}
+                        isAirdropComplete={isAirdropComplete}
+                        sendProgress={sendProgress}
+                        finalizeProgress={finalizeProgress}
+                        sentTransactions={sentTransactions}
+                        finalizedTransactions={finalizedTransactions}
+                        totalTransactions={totalTransactions}
+                        onBackToHome={onBackToHome}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+                {step === 1 && (
+                  <div className="flex justify-between items-center">
+                    <Button
+                      onClick={onBackToHome}
+                      type="button"
+                      variant="outline"
+                    >
+                      Previous
+                    </Button>
+                    <Button type="submit">Resume Airdrop</Button>
+                  </div>
+                )}
+              </form>
+            </Form>
           )}
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {step === 1 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Step 1: Setup Your Wallet</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Step1 form={form} />
-                  </CardContent>
-                </Card>
-              )}
-              {step === 2 && (
-                <Step5
-                  isAirdropInProgress={isAirdropInProgress}
-                  isAirdropComplete={isAirdropComplete}
-                  sendProgress={sendProgress}
-                  finalizeProgress={finalizeProgress}
-                  sentTransactions={sentTransactions}
-                  finalizedTransactions={finalizedTransactions}
-                  totalTransactions={totalTransactions}
-                  onBackToHome={onBackToHome}
-                />
-              )}
-              {step === 1 && (
-                <div className="flex justify-between items-center">
-                  <Button
-                    onClick={onBackToHome}
-                    type="button"
-                    variant="outline"
-                  >
-                    Previous
-                  </Button>
-                  <Button type="submit">Resume Airdrop</Button>
-                </div>
-              )}
-            </form>
-          </Form>
         </CardContent>
       </Card>
-      {!isAirdropInProgress && !isAirdropComplete && (
+      {!isAirdropInProgress && !isAirdropComplete && step < 2 && (
         <a
           href="#"
           onClick={(e) => {

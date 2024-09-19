@@ -289,6 +289,11 @@ export function CreateAirdrop({
                 <AlertTitle>Error</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
+              <div className="flex justify-center">
+                <Button onClick={onBackToHome} className="mt-1">
+                  Back to Home
+                </Button>
+              </div>
             </>
           ) : isCreatingAirdrop ? (
             <div className="flex flex-col items-center justify-center space-y-4">
@@ -403,7 +408,7 @@ export function CreateAirdrop({
           )}
         </CardContent>
       </Card>
-      {(!isAirdropInProgress && !isAirdropComplete && step < 5) || error ? (
+      {!isAirdropInProgress && !isAirdropComplete && step < 5 && (
         <a
           href="#"
           onClick={(e) => {
@@ -414,7 +419,7 @@ export function CreateAirdrop({
         >
           Back to Home
         </a>
-      ) : null}
+      )}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent>
           <DialogHeader>
