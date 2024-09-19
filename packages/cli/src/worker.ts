@@ -31,19 +31,35 @@ export async function create({
 export async function send({
   secretKey,
   url,
+  port,
 }: {
   secretKey: Uint8Array;
   url: string;
+  port: MessagePort;
 }) {
   const keypair = web3.Keypair.fromSecretKey(secretKey);
 
-  await airdropsender.send({
-    db,
-    keypair,
-    url,
-  });
+  try {
+    await airdropsender.send({
+      db,
+      keypair,
+      url,
+    });
+  } catch (error) {
+    if (port) {
+      port.postMessage({ error: error instanceof Error ? error.message : String(error) });
+    }
+    throw error;
+  }
 }
 
-export async function poll({ url }: { url: string }) {
-  await airdropsender.poll({ db, url });
+export async function poll({ url, port }: { url: string; port: MessagePort }) {
+  try {
+    await airdropsender.poll({ db, url });
+  } catch (error) {
+    if (port) {
+      port.postMessage({ error: error instanceof Error ? error.message : String(error) });
+    }
+    throw error;
+  }
 }

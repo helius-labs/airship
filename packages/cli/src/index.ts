@@ -32,6 +32,7 @@ import { splToken } from "./imports/spl-token";
 import Tinypool from "tinypool";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
+import { MessageChannel } from 'node:worker_threads'
 
 process.on("SIGINT", exitProgram);
 process.on("SIGTERM", exitProgram);
@@ -347,8 +348,8 @@ async function confirmAirdrop(
   );
 
   const transactionFee =
-  BigInt(baseFee) +
-  ((BigInt(computeUnitLimit) * BigInt(computeUnitPrice)) / BigInt(MICRO_LAMPORTS_PER_LAMPORT));
+    BigInt(baseFee) +
+    ((BigInt(computeUnitLimit) * BigInt(computeUnitPrice)) / BigInt(MICRO_LAMPORTS_PER_LAMPORT));
 
   const token = tokens.find((token) => {
     return token.mintAddress.toBase58() === mintAddress;
@@ -380,7 +381,7 @@ async function confirmAirdrop(
     ["Number of transactions", numberOfTransactions],
     [
       "Approximate transaction fee",
-     `${(Number(numberOfTransactions * transactionFee) / 1e9).toFixed(9)} SOL`,
+      `${(Number(numberOfTransactions * transactionFee) / 1e9).toFixed(9)} SOL`,
     ],
     [
       "Approximate compression fee",
@@ -433,8 +434,36 @@ async function startAndMonitorAirdrop(keypair: web3.Keypair, url: string) {
   const startSpinner = ora("Starting airdrop");
   try {
     startSpinner.start();
-    pool.run({ secretKey: keypair.secretKey, url: url }, { name: "send" });
-    pool.run({ url }, { name: "poll" });
+
+    // Worker to send transactions
+    const mcSend = new MessageChannel();
+
+    pool.run({ secretKey: keypair.secretKey, url: url, port: mcSend.port1 }, {
+      name: "send",
+      transferList: [mcSend.port1],
+    });
+
+    mcSend.port2.on('message', (message: any) => {
+      console.log(message);
+      if (message.error) {
+        handleAirdropError(startSpinner, new Error(message.error));
+      }
+    });
+
+    // Worker to poll for transaction confirmations
+    const mcPoll = new MessageChannel();
+
+    pool.run({ url, port: mcPoll.port1 }, {
+      name: "poll",
+      transferList: [mcPoll.port1],
+    });
+
+    mcPoll.port2.on('message', (message: any) => {
+      if (message.error) {
+        handleAirdropError(startSpinner, new Error(message.error));
+      }
+    });
+
     startSpinner.succeed("Airdrop started");
   } catch (error) {
     handleAirdropError(startSpinner, error);
@@ -486,7 +515,7 @@ function handleAirdropError(spinner: Ora, error: any) {
   if (error instanceof AirdropError) {
     console.error(chalk.red(error.message));
   } else {
-    console.error(chalk.red("Sending airdrop failed", error));
+    console.error(chalk.red(error));
   }
   process.exit(0);
 }
