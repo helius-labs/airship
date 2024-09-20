@@ -3,6 +3,7 @@ import * as web3 from "@solana/web3.js";
 import { SQLocalDrizzle } from "sqlocal/drizzle";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 import { databaseFile } from "helius-airship-core";
+import { sql } from "drizzle-orm";
 
 const { driver, batchDriver } = new SQLocalDrizzle({
   databasePath: databaseFile,
@@ -17,6 +18,8 @@ export async function create(
   amount: bigint,
   mintAddress: string
 ) {
+  await db.run(sql`PRAGMA journal_mode = WAL;`);
+
   await airdropsender.create({
     db,
     signer: new web3.PublicKey(signer),

@@ -4,6 +4,7 @@ import { asc, eq, ne, and, count, isNotNull, or } from "drizzle-orm";
 import { logger } from "./logger";
 import { SendTransactionError } from "@solana/web3.js";
 import { CommitmentStatus } from "../config/constants";
+import { sleep } from "../utils/common";
 
 // Using db: any instead of db: BetterSQLite3Database | SqliteRemoteDatabase because of typescript limitations
 // https://github.com/drizzle-team/drizzle-orm/issues/1966#issuecomment-1981726977
@@ -106,17 +107,17 @@ export async function poll(params: PollParams) {
             break;
         }
 
-        await db
-          .update(transaction_queue)
-          .set({
-            commitment_status: commitmentStatus,
-          })
-          .where(eq(transaction_queue.id, transaction.id));
-
         if (
           commitmentStatus === CommitmentStatus.Confirmed ||
           commitmentStatus === CommitmentStatus.Finalized
         ) {
+          await db
+            .update(transaction_queue)
+            .set({
+              commitment_status: commitmentStatus,
+            })
+            .where(eq(transaction_queue.id, transaction.id));
+
           logger.info(
             `Transaction [${transaction.id}/${totalTransactionsToSend}] confirmed: ${transaction.signature}`
           );
@@ -131,5 +132,8 @@ export async function poll(params: PollParams) {
         }
       }
     }
+
+    // Sleep for 1 second
+    await sleep(1000);
   }
 }
