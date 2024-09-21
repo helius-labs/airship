@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.5.0",
   "description": "Helius AirShip core library",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": {
     "name": "Helius",
     "url": "https://www.helius.dev/"
