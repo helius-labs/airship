@@ -5,6 +5,7 @@ import Database from "better-sqlite3";
 // Load the database
 const sqlite = new Database(airdropsender.databaseFile);
 sqlite.exec("PRAGMA journal_mode = WAL;");
+sqlite.exec("PRAGMA synchronous = normal;");
 
 const db = drizzle(sqlite);
 

@@ -15,7 +15,6 @@ async function createTransactionQueueTable(
       \`amount\` text NOT NULL,
       \`blockhash\` text(44),
       \`last_valid_block_height\` integer DEFAULT 0,
-      \`serialised_transaction\` text,
       \`signature\` text(88),
       \`created_at\` integer DEFAULT (unixepoch()) NOT NULL,
       \`attempts\` integer DEFAULT 0 NOT NULL,

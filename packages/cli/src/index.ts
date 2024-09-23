@@ -44,6 +44,7 @@ const pool = new Tinypool({
 // Load the database
 const sqlite = new Database(databaseFile);
 sqlite.exec("PRAGMA journal_mode = WAL;");
+sqlite.exec("PRAGMA synchronous = normal;");
 
 const db = drizzle(sqlite);
 

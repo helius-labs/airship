@@ -82,7 +82,7 @@ export function ResumeAirdrop({
 
       sendWorker.onmessage = (event) => {
         if (event.data.error) {
-          handleError(`${event.data.error}`);
+          handleError(`Error sending transactions: ${event.data.error}`);
         }
       };
       sendWorker.postMessage({ privateKey, rpcUrl });
@@ -95,7 +95,7 @@ export function ResumeAirdrop({
 
       pollWorker.onmessage = (event) => {
         if (event.data.error) {
-          handleError(`${event.data.error}`);
+          handleError(`Error polling transactions: ${event.data.error}`);
         }
       };
       pollWorker.postMessage({ rpcUrl });

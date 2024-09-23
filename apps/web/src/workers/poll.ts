@@ -2,7 +2,7 @@ import * as airdropsender from "helius-airship-core";
 import { SQLocalDrizzle } from "sqlocal/drizzle";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 import { databaseFile } from "helius-airship-core";
-import { sql } from "drizzle-orm";
+import { configureDatabase } from "@/lib/utils";
 
 const { driver, batchDriver } = new SQLocalDrizzle({
   databasePath: databaseFile,
@@ -15,7 +15,7 @@ self.onmessage = async (e: MessageEvent<any>) => {
   const { rpcUrl } = e.data;
 
   try {
-    await db.run(sql`PRAGMA journal_mode = WAL;`);
+    await configureDatabase(db);
 
     await airdropsender.poll({ db, url: rpcUrl });
   } catch (error) {

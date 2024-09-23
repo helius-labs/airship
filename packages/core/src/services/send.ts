@@ -157,7 +157,6 @@ export async function send(params: SendParams) {
             last_attempted_at: sql`(unixepoch())`,
             blockhash: blockhash,
             last_valid_block_height: lastValidBlockHeight,
-            serialised_transaction: bs58.encode(signedTx.serialize()),
           })
           .where(eq(transaction_queue.id, transaction.id));
         logger.info(

@@ -2,8 +2,7 @@ import * as airdropsender from "helius-airship-core";
 import { SQLocalDrizzle } from "sqlocal/drizzle";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 import { databaseFile } from "helius-airship-core";
-import { getKeypairFromPrivateKey } from "../lib/utils";
-import { sql } from "drizzle-orm";
+import { configureDatabase, getKeypairFromPrivateKey } from "../lib/utils";
 
 const { driver, batchDriver } = new SQLocalDrizzle({
   databasePath: databaseFile,
@@ -18,7 +17,7 @@ self.onmessage = async (e: MessageEvent<any>) => {
   const keypair = getKeypairFromPrivateKey(privateKey);
 
   try {
-    await db.run(sql`PRAGMA journal_mode = WAL;`);
+    await configureDatabase(db);
 
     await airdropsender.send({
       db,

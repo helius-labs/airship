@@ -7,7 +7,7 @@ import { DecompressPage } from "./components/DecompressPage";
 import { init, exist, databaseFile } from "helius-airship-core";
 import { SQLocalDrizzle } from "sqlocal/drizzle";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
-import { sql } from "drizzle-orm";
+import { configureDatabase } from "./lib/utils";
 
 const { driver, batchDriver } = new SQLocalDrizzle({
   databasePath: databaseFile,
@@ -23,7 +23,7 @@ function App() {
   useEffect(() => {
     async function initApp() {
       try {
-        await db.run(sql`PRAGMA journal_mode = WAL;`);
+        await configureDatabase(db);
 
         // Initialize the airdrop sender
         await init({ db });
