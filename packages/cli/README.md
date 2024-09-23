@@ -1,53 +1,27 @@
-# Helius AirShip
+# Helius AirShip CLI
 
-Helius AirShip is an open-source tool that makes token airdrops simple, affordable, and accessible. Whether you're distributing to Saga Chapter 2 holders, NFT/cNFT holders, SPL token holders, or using a CSV file, Helius AirShip streamlines the process and cuts costs.
+**Helius AirShip CLI** is a command-line tool that makes token airdrops simple, affordable, and accessible. Whether you're distributing to Saga Chapter 2 holders, NFT/cNFT holders, SPL token holders, or using a CSV file, Helius AirShip CLI streamlines the process and cuts costs.
 
 ## Features
 
 - 🚀 **Simplified Airdrops**: Easy token airdrops for all, no technical skills needed.
 - 💸 **ZK Compression**: Cut costs on large airdrops by reducing account usage. [More info](https://www.zkcompression.com/).
-- 🖥️ **Web Version**: Perfect for small airdrops, up to 200,000 recipients.
--  **CLI Version**: For advanced users needing larger-scale distribution.
 
-## Web Version
-
-### Requirements
-
-- RPC that supports both ZK Compression and the DAS API. If you don't have one, you can get one for free at https://www.helius.dev
-
-### Public Web Version
-
-You can find public web version of Helius AirShip [here](https://airship.helius.dev).
-
-### Run locally from source
-
-```bash
-git clone https://github.com/helius-labs/airship.git
-cd airship
-pnpm install
-cd apps/web
-pnpm preview
-```
-
-Open http://localhost:4173/
-
-## CLI Version
-
-### Requirements
+## Requirements
 
 - Ensure you have Node >= v20.9.0 installed on your machine.
 - You will need an RPC that supports both ZK Compression and the DAS API. If you don't have one, you can get one for free at https://www.helius.dev
 - You will need a valid Solana filesystem wallet. If you don't have one yet, visit the [Solana documentation](https://docs.solanalabs.com/cli/wallets/file-system) for details. The CLI will use this wallet for signing transactions, covering transaction fees, and as the owner of the token you wish to distribute.
 
-### Installation
+## Installation
 
-#### Using npm
+### Using npm
 
 ```bash
 npm install -g helius-airship
 ```
 
-#### Build from source using pnpm
+### Build from source using pnpm
 
 ```bash
 git clone https://github.com/helius-labs/airship.git
@@ -58,7 +32,7 @@ pnpm link --global
 helius-airship --help
 ```
 
-### Example
+## Example
 
 To perform an airdrop, use the following command and follow the steps:
 

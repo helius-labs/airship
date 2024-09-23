@@ -30,7 +30,6 @@ export function isValidPrivateKey(key: string): boolean {
     getKeypairFromPrivateKey(key);
     return true;
   } catch (error) {
-    console.log(error);
     return false;
   }
 }
@@ -50,8 +49,6 @@ export async function isValidRpcUrl(url: string): Promise<boolean> {
 
     const connection = new Connection(url);
     const blockHeight = await connection.getBlockHeight();
-
-    console.log("blockHeight", blockHeight);
 
     if (blockHeight === 0) {
       return false;
