@@ -5,6 +5,7 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { PHProvider } from '@/providers/PostHog';
 
 interface ProvidersProps {
     children: React.ReactNode;
@@ -38,15 +39,17 @@ export function Providers({ children }: ProvidersProps) {
 
     return (
         <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-            <ConnectionProvider endpoint={endpoint}>
-                <WalletProvider wallets={wallets} autoConnect>
-                    <WalletModalProvider>
-                        <Router>
-                            {children}
-                        </Router>
-                    </WalletModalProvider>
-                </WalletProvider>
-            </ConnectionProvider>
+            <PHProvider>
+                <ConnectionProvider endpoint={endpoint}>
+                    <WalletProvider wallets={wallets} autoConnect>
+                        <WalletModalProvider>
+                            <Router>
+                                {children}
+                            </Router>
+                        </WalletModalProvider>
+                    </WalletProvider>
+                </ConnectionProvider>
+            </PHProvider>
         </ThemeProvider>
     );
 }
