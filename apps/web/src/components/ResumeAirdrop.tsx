@@ -32,6 +32,7 @@ export function ResumeAirdrop({
   const [finalizedTransactions, setFinalizedTransactions] = useState(0);
   const [totalTransactions, setTotalTransactions] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isAirdropCanceled, setIsAirdropCanceled] = useState(false);
 
   const currentValidationSchema = validationSchema[step - 1];
 
@@ -47,6 +48,24 @@ export function ResumeAirdrop({
     setError(errorMessage);
     setIsAirdropInProgress(false);
     // Stop both workers
+    sendWorker?.terminate();
+    sendWorker = undefined;
+    pollWorker?.terminate();
+    pollWorker = undefined;
+  };
+
+  const handleCancel = () => {
+    setIsAirdropInProgress(false);
+    setIsAirdropComplete(false);
+    setSendProgress(0);
+    setFinalizeProgress(0);
+    setSentTransactions(0);
+    setFinalizedTransactions(0);
+    setTotalTransactions(0);
+    setError(null);
+    setIsAirdropCanceled(true);
+
+    // Terminate both workers
     sendWorker?.terminate();
     sendWorker = undefined;
     pollWorker?.terminate();
@@ -69,6 +88,7 @@ export function ResumeAirdrop({
     setIsAirdropInProgress(true);
     setStep(2);
     setError(null); // Clear any previous errors
+    setIsAirdropCanceled(false);
 
     const { privateKey, rpcUrl } = values;
 
@@ -149,6 +169,19 @@ export function ResumeAirdrop({
                 </Button>
               </div>
             </>
+          ) : isAirdropCanceled ? (
+            <>
+              <Alert variant="default" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Airdrop Canceled</AlertTitle>
+                <AlertDescription>The airdrop has been canceled.</AlertDescription>
+              </Alert>
+              <div className="flex justify-center">
+                <Button onClick={onBackToHome} className="mt-1">
+                  Back to Home
+                </Button>
+              </div>
+            </>
           ) : (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -175,6 +208,11 @@ export function ResumeAirdrop({
                         totalTransactions={totalTransactions}
                         onBackToHome={onBackToHome}
                       />
+                      <div className="flex justify-center mt-4">
+                        <Button onClick={handleCancel} variant="outline">
+                          Cancel Airdrop
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 )}

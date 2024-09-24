@@ -68,6 +68,7 @@ export function CreateAirdrop({
   const [isAirdropComplete, setIsAirdropComplete] = useState(false);
   const [isCreatingAirdrop, setIsCreatingAirdrop] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAirdropCanceled, setIsAirdropCanceled] = useState(false);
 
   const currentValidationSchema = validationSchema[step - 1];
 
@@ -156,10 +157,30 @@ export function CreateAirdrop({
     pollWorker = undefined;
   };
 
+  const handleCancel = () => {
+    setIsAirdropInProgress(false);
+    setIsAirdropComplete(false);
+    setIsCreatingAirdrop(false);
+    setSendProgress(0);
+    setFinalizeProgress(0);
+    setSentTransactions(0);
+    setFinalizedTransactions(0);
+    setTotalTransactions(0);
+    setError(null);
+    setIsAirdropCanceled(true);
+
+    // Terminate both workers
+    sendWorker?.terminate();
+    sendWorker = undefined;
+    pollWorker?.terminate();
+    pollWorker = undefined;
+  };
+
   const handleSendAirdrop = async () => {
     setShowConfirmDialog(false);
     setIsCreatingAirdrop(true);
     setError(null); // Clear any previous errors
+    setIsAirdropCanceled(false);
 
     try {
       if (!amountValue) {
@@ -295,6 +316,19 @@ export function CreateAirdrop({
                 </Button>
               </div>
             </>
+          ) : isAirdropCanceled ? (
+            <>
+              <Alert variant="default" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Airdrop Canceled</AlertTitle>
+                <AlertDescription>The airdrop has been canceled.</AlertDescription>
+              </Alert>
+              <div className="flex justify-center">
+                <Button onClick={onBackToHome} className="mt-1">
+                  Back to Home
+                </Button>
+              </div>
+            </>
           ) : isCreatingAirdrop ? (
             <div className="flex flex-col items-center justify-center space-y-4">
               <Loader2 className="h-12 w-12 animate-spin" />
@@ -378,6 +412,11 @@ export function CreateAirdrop({
                         totalTransactions={totalTransactions}
                         onBackToHome={onBackToHome}
                       />
+                      <div className="flex justify-center mt-4">
+                        <Button onClick={handleCancel} variant="outline">
+                          Cancel Airdrop
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 )}
