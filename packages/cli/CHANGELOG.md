@@ -1,5 +1,13 @@
 # helius-airship
 
+## 0.8.1
+
+### Patch Changes
+
+- Improved database write times
+- Updated dependencies
+  - helius-airship-core@0.5.1
+
 ## 0.8.0
 
 ### Minor Changes
