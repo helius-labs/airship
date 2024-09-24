@@ -165,11 +165,11 @@ export async function send(params: SendParams) {
         );
       } catch (error) {
         if (error instanceof SendTransactionError) {
-          if (error.logs?.includes("Program log: Error: insufficient funds")) {
+          if (error.logs?.includes("Program log: Error: insufficient funds") || error.message.includes("insufficient funds")) {
             logger.error(AirdropErrorMessage.airdropInsufficientFunds);
             throw new AirdropError(AirdropErrorMessage.airdropInsufficientFunds, AirdropErrorCode.airdropInsufficientFunds);
           }
-          logger.error(error.message);
+          logger.error(error);
         } else {
           logger.error(error);
         }
