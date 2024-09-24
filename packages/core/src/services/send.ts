@@ -6,6 +6,7 @@ import {
   computeUnitPrice,
   lookupTableAddress,
   maxAddressesPerTransaction,
+  maxAddressesPerInstruction,
 } from "../config/constants";
 import { desc, asc, sql, eq, count, isNull, or } from "drizzle-orm";
 import { buildAndSignTx, createRpc, Rpc } from "@lightprotocol/stateless.js";
@@ -215,9 +216,15 @@ async function createInstructions(
   instructions.push(unitPriceIX);
 
   // Create batches of 5 addresses per instruction to not go over the maximum cross-program invocation instruction size
-  const batches = Math.ceil(addresses.length / 5);
+  const batches = Math.ceil(addresses.length / maxAddressesPerInstruction);
   for (let i = 0; i < batches; i++) {
-    const batch = addresses.slice(i * 5, (i + 1) * 5);
+    const batch = addresses.slice(i * maxAddressesPerInstruction, (i + 1) * maxAddressesPerInstruction);
+
+    // Skip empty batches.
+    // This may occur due to floating-point precision errors in JavaScript.
+    if (batch.length === 0) {
+      continue;
+    }
 
     // Compress tokens for each airdrop address and add it to the transaction
     const compressIx = await CompressedTokenProgram.compress({
