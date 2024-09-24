@@ -1,5 +1,11 @@
 # helius-airship-core
 
+## 0.5.2
+
+### Patch Changes
+
+- Fixed empty batches
+
 ## 0.5.1
 
 ### Patch Changes

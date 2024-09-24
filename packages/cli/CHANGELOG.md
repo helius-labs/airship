@@ -1,5 +1,13 @@
 # helius-airship
 
+## 0.8.2
+
+### Patch Changes
+
+- Fixed empty batches
+- Updated dependencies
+  - helius-airship-core@0.5.2
+
 ## 0.8.1
 
 ### Patch Changes
