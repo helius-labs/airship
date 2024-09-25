@@ -24,8 +24,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lightprotocol/compressed-token": "^0.11.0",
-    "@lightprotocol/stateless.js": "^0.11.0",
+    "@lightprotocol/compressed-token": "^0.13.0",
+    "@lightprotocol/stateless.js": "^0.13.0",
     "@solana/spl-token": "^0.4.8",
     "@solana/web3.js": "^1.95.3",
     "bn.js": "^5.2.1",

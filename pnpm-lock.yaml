@@ -28,11 +28,11 @@ importers:
         specifier: ^3.9.0
         version: 3.9.0(react-hook-form@7.53.0(react@18.3.1))
       '@lightprotocol/compressed-token':
-        specifier: ^0.11.0
-        version: 0.11.1(@lightprotocol/stateless.js@0.11.0(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(utf-8-validate@5.0.10))(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
+        specifier: ^0.13.0
+        version: 0.13.0(@lightprotocol/stateless.js@0.13.0(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
       '@lightprotocol/stateless.js':
-        specifier: ^0.11.0
-        version: 0.11.0(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        specifier: ^0.13.0
+        version: 0.13.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       '@radix-ui/react-alert-dialog':
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -273,11 +273,11 @@ importers:
   packages/core:
     dependencies:
       '@lightprotocol/compressed-token':
-        specifier: ^0.11.0
-        version: 0.11.1(@lightprotocol/stateless.js@0.11.0(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(utf-8-validate@5.0.10))(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
+        specifier: ^0.13.0
+        version: 0.13.0(@lightprotocol/stateless.js@0.13.0(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
       '@lightprotocol/stateless.js':
-        specifier: ^0.11.0
-        version: 0.11.0(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        specifier: ^0.13.0
+        version: 0.13.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       '@solana/spl-token':
         specifier: ^0.4.8
         version: 0.4.8(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
@@ -1616,16 +1616,13 @@ packages:
   '@lezer/lr@1.4.2':
     resolution: {integrity: sha512-pu0K1jCIdnQ12aWNaAVU5bzi7Bd1w54J3ECgANPmYLtQKP0HBj2cE/5coBD66MT10xbtIuUr7tg0Shbsvk0mDA==}
 
-  '@lightprotocol/compressed-token@0.11.1':
-    resolution: {integrity: sha512-0KVM9j4rWEStSsVGzOhrSxUJ7iQ/Vkg+NIH9v+RR5XhjdCtTEXDxH/7uMAVs8WDJFnMyHbb7iUGBbnTlXcWogQ==}
+  '@lightprotocol/compressed-token@0.13.0':
+    resolution: {integrity: sha512-YnNlFbWSO+sX4AP5HLh1xT0kz88xOSNo2LuyyNLuCLto6PYdPl1RQO2PNBt+LR5vd7NflSETARVdrBMeTu9ZqQ==}
     peerDependencies:
-      '@lightprotocol/stateless.js': 0.11.0
-      '@solana/web3.js': ^1.95.0
+      '@lightprotocol/stateless.js': 0.13.0
 
-  '@lightprotocol/stateless.js@0.11.0':
-    resolution: {integrity: sha512-jtmjCZiiIn7FM29ywxvzjBRHy2e3bQJq9OuWx8uOPDrQs6L1KW0MB/yvApdoiWNoPLNcnhaI3wUCreSWsN01Og==}
-    peerDependencies:
-      '@solana/web3.js': ^1.95.0
+  '@lightprotocol/stateless.js@0.13.0':
+    resolution: {integrity: sha512-eIkvowkYxuOWCjCvCodkSvuIvMV2arzLlbyxxbk98PMz4MniCAB4olXD05ejWPTKvyh3vnQvjA8QIvd7xgr0Dg==}
 
   '@manypkg/find-root@1.1.0':
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
@@ -2425,12 +2422,6 @@ packages:
     engines: {node: '>=16'}
     peerDependencies:
       '@solana/web3.js': ^1.95.3
-
-  '@solana/spl-token@0.3.11':
-    resolution: {integrity: sha512-bvohO3rIMSVL24Pb+I4EYTJ6cL82eFpInEXD/I8K8upOGjpqHsKUoAempR/RnUlI1qSFNyFlWJfu6MNUgfbCQQ==}
-    engines: {node: '>=16'}
-    peerDependencies:
-      '@solana/web3.js': ^1.88.0
 
   '@solana/spl-token@0.4.8':
     resolution: {integrity: sha512-RO0JD9vPRi4LsAbMUdNbDJ5/cv2z11MGhtAvFeRzT4+hAGE/FUzRi0tkkWtuCfSIU3twC6CtmAihRp/+XXjWsA==}
@@ -6321,10 +6312,6 @@ packages:
   superstruct@0.15.5:
     resolution: {integrity: sha512-4AOeU+P5UuE/4nOUkmcQdW5y7i9ndt1cQd/3iUe+LTz3RxESf/W/5lg4B74HbDMMv8PHnPnGCQFH45kBcrQYoQ==}
 
-  superstruct@1.0.4:
-    resolution: {integrity: sha512-7JpaAoX2NGyoFlI9NBh66BQXGONc+uE+MRS5i2iOBKuS4e+ccgMDjATgZldkah+33DakBxDHiss9kvUcGAO8UQ==}
-    engines: {node: '>=14.0.0'}
-
   superstruct@2.0.2:
     resolution: {integrity: sha512-uV+TFRZdXsqXTL2pRvujROjdZQ4RAlBUS5BTh9IGm+jTqQntYThciG/qu57Gs69yjnVUSqdxF9YLmSnpupBW9A==}
     engines: {node: '>=14.0.0'}
@@ -8461,11 +8448,11 @@ snapshots:
     dependencies:
       '@lezer/common': 1.2.1
 
-  '@lightprotocol/compressed-token@0.11.1(@lightprotocol/stateless.js@0.11.0(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(utf-8-validate@5.0.10))(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)':
+  '@lightprotocol/compressed-token@0.13.0(@lightprotocol/stateless.js@0.13.0(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/anchor': 0.29.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      '@lightprotocol/stateless.js': 0.11.0(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      '@solana/spl-token': 0.3.11(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
+      '@lightprotocol/stateless.js': 0.13.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      '@solana/spl-token': 0.4.8(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
       '@solana/web3.js': 1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       buffer: 6.0.3
       tweetnacl: 1.0.3
@@ -8476,13 +8463,13 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@lightprotocol/stateless.js@0.11.0(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
+  '@lightprotocol/stateless.js@0.13.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/anchor': 0.29.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       '@noble/hashes': 1.5.0
       '@solana/web3.js': 1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       buffer: 6.0.3
-      superstruct: 1.0.4
+      superstruct: 2.0.2
       tweetnacl: 1.0.3
     transitivePeerDependencies:
       - bufferutil
@@ -9599,20 +9586,6 @@ snapshots:
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
       - typescript
-
-  '@solana/spl-token@0.3.11(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)':
-    dependencies:
-      '@solana/buffer-layout': 4.0.1
-      '@solana/buffer-layout-utils': 0.2.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      '@solana/spl-token-metadata': 0.1.5(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)
-      '@solana/web3.js': 1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      buffer: 6.0.3
-    transitivePeerDependencies:
-      - bufferutil
-      - encoding
-      - fastestsmallesttextencoderdecoder
-      - typescript
-      - utf-8-validate
 
   '@solana/spl-token@0.4.8(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)':
     dependencies:
@@ -14151,8 +14124,6 @@ snapshots:
   sudo-prompt@9.2.1: {}
 
   superstruct@0.15.5: {}
-
-  superstruct@1.0.4: {}
 
   superstruct@2.0.2: {}
 

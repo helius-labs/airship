@@ -196,7 +196,7 @@ async function selectToken(keypair: web3.Keypair, tokens: any[]) {
   if (tokenChoices.length === 0) {
     console.log(
       chalk.red(
-        `No tokens found. Please transfer or mint tokens to ${keypair.publicKey.toBase58()}`
+        `No SPL Tokens found. Please transfer or mint SPL Tokens to ${keypair.publicKey.toBase58()}`
       )
     );
     process.exit(0);

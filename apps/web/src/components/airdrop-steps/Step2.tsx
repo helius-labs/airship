@@ -20,6 +20,7 @@ import {
   CircleCheck,
   CircleAlert,
   RefreshCw,
+  HelpCircle,
 } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Input } from "../ui/input";
@@ -60,6 +61,11 @@ import { UseFormReturn } from "react-hook-form";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertTriangle } from "lucide-react";
 import Papa from "papaparse";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface Step2Props {
   form: UseFormReturn<FormValues>;
@@ -280,7 +286,17 @@ export default function Step2({
         name="selectedToken"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Which token do you want to airdrop?</FormLabel>
+            <FormLabel className="flex items-center space-x-1">
+              <span>Which SPL Token do you want to airdrop?</span>
+              <Popover>
+                <PopoverTrigger>
+                  <HelpCircle className="h-4 w-4" />
+                </PopoverTrigger>
+                <PopoverContent className="space-y-2">
+                  Currently, ZK Compression supports only SPL tokens. Support for Token 2022 tokens will be added soon.
+                </PopoverContent>
+              </Popover>
+            </FormLabel>
             <FormControl>
               <div className="flex items-center space-x-2">
                 <Select

@@ -145,12 +145,12 @@ export function CreateAirdrop({
       setTokens(loadedTokens);
       if (loadedTokens.length === 0) {
         setNoTokensMessage(
-          `No tokens found. Please transfer or mint tokens to ${keypair.publicKey.toBase58()}`
+          `No SPL Tokens found. Please transfer or mint tokens to ${keypair.publicKey.toBase58()}`
         );
         if (showToast) {
           toast({
-            title: "No tokens found",
-            description: `Please transfer or mint tokens to ${keypair.publicKey.toBase58()}`,
+            title: "No SPL Tokens found",
+            description: `Please transfer or mint SPL Tokens to ${keypair.publicKey.toBase58()}`,
             variant: "destructive",
           });
         }

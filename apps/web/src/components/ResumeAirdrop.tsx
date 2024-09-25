@@ -24,6 +24,8 @@ export function ResumeAirdrop({
   db,
   onBackToHome,
 }: ResumeAirdropProps) {
+
+  // TODO: Refactor methods and state management to be more reusable with CreateAirdrop
   const [step, setStep] = useState(1);
   const [isAirdropInProgress, setIsAirdropInProgress] = useState(false);
   const [isAirdropComplete, setIsAirdropComplete] = useState(false);

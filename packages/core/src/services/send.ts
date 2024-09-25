@@ -21,7 +21,6 @@ import {
   AirdropErrorMessage,
 } from "../utils/airdropError";
 import { logger } from "./logger";
-import bs58 from "bs58";
 import { SendTransactionError } from "@solana/web3.js";
 import { sleep } from "../utils/common";
 
@@ -89,7 +88,9 @@ export async function send(params: SendParams) {
       continue;
     }
 
-    const connection: Rpc = createRpc(url, url);
+    const connection: Rpc = createRpc(url, url, undefined, {
+      commitment: "confirmed",
+    });
 
     // get the table from the cluster
     const lookupTableAccount = (
@@ -99,12 +100,20 @@ export async function send(params: SendParams) {
     const mintAddress = new web3.PublicKey(transactionQueue[0].mint_address);
 
     // Get the source token account for the mint address
-    const sourceTokenAccount = await splToken.getOrCreateAssociatedTokenAccount(
-      connection,
-      keypair,
-      mintAddress,
-      keypair.publicKey
-    );
+    let sourceTokenAccount: splToken.Account | null = null;
+
+    try {
+      sourceTokenAccount = await splToken.getOrCreateAssociatedTokenAccount(
+        connection,
+        keypair,
+        mintAddress,
+        keypair.publicKey,
+      );
+
+    } catch (error) {
+      logger.error("Source token account not found and failed to create it. Please add funds to your wallet and try again.");
+      throw new Error("Source token account not found and failed to create it. Please add funds to your wallet and try again.");
+    }
 
     // Create a token pool for the mint address if it doesn't exist
     try {
