@@ -49,6 +49,7 @@ const createWorker = new ComlinkWorker<
 
 let sendWorker: Worker | undefined = undefined;
 let pollWorker: Worker | undefined = undefined;
+let monitorInterval: NodeJS.Timeout | undefined = undefined;
 
 export function CreateAirdrop({
   db,
@@ -194,9 +195,20 @@ export function CreateAirdrop({
     sendWorker = undefined;
     pollWorker?.terminate();
     pollWorker = undefined;
+    // Clear the monitorInterval
+    if (monitorInterval) {
+      clearInterval(monitorInterval);
+      monitorInterval = undefined;
+    }
   };
 
   const handleCancel = () => {
+    // Clear the monitorInterval
+    if (monitorInterval) {
+      clearInterval(monitorInterval);
+      monitorInterval = undefined;
+    }
+
     setIsAirdropInProgress(false);
     setIsAirdropComplete(false);
     setIsCreatingAirdrop(false);
@@ -265,7 +277,7 @@ export function CreateAirdrop({
       };
       pollWorker.postMessage({ rpcUrl });
 
-      const monitorInterval = setInterval(async () => {
+      monitorInterval = setInterval(async () => {
         try {
           const currentStatus = await airdropsender.status({ db });
           setSendProgress((currentStatus.sent / currentStatus.total) * 100);
@@ -277,12 +289,18 @@ export function CreateAirdrop({
           setFinalizedTransactions(currentStatus.finalized);
 
           if (currentStatus.finalized === currentStatus.total) {
-            clearInterval(monitorInterval);
+            if (monitorInterval) {
+              clearInterval(monitorInterval);
+              monitorInterval = undefined;
+            }
             setIsAirdropInProgress(false);
             setIsAirdropComplete(true);
           }
         } catch (error) {
-          clearInterval(monitorInterval);
+          if (monitorInterval) {
+            clearInterval(monitorInterval);
+            monitorInterval = undefined;
+          }
           handleError(`Error monitoring airdrop status: ${error}`);
         }
       }, 1000);
@@ -453,11 +471,13 @@ export function CreateAirdrop({
                         totalTransactions={totalTransactions}
                         onBackToHome={onBackToHome}
                       />
-                      <div className="flex justify-center mt-4">
-                        <Button onClick={handleCancel} variant="outline">
-                          Cancel Airdrop
-                        </Button>
-                      </div>
+                      {!isAirdropComplete && (
+                        <div className="flex justify-center mt-4">
+                          <Button onClick={handleCancel} variant="outline">
+                            Cancel Airdrop
+                          </Button>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 )}
