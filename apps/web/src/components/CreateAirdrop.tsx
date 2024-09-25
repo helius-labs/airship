@@ -32,6 +32,7 @@ import { FormValues, validationSchema } from "@/schemas/formSchema";
 import { getKeypairFromPrivateKey } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface CreateAirdropProps {
   db: airdropsender.BrowserDatabase;
@@ -69,6 +70,8 @@ export function CreateAirdrop({
   const [isCreatingAirdrop, setIsCreatingAirdrop] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isAirdropCanceled, setIsAirdropCanceled] = useState(false);
+  const [isRefreshingTokens, setIsRefreshingTokens] = useState(false);
+  const { toast } = useToast();
 
   const currentValidationSchema = validationSchema[step - 1];
 
@@ -125,31 +128,62 @@ export function CreateAirdrop({
     window.sessionStorage.setItem("rpcUrl", rpcUrl);
   }, [privateKey, rpcUrl]);
 
-  useEffect(() => {
-    async function loadTokens() {
-      if (!privateKey || !rpcUrl) return;
-      try {
-        const keypair = getKeypairFromPrivateKey(privateKey);
-        const ownerAddress = keypair.publicKey;
-        const loadedTokens = await getTokensByOwner({
-          ownerAddress,
-          url: rpcUrl,
-        });
-        setTokens(loadedTokens);
-        if (loadedTokens.length === 0) {
-          setNoTokensMessage(
-            `No tokens found. Please transfer or mint tokens to ${keypair.publicKey.toBase58()}`
-          );
-        } else {
-          setNoTokensMessage(null);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error) {
-        setNoTokensMessage("Error loading tokens. Please try again.");
-      }
+  const loadTokens = useCallback(async (showToast: boolean = false) => {
+    if (!privateKey || !rpcUrl) {
+      setNoTokensMessage("Private key or RPC URL is missing");
+      return;
     }
-    void loadTokens();
-  }, [privateKey, rpcUrl]);
+    setIsRefreshingTokens(true);
+    try {
+      const keypair = getKeypairFromPrivateKey(privateKey);
+      const ownerAddress = keypair.publicKey;
+      const loadedTokens = await getTokensByOwner({
+        ownerAddress,
+        url: rpcUrl,
+      });
+      setTokens(loadedTokens);
+      if (loadedTokens.length === 0) {
+        setNoTokensMessage(
+          `No tokens found. Please transfer or mint tokens to ${keypair.publicKey.toBase58()}`
+        );
+        if (showToast) {
+          toast({
+            title: "No tokens found",
+            description: `Please transfer or mint tokens to ${keypair.publicKey.toBase58()}`,
+            variant: "destructive",
+          });
+        }
+      } else {
+        setNoTokensMessage(null);
+        if (showToast) {
+          toast({
+            title: "Tokens refreshed",
+            description: `${loadedTokens.length} token${loadedTokens.length !== 1 ? 's' : ''} found`,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error loading tokens:", error);
+      setNoTokensMessage("Error loading tokens. Please try again.");
+      if (showToast) {
+        toast({
+          title: "Error refreshing tokens",
+          description: "Please try again",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsRefreshingTokens(false);
+    }
+  }, [privateKey, rpcUrl, toast]);
+
+  useEffect(() => {
+    void loadTokens(false); // Don't show toast on initial load
+  }, [loadTokens]);
+
+  const onRefreshTokens = useCallback(async () => {
+    await loadTokens(true); // Show toast when manually refreshing
+  }, [loadTokens]);
 
   const handleError = (errorMessage: string) => {
     setError(errorMessage);
@@ -375,6 +409,8 @@ export function CreateAirdrop({
                         tokens={tokens}
                         rpcUrl={rpcUrl}
                         noTokensMessage={noTokensMessage}
+                        onRefreshTokens={onRefreshTokens}
+                        isRefreshingTokens={isRefreshingTokens}
                       />
                     </CardContent>
                   </Card>

@@ -19,6 +19,7 @@ import {
   FileSpreadsheet,
   CircleCheck,
   CircleAlert,
+  RefreshCw,
 } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Input } from "../ui/input";
@@ -65,6 +66,8 @@ interface Step2Props {
   tokens: Token[];
   rpcUrl: string;
   noTokensMessage: string | null;
+  onRefreshTokens: () => Promise<void>;
+  isRefreshingTokens: boolean;
 }
 
 export default function Step2({
@@ -72,6 +75,8 @@ export default function Step2({
   tokens,
   rpcUrl,
   noTokensMessage,
+  onRefreshTokens,
+  isRefreshingTokens,
 }: Step2Props) {
   const { control, watch, setValue } = form;
 
@@ -277,10 +282,11 @@ export default function Step2({
           <FormItem>
             <FormLabel>Which token do you want to airdrop?</FormLabel>
             <FormControl>
-              <>
+              <div className="flex items-center space-x-2">
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
+                  disabled={isRefreshingTokens}
                 >
                   <SelectTrigger ref={field.ref}>
                     <SelectValue placeholder="Select a token" />
@@ -307,20 +313,21 @@ export default function Step2({
                     )}
                   </SelectContent>
                 </Select>
-                {noTokensMessage && (
-                  <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{noTokensMessage}</AlertDescription>
-                  </Alert>
-                )}
-              </>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={onRefreshTokens}
+                  disabled={isRefreshingTokens}
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshingTokens ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
-
       <FormField
         control={control}
         name="recipientImportOption"
@@ -457,13 +464,12 @@ export default function Step2({
           <Label htmlFor="recipients">CSV file</Label>
           <div
             {...getRootProps()}
-            className={`border border-dashed rounded-md p-8 transition-colors duration-200 ease-in-out ${
-              isDragActive
-                ? "border-primary bg-primary/10"
-                : csvFileError
-                  ? "border-red-50"
-                  : "border-gray-300 hover:border-primary/50 hover:bg-primary/5"
-            }`}
+            className={`border border-dashed rounded-md p-8 transition-colors duration-200 ease-in-out ${isDragActive
+              ? "border-primary bg-primary/10"
+              : csvFileError
+                ? "border-red-50"
+                : "border-gray-300 hover:border-primary/50 hover:bg-primary/5"
+              }`}
           >
             <input {...getInputProps()} />
             {csvFile ? (

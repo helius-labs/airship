@@ -6,6 +6,7 @@ import { clusterApiUrl } from '@solana/web3.js';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { PHProvider } from '@/providers/PostHog';
+import { Toaster } from "@/components/ui/toaster"
 
 interface ProvidersProps {
     children: React.ReactNode;
@@ -45,6 +46,7 @@ export function Providers({ children }: ProvidersProps) {
                         <WalletModalProvider>
                             <Router>
                                 {children}
+                                <Toaster />
                             </Router>
                         </WalletModalProvider>
                     </WalletProvider>
