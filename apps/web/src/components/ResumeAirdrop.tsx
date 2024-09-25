@@ -39,8 +39,8 @@ export function ResumeAirdrop({
   const form = useForm<FormValues>({
     resolver: zodResolver(currentValidationSchema),
     defaultValues: {
-      privateKey: "",
-      rpcUrl: "",
+      privateKey: window.sessionStorage.getItem("privateKey") || "",
+      rpcUrl: window.sessionStorage.getItem("rpcUrl") || "",
     },
   });
 
@@ -71,6 +71,14 @@ export function ResumeAirdrop({
     pollWorker?.terminate();
     pollWorker = undefined;
   };
+
+  const { watch } = form;
+  const { privateKey, rpcUrl } = watch();
+
+  useEffect(() => {
+    window.sessionStorage.setItem("privateKey", privateKey);
+    window.sessionStorage.setItem("rpcUrl", rpcUrl);
+  }, [privateKey, rpcUrl]);
 
   useEffect(() => {
     async function loadAirdropStatus() {

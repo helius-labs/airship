@@ -75,8 +75,8 @@ export function CreateAirdrop({
   const form = useForm<FormValues>({
     resolver: zodResolver(currentValidationSchema),
     defaultValues: {
-      privateKey: "",
-      rpcUrl: "",
+      privateKey: window.sessionStorage.getItem("privateKey") || "",
+      rpcUrl: window.sessionStorage.getItem("rpcUrl") || "",
       selectedToken: "",
       recipients: "",
       amountType: "fixed",
@@ -119,6 +119,11 @@ export function CreateAirdrop({
   useEffect(() => {
     setAmountValue(calculateAmountValue());
   }, [calculateAmountValue]);
+
+  useEffect(() => {
+    window.sessionStorage.setItem("privateKey", privateKey);
+    window.sessionStorage.setItem("rpcUrl", rpcUrl);
+  }, [privateKey, rpcUrl]);
 
   useEffect(() => {
     async function loadTokens() {

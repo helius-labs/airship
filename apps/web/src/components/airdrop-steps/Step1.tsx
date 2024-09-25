@@ -65,16 +65,6 @@ export default function Step1({ form }: Step1Props) {
               />
             </FormControl>
             <FormMessage />
-            <FormDescription>
-              <Alert variant="destructive" className="mt-2">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Warning</AlertTitle>
-                <AlertDescription>
-                  The private key is stored only in your browser's memory and
-                  will not persist after this session ends.
-                </AlertDescription>
-              </Alert>
-            </FormDescription>
           </FormItem>
         )}
       />
@@ -91,6 +81,13 @@ export default function Step1({ form }: Step1Props) {
           </FormItem>
         )}
       />
+      <Alert variant="destructive" className="mt-2">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Warning</AlertTitle>
+        <AlertDescription>
+          The Private key and RPC URL are stored in your browser session and will not persist after the session ends. The session will terminate once the entire browser is closed.
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }
