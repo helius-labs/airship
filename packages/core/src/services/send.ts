@@ -4,9 +4,10 @@ import {
   CommitmentStatus,
   computeUnitLimit,
   computeUnitPrice,
-  lookupTableAddress,
   maxAddressesPerTransaction,
   maxAddressesPerInstruction,
+  lookupTableAddressDevnet,
+  lookupTableAddressMainnet,
 } from "../config/constants";
 import { desc, asc, sql, eq, count, isNull, or } from "drizzle-orm";
 import { buildAndSignTx, createRpc, Rpc } from "@lightprotocol/stateless.js";
@@ -93,9 +94,17 @@ export async function send(params: SendParams) {
     });
 
     // get the table from the cluster
-    const lookupTableAccount = (
-      await connection.getAddressLookupTable(lookupTableAddress)
+    const lookupTableAccountDevnet = (
+      await connection.getAddressLookupTable(lookupTableAddressDevnet)
     ).value!;
+
+    // get the table from the cluster
+    const lookupTableAccountMainnet = (
+      await connection.getAddressLookupTable(lookupTableAddressMainnet)
+    ).value!;
+
+    const lookupTableAccount = lookupTableAccountMainnet || lookupTableAccountDevnet;
+
 
     const mintAddress = new web3.PublicKey(transactionQueue[0].mint_address);
 
