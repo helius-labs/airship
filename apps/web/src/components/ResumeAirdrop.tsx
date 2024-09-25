@@ -44,6 +44,7 @@ export function ResumeAirdrop({
     defaultValues: {
       privateKey: window.sessionStorage.getItem("privateKey") || "",
       rpcUrl: window.sessionStorage.getItem("rpcUrl") || "",
+      saveCredentials: window.sessionStorage.getItem("saveCredentials") === "true",
     },
   });
 
@@ -88,12 +89,18 @@ export function ResumeAirdrop({
   };
 
   const { watch } = form;
-  const { privateKey, rpcUrl } = watch();
+  const { privateKey, rpcUrl, saveCredentials } = watch();
 
   useEffect(() => {
-    window.sessionStorage.setItem("privateKey", privateKey);
-    window.sessionStorage.setItem("rpcUrl", rpcUrl);
-  }, [privateKey, rpcUrl]);
+    window.sessionStorage.setItem("saveCredentials", saveCredentials.toString());
+    if (saveCredentials) {
+      window.sessionStorage.setItem("privateKey", privateKey);
+      window.sessionStorage.setItem("rpcUrl", rpcUrl);
+    } else {
+      window.sessionStorage.removeItem("privateKey");
+      window.sessionStorage.removeItem("rpcUrl");
+    }
+  }, [privateKey, rpcUrl, saveCredentials]);
 
   useEffect(() => {
     async function loadAirdropStatus() {

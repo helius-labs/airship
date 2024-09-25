@@ -5,16 +5,17 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { HelpCircle, AlertTriangle } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import { FormValues } from "@/schemas/formSchema";
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface Step1Props {
   form: UseFormReturn<FormValues>;
@@ -80,13 +81,29 @@ export default function Step1({ form }: Step1Props) {
           </FormItem>
         )}
       />
-      <Alert variant="destructive" className="mt-2">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Warning</AlertTitle>
-        <AlertDescription>
-          The Private key and RPC URL are stored in your browser session and will not persist after the session ends. The session will terminate once the entire browser is closed.
-        </AlertDescription>
-      </Alert>
+      <FormField
+        control={form.control}
+        name="saveCredentials"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-start space-x-3 space-y-0 shadow">
+            <FormControl>
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            </FormControl>
+            <div className="space-y-1 leading-none">
+              <FormLabel>
+                Store Private key and RPC URL in browser session
+              </FormLabel>
+              <FormDescription>
+                The Private key and RPC URL will be stored in your browser session and will not persist after the session ends. The session will terminate once the entire browser is closed.
+              </FormDescription>
+            </div>
+          </FormItem>
+        )}
+      />
+
     </div>
   );
 }

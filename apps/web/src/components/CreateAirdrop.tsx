@@ -81,6 +81,7 @@ export function CreateAirdrop({
     defaultValues: {
       privateKey: window.sessionStorage.getItem("privateKey") || "",
       rpcUrl: window.sessionStorage.getItem("rpcUrl") || "",
+      saveCredentials: window.sessionStorage.getItem("saveCredentials") === "true",
       selectedToken: "",
       recipients: "",
       amountType: "fixed",
@@ -93,7 +94,7 @@ export function CreateAirdrop({
   });
 
   const { watch } = form;
-  const { privateKey, rpcUrl, selectedToken, recipients, amount, amountType } =
+  const { privateKey, rpcUrl, selectedToken, recipients, amount, amountType, saveCredentials } =
     watch();
 
   const calculateAmountValue = useCallback(() => {
@@ -125,9 +126,15 @@ export function CreateAirdrop({
   }, [calculateAmountValue]);
 
   useEffect(() => {
-    window.sessionStorage.setItem("privateKey", privateKey);
-    window.sessionStorage.setItem("rpcUrl", rpcUrl);
-  }, [privateKey, rpcUrl]);
+    window.sessionStorage.setItem("saveCredentials", saveCredentials.toString());
+    if (saveCredentials) {
+      window.sessionStorage.setItem("privateKey", privateKey);
+      window.sessionStorage.setItem("rpcUrl", rpcUrl);
+    } else {
+      window.sessionStorage.removeItem("privateKey");
+      window.sessionStorage.removeItem("rpcUrl");
+    }
+  }, [privateKey, rpcUrl, saveCredentials]);
 
   const loadTokens = useCallback(async (showToast: boolean = false) => {
     if (!privateKey || !rpcUrl) {

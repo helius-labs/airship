@@ -15,6 +15,7 @@ export const step2Schema = z.object({
   mintAddress: z.string().optional(),
   recipients: z.string().min(1, "Please import or enter recipients"),
   csvFile: z.string().optional(),
+  saveCredentials: z.boolean(),
 });
 
 export const step3Schema = z.object({
