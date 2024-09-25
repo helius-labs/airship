@@ -50,11 +50,10 @@ export async function getTokensByOwner(
   const data = await response.json();
 
   const tokens: Token[] = data.result.items.flatMap((item: any) => {
-
     // ZK Compression currently only supports SPL Tokens
     if (
       item.interface === "FungibleToken" &&
-      item.token_info?.token_program_id === TOKEN_PROGRAM_ID &&
+      item.token_info?.token_program === TOKEN_PROGRAM_ID.toBase58() &&
       item.token_info?.associated_token_address
     ) {
       return {
