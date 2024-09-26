@@ -227,7 +227,10 @@ export function DecompressPage() {
                   <TableBody>
                     {compressedTokenAccounts.map((account, index) => (
                       <TableRow key={index}>
-                        <TableCell>{account.parsed.mint.toBase58().slice(0, 4) + '...' + account.parsed.mint.toBase58().slice(-4)}</TableCell>
+                        <TableCell>
+                          <span className="hidden sm:block">{account.parsed.mint.toBase58()}</span>
+                          <span className="block sm:hidden">{account.parsed.mint.toBase58().slice(0, 4) + '...' + account.parsed.mint.toBase58().slice(-4)}</span>
+                        </TableCell>
                         <TableCell>{normalizeTokenAmount(account.parsed.amount.toString(), 9)}</TableCell>
                         <TableCell>
                           <Button onClick={() => handleDecompress(account)}>Decompress</Button>
