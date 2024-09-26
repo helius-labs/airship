@@ -1,5 +1,13 @@
 # helius-airship
 
+## 0.8.3
+
+### Patch Changes
+
+- Added mainnet support
+- Updated dependencies
+  - helius-airship-core@0.5.3
+
 ## 0.8.2
 
 ### Patch Changes
