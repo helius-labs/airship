@@ -1,5 +1,13 @@
 # helius-airship
 
+## 0.8.4
+
+### Patch Changes
+
+- Memory optimizations
+- Updated dependencies
+  - helius-airship-core@0.5.4
+
 ## 0.8.3
 
 ### Patch Changes

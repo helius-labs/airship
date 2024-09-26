@@ -1,5 +1,11 @@
 # helius-airship-core
 
+## 0.5.4
+
+### Patch Changes
+
+- Memory optimizations
+
 ## 0.5.3
 
 ### Patch Changes
