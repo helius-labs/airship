@@ -93,13 +93,9 @@ export async function send(params: SendParams) {
   }
 
   while (true) {
-    try {
-      const shouldContinue = await processBatch(db, connection, keypair, lookupTableAccount, totalTransactionsToSend, sourceTokenAccount, mintAddress);
-      if (!shouldContinue) {
-        break;
-      }
-    } catch (error) {
-      logger.error("Error processing batch:", error);
+    const shouldContinue = await processBatch(db, connection, keypair, lookupTableAccount, totalTransactionsToSend, sourceTokenAccount, mintAddress);
+    if (!shouldContinue) {
+      break;
     }
 
     await sleep(100);
