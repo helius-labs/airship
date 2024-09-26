@@ -198,7 +198,7 @@ export function DecompressPage() {
       <Card className="w-full max-w-3xl">
         <CardHeader className="flex flex-row justify-between space-y-0">
           <CardTitle className="text-3xl font-bold text-primary">
-            Decompress Tokens
+            Token Portfolio
           </CardTitle>
           <WalletMultiButton />
         </CardHeader>
