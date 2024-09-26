@@ -33,6 +33,7 @@ import { getKeypairFromPrivateKey } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Header } from "./Header.tsx";
 
 interface CreateAirdropProps {
   db: airdropsender.BrowserDatabase;
@@ -355,7 +356,7 @@ export function CreateAirdrop({
 
   return (
     <main className="flex flex-col items-center justify-top my-12 space-y-12">
-      <img src="/airship-logo.svg" className="max-w-xl" alt="Airship Logo" />
+      <Header />
       <Card className="w-full max-w-4xl">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-primary">

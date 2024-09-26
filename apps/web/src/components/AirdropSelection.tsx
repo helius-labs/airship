@@ -13,6 +13,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { databaseFile } from "helius-airship-core";
 import { SQLocalDrizzle } from "sqlocal/drizzle";
 import { useNavigate } from "react-router-dom";
+import { Footer } from "./Footer";
+import { Header } from "./Header";
 
 interface AirdropSelectionProps {
   existingAirdrop: boolean | null;
@@ -74,9 +76,9 @@ export function AirdropSelection({
   };
 
   return (
-    <main className="flex flex-col items-center justify-center h-screen space-y-12">
-      <img src="/airship-logo.svg" className="max-w-xl" />
-      <Card className="w-full max-w-md">
+    <main className="flex flex-col items-center justify-center h-screen">
+      <Header />
+      <Card className="w-full max-w-md mt-12 mb-8">
         <CardContent className="pt-6">
           <div className="text-center space-y-4">
             {existingAirdrop === null ? (
@@ -104,6 +106,7 @@ export function AirdropSelection({
           </div>
         </CardContent>
       </Card>
+      <Footer />
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent>

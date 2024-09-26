@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
 } from './ui/alert-dialog';
 import { Link } from 'react-router-dom';
+import { Header } from './Header';
 
 // Add this enum at the top of your file, outside the component
 enum DialogState {
@@ -198,7 +199,7 @@ export function DecompressPage() {
 
   return (
     <main className="flex flex-col items-center justify-top my-12 space-y-12">
-      <img src="/airship-logo.svg" className="max-w-xl" alt="Airship Logo" />
+      <Header />
       <Card className="w-full max-w-3xl">
         <CardHeader className="flex flex-row justify-between space-y-0">
           <CardTitle className="text-3xl font-bold text-primary">
