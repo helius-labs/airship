@@ -93,8 +93,12 @@ export function DecompressPage() {
         publicKey,
       );
 
-      if (!ata) {
-        // Create an associated token account for the user if it doesn't exist
+      // Check if the ATA exists
+      const ataInfo = await connection.getAccountInfo(ata);
+      const ataExists = ataInfo !== null;
+
+      if (!ataExists) {
+        // Create an associated token account if it doesn't exist
         const createAtaInstruction = await createAssociatedTokenAccountInstruction(
           publicKey,
           ata,
