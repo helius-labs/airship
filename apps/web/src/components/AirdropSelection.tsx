@@ -94,7 +94,7 @@ export function AirdropSelection({
                   </Button>
                 )}
                 <Button onClick={() => navigate("/decompress")}>
-                  Decompress Tokens
+                  View Your Compressed Tokens
                 </Button>
                 {showDownloadButton && (
                   <Button onClick={downloadDB}>Download Database</Button>
