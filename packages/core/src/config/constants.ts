@@ -6,7 +6,7 @@ export const baseFee = 5000;
 // Compression fee per compress instruction is 1500 lamports
 // In total we need 3 compress instructions per transaction to send 15 addresses
 export const compressionFee = 1500 * 3;
-export const computeUnitLimit = 500_000;
+export const computeUnitLimit = 550_000;
 // Compute unit price is micro lamports
 export const computeUnitPrice = 10_000;
 export const lookupTableAddressDevnet = new web3.PublicKey(

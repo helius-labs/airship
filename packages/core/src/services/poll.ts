@@ -29,7 +29,7 @@ export async function poll(params: PollParams) {
   const totalTransactionsToSend = totalQueue[0].count;
 
   while (true) {
-    // Fetch total amount of addresses to send
+    // Fetch total amount of finalized transactions
     const totalFinalizedQueue = await db
       .select({ count: count() })
       .from(transaction_queue)
@@ -45,8 +45,8 @@ export async function poll(params: PollParams) {
       break;
     }
 
-    // Fetch the airdrop queue
-    const transactionQueue = await db
+    // Fetch a batch of 100 transactions
+    const transactionBatch = await db
       .select({
         id: transaction_queue.id,
         signature: transaction_queue.signature,
@@ -64,9 +64,10 @@ export async function poll(params: PollParams) {
       .orderBy(
         asc(transaction_queue.last_attempted_at),
         asc(transaction_queue.commitment_status)
-      );
+      )
+      .limit(100);
 
-    for (const transaction of transactionQueue) {
+    for (const transaction of transactionBatch) {
       try {
         const status = await connection.getSignatureStatus(
           transaction.signature!,
@@ -133,7 +134,6 @@ export async function poll(params: PollParams) {
       }
     }
 
-    // Sleep for 1 second
-    await sleep(1000);
+    await sleep(100);
   }
 }

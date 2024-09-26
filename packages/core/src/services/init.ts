@@ -26,10 +26,13 @@ async function createTransactionQueueTable(
 // Index creation
 async function createIndexes(db: BetterSQLite3Database | SqliteRemoteDatabase) {
   await db.run(
-    sql`CREATE INDEX IF NOT EXISTS \`signer\` ON ${sql.identifier(TABLE_NAME)} (\`signer\`);`
+    sql`CREATE INDEX IF NOT EXISTS \`signature\` ON ${sql.identifier(TABLE_NAME)} (\`signature\`);`
   );
   await db.run(
     sql`CREATE INDEX IF NOT EXISTS \`last_attempted_at\` ON ${sql.identifier(TABLE_NAME)} (\`last_attempted_at\`);`
+  );
+  await db.run(
+    sql`CREATE INDEX IF NOT EXISTS \`commitment_status\` ON ${sql.identifier(TABLE_NAME)} (\`commitment_status\`);`
   );
 }
 
