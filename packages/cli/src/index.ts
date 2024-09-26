@@ -33,6 +33,7 @@ import Tinypool from "tinypool";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import { MessageChannel } from 'node:worker_threads'
+import { version } from "../package.json"; // Import version from package.json
 
 process.on("SIGINT", exitProgram);
 process.on("SIGTERM", exitProgram);
@@ -87,7 +88,7 @@ function createCommandProgram() {
       "URL for Solana's JSON RPC with ZK Compression support"
     )
     .version(
-      "0.8.2",
+      version, // Use the imported version
       "-v, --version",
       "display the version number"
     );
