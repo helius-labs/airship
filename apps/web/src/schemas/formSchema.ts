@@ -6,6 +6,10 @@ export const step1Schema = z.object({
     return typeof val === "string" ? isValidPrivateKey(val) : false;
   }, "Invalid private key"),
   rpcUrl: z.string().startsWith("https://").url("Invalid RPC URL format"),
+  saveCredentials: z.boolean(),
+  acknowledgedRisks: z.boolean().refine((val) => val === true, {
+    message: "Please read the risks and agree to use a temporary wallet",
+  })
 });
 
 export const step2Schema = z.object({
@@ -15,7 +19,6 @@ export const step2Schema = z.object({
   mintAddress: z.string().optional(),
   recipients: z.string().min(1, "Please import or enter recipients"),
   csvFile: z.string().optional(),
-  saveCredentials: z.boolean(),
 });
 
 export const step3Schema = z.object({

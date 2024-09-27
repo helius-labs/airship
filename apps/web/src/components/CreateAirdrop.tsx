@@ -15,7 +15,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -83,6 +82,7 @@ export function CreateAirdrop({
       privateKey: window.sessionStorage.getItem("privateKey") || "",
       rpcUrl: window.sessionStorage.getItem("rpcUrl") || "",
       saveCredentials: window.sessionStorage.getItem("saveCredentials") === "true",
+      acknowledgedRisks: window.sessionStorage.getItem("acknowledgedRisks") === "true",
       selectedToken: "",
       recipients: "",
       amountType: "fixed",
@@ -95,7 +95,7 @@ export function CreateAirdrop({
   });
 
   const { watch } = form;
-  const { privateKey, rpcUrl, selectedToken, recipients, amount, amountType, saveCredentials } =
+  const { privateKey, rpcUrl, selectedToken, recipients, amount, amountType, saveCredentials, acknowledgedRisks } =
     watch();
 
   const calculateAmountValue = useCallback(() => {
@@ -128,6 +128,7 @@ export function CreateAirdrop({
 
   useEffect(() => {
     window.sessionStorage.setItem("saveCredentials", saveCredentials.toString());
+    window.sessionStorage.setItem("acknowledgedRisks", acknowledgedRisks.toString());
     if (saveCredentials) {
       window.sessionStorage.setItem("privateKey", privateKey);
       window.sessionStorage.setItem("rpcUrl", rpcUrl);
@@ -135,7 +136,7 @@ export function CreateAirdrop({
       window.sessionStorage.removeItem("privateKey");
       window.sessionStorage.removeItem("rpcUrl");
     }
-  }, [privateKey, rpcUrl, saveCredentials]);
+  }, [privateKey, rpcUrl, saveCredentials, acknowledgedRisks]);
 
   const loadTokens = useCallback(async (showToast: boolean = false) => {
     if (!privateKey || !rpcUrl) {
@@ -409,13 +410,6 @@ export function CreateAirdrop({
                   <Card>
                     <CardHeader>
                       <CardTitle>Step 1: Setup Your Wallet</CardTitle>
-                      <CardDescription>
-                        To handle transaction fees and automatically sign
-                        transactions, you'll need to provide a private key. For
-                        security, we recommend creating a new wallet just for
-                        this purpose and transferring the necessary tokens and
-                        funds to it.
-                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <Step1 form={form} />

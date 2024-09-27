@@ -45,6 +45,7 @@ export function ResumeAirdrop({
       privateKey: window.sessionStorage.getItem("privateKey") || "",
       rpcUrl: window.sessionStorage.getItem("rpcUrl") || "",
       saveCredentials: window.sessionStorage.getItem("saveCredentials") === "true",
+      acknowledgedRisks: window.sessionStorage.getItem("acknowledgedRisks") === "true",
     },
   });
 
@@ -89,10 +90,11 @@ export function ResumeAirdrop({
   };
 
   const { watch } = form;
-  const { privateKey, rpcUrl, saveCredentials } = watch();
+  const { privateKey, rpcUrl, saveCredentials, acknowledgedRisks } = watch();
 
   useEffect(() => {
     window.sessionStorage.setItem("saveCredentials", saveCredentials.toString());
+    window.sessionStorage.setItem("acknowledgedRisks", acknowledgedRisks.toString());
     if (saveCredentials) {
       window.sessionStorage.setItem("privateKey", privateKey);
       window.sessionStorage.setItem("rpcUrl", rpcUrl);
@@ -100,7 +102,7 @@ export function ResumeAirdrop({
       window.sessionStorage.removeItem("privateKey");
       window.sessionStorage.removeItem("rpcUrl");
     }
-  }, [privateKey, rpcUrl, saveCredentials]);
+  }, [privateKey, rpcUrl, saveCredentials, acknowledgedRisks]);
 
   useEffect(() => {
     async function loadAirdropStatus() {
