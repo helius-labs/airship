@@ -29,7 +29,7 @@ cd apps/web
 pnpm preview
 ```
 
-Open http://localhost:4173/
+Open http://localhost:5173/
 
 ## CLI Version
 
