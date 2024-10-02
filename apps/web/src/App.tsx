@@ -37,7 +37,7 @@ function App() {
       }
     }
     void initApp();
-  }, [db]);
+  }, []);
 
   const handleCreateAirdrop = () => {
     setSelectedAction("create");

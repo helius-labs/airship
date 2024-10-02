@@ -2,17 +2,18 @@ import { ReactNode, useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from './ui/wallet-multi-button';
-import { bn, buildTx, createRpc, ParsedTokenAccount, Rpc, sendAndConfirmTx } from '@lightprotocol/stateless.js';
+import { bn, buildTx, createRpc, Rpc, sendAndConfirmTx } from '@lightprotocol/stateless.js';
 import { CompressedTokenProgram, selectMinCompressedTokenAccountsForTransfer } from '@lightprotocol/compressed-token';
 import { Button } from './ui/button';
 import { computeUnitLimit, computeUnitPrice, normalizeTokenAmount } from 'helius-airship-core';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress } from '@solana/spl-token';
-import { ComputeBudgetProgram, TransactionInstruction } from '@solana/web3.js';
-import { Loader2 } from 'lucide-react';
+import { ComputeBudgetProgram, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { Loader2, HelpCircle } from 'lucide-react';
 import {
   AlertDialog,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -21,8 +22,8 @@ import {
 } from './ui/alert-dialog';
 import { Link } from 'react-router-dom';
 import { Header } from './Header';
+import { BN } from '@coral-xyz/anchor';
 
-// Add this enum at the top of your file, outside the component
 enum DialogState {
   Idle,
   ConfirmingTransaction,
@@ -31,41 +32,108 @@ enum DialogState {
   Error
 }
 
+interface Token {
+  mint: PublicKey;
+  amount: BN;
+  symbol: string;
+  decimals: number;
+  image: string;
+  pricePerToken: number;
+}
+
 const connection: Rpc = createRpc(import.meta.env.VITE_RPC_ENDPOINT, import.meta.env.VITE_RPC_ENDPOINT);
 
 export function DecompressPage() {
   const { publicKey, connected, signTransaction } = useWallet();
-  const [compressedTokenAccounts, setCompressedTokenAccounts] = useState<ParsedTokenAccount[]>([]);
+  const [compressedTokenAccounts, setCompressedTokenAccounts] = useState<Token[]>([]);
   const [isLoading, setIsLoading] = useState(false); // New state for loading
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [alertDialogContent, setAlertDialogContent] = useState<{ title: string; message: string | ReactNode }>({ title: '', message: '' });
   const [dialogState, setDialogState] = useState<DialogState>(DialogState.Idle);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (connected && publicKey) {
-        setIsLoading(true); // Set loading to true when fetching starts
-        try {
-          const accounts = await connection.getCompressedTokenAccountsByOwner(publicKey);
-          setCompressedTokenAccounts(accounts.items);
-        } catch (error) {
-          console.error("Error fetching compressed tokens:", error);
-          // TODO: Add user-friendly error handling
-        } finally {
-          setIsLoading(false); // Set loading to false when fetching ends
-        }
-      }
-    };
+  const fetchCompressedTokenAccounts = async () => {
+    if (connected && publicKey) {
+      setIsLoading(true);
+      try {
+        // Fetch compressed token accounts
+        const accounts = await connection.getCompressedTokenAccountsByOwner(publicKey);
 
-    fetchData();
+        // Deduplicate tokens with the same mint address and add the amounts
+        const deduplicatedAccounts = accounts.items.reduce((acc, current) => {
+          const existingAccount = acc.find(item => item.parsed.mint.equals(current.parsed.mint));
+          if (existingAccount) {
+            existingAccount.parsed.amount = existingAccount.parsed.amount.add(current.parsed.amount);
+          } else {
+            acc.push(current);
+          }
+          return acc;
+        }, [] as typeof accounts.items);
+
+        // Fetch asset data using Helius DAS API getAssetBatch method
+        const url = `${import.meta.env.VITE_RPC_ENDPOINT}`;
+        const assetIds = deduplicatedAccounts.map(account => account.parsed.mint.toBase58());
+
+        const getAssetBatch = async (ids: string[]) => {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 'helius-airship',
+              method: 'getAssetBatch',
+              params: {
+                ids: ids
+              },
+            }),
+          });
+          const { result } = await response.json();
+          return result;
+        };
+
+        const assetData = await getAssetBatch(assetIds);
+
+        // Merge asset data with account data
+        let tokens = deduplicatedAccounts.map(account => {
+          const asset = assetData.find((asset: { id: string }) => asset.id === account.parsed.mint.toBase58());
+          return {
+            mint: account.parsed.mint,
+            amount: account.parsed.amount,
+            symbol: asset.content?.metadata?.symbol || '',
+            decimals: asset.token_info?.decimals || 0,
+            image: asset.content?.links?.image || '',
+            pricePerToken: asset.token_info?.price_info?.price_per_token || 0,
+          };
+        });
+
+        // Sort tokens by value (price * amount)
+        const sortedTokens = tokens.sort((a, b) => {
+          const valueA = a.pricePerToken * Number(a.amount) / Math.pow(10, a.decimals);
+          const valueB = b.pricePerToken * Number(b.amount) / Math.pow(10, b.decimals);
+          return valueB - valueA; // Sort in descending order
+        });
+
+        // Update tokens with sorted array
+        tokens = sortedTokens;
+
+        setCompressedTokenAccounts(tokens);
+      } catch (error) {
+        console.error("Error fetching compressed tokens:", error);
+        // TODO: Add user-friendly error handling
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchCompressedTokenAccounts();
   }, [connected, publicKey]);
 
-  const handleDecompress = async (inputCompressedTokenAccount: ParsedTokenAccount) => {
+  const handleDecompress = async (mint: PublicKey, amount: BN) => {
     try {
       if (!publicKey || !signTransaction) throw new WalletNotConnectedError();
-
-      const mint = inputCompressedTokenAccount.parsed.mint;
-      const amount = inputCompressedTokenAccount.parsed.amount;
 
       setAlertDialogOpen(true);
       setDialogState(DialogState.ConfirmingTransaction);
@@ -165,8 +233,7 @@ export function DecompressPage() {
       const txId = await sendAndConfirmTx(connection, signedTx);
 
       // Refresh the list of compressed tokens
-      const accounts = await connection.getCompressedTokenAccountsByOwner(publicKey);
-      setCompressedTokenAccounts(accounts.items);
+      await fetchCompressedTokenAccounts();
 
       setDialogState(DialogState.Success);
       setAlertDialogContent({
@@ -175,7 +242,7 @@ export function DecompressPage() {
           <>
             <p>Signature:&nbsp;
               <a
-                href={`https://xray.helius.xyz/tx/${txId}`}
+                href={`https://photon.helius.dev/tx/${txId}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary font-semibold underline hover:underline"
@@ -219,21 +286,51 @@ export function DecompressPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Mint</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Action</TableHead>
+                      <TableHead></TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right hidden sm:table-cell">Value</TableHead>
+                      <TableHead className="text-right">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {compressedTokenAccounts.map((account, index) => (
+                    {compressedTokenAccounts.map((token, index) => (
                       <TableRow key={index}>
                         <TableCell>
-                          <span className="hidden sm:block">{account.parsed.mint.toBase58()}</span>
-                          <span className="block sm:hidden">{account.parsed.mint.toBase58().slice(0, 4) + '...' + account.parsed.mint.toBase58().slice(-4)}</span>
+                          <div className="flex items-center space-x-2">
+                            {token.image ? (
+                              <img
+                                crossOrigin="anonymous"
+                                src={token.image}
+                                alt={token.symbol || 'Token'}
+                                className="w-8 h-8 rounded-full"
+                              />
+                            ) : (
+                              <HelpCircle className="w-8 h-8 text-gray-400" />
+                            )}
+                            <div>
+                              <span className="font-medium">{token.symbol || 'Unknown'}</span>
+                              <a
+                                className="block text-xs text-gray-400 hover:underline"
+                                href={`https://birdeye.so/token/${token.mint.toBase58()}?chain=solana`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="View on Birdeye"
+                              >
+                                {token.mint.toBase58().slice(0, 4) + '...' + token.mint.toBase58().slice(-4)}
+                              </a>
+                            </div>
+                          </div>
                         </TableCell>
-                        <TableCell>{normalizeTokenAmount(account.parsed.amount.toString(), 9)}</TableCell>
-                        <TableCell>
-                          <Button onClick={() => handleDecompress(account)}>Decompress</Button>
+                        <TableCell className="text-right">
+                          {normalizeTokenAmount(token.amount.toString(), token.decimals)}
+                        </TableCell>
+                        <TableCell className="text-right hidden sm:table-cell">
+                          {token.pricePerToken > 0
+                            ? `$${(normalizeTokenAmount(token.amount.toString(), token.decimals) * token.pricePerToken).toFixed(2)}`
+                            : 'N/A'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm" onClick={() => handleDecompress(token.mint, token.amount)}>Decompress</Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -247,7 +344,7 @@ export function DecompressPage() {
             <p>Connect your wallet to view your compressed tokens.</p>
           )}
         </CardContent>
-      </Card>
+      </Card >
       <Link
         to="/"
         className="text-primary text-white shadow-lg hover:underline"
@@ -264,16 +361,16 @@ export function DecompressPage() {
           </AlertDialogHeader>
           {(dialogState === DialogState.Success || dialogState === DialogState.Error) && (
             <AlertDialogFooter>
-              <Button onClick={() => {
+              <AlertDialogCancel onClick={() => {
                 setAlertDialogOpen(false);
                 setDialogState(DialogState.Idle);
               }}>
                 Close
-              </Button>
+              </AlertDialogCancel>
             </AlertDialogFooter>
           )}
         </AlertDialogContent>
       </AlertDialog>
-    </main>
+    </main >
   );
 }
