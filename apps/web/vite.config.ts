@@ -6,16 +6,19 @@ import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [nodePolyfills(), comlink(), react()],
+  plugins: [nodePolyfills(), comlink(), react(), {
+    name: 'configure-response-headers',
+    configureServer: (server) => {
+      server.middlewares.use((_req, res, next) => {
+        res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+        res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+        next();
+      });
+    },
+  },],
   worker: {
     plugins: () => [comlink()],
     format: "es",
-  },
-  server: {
-    headers: {
-      "Cross-Origin-Embedder-Policy": "require-corp",
-      "Cross-Origin-Opener-Policy": "same-origin",
-    },
   },
   optimizeDeps: {
     exclude: ["sqlocal"],

@@ -299,10 +299,14 @@ export function DecompressPage() {
                           <div className="flex items-center space-x-2">
                             {token.image ? (
                               <img
-                                crossOrigin="anonymous"
+                                crossOrigin=""
                                 src={token.image}
                                 alt={token.symbol || 'Token'}
                                 className="w-8 h-8 rounded-full"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = '/not-found.svg';
+                                }}
                               />
                             ) : (
                               <HelpCircle className="w-8 h-8 text-gray-400" />
