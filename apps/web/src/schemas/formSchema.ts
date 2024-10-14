@@ -10,7 +10,7 @@ export const step1Schema = z.object({
   acknowledgedRisks: z.boolean().refine((val) => val === true, {
     message: "Please read the risks and agree to use a temporary wallet",
   }),
-  walletMethod: z.enum(["solflare", "privateKey"]),
+  walletMethod: z.enum(["auto-approve", "privateKey"]),
 });
 
 export const step2Schema = z.object({

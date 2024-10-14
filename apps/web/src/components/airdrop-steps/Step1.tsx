@@ -16,20 +16,21 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletName } from "@solana/wallet-adapter-base";
+import { SolflareWalletName } from "@solana/wallet-adapter-wallets";
 
 interface Step1Props {
   form: UseFormReturn<FormValues>;
 }
 
 export default function Step1({ form }: Step1Props) {
-  const { select, connect, connected, disconnect } = useWallet();
+  const { select, connect, connected, disconnect, publicKey, signTransaction, wallets, wallet } = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
+
 
   const handleSolflareConnect = async () => {
     try {
       setIsConnecting(true);
-      select("Solflare" as WalletName);
+      await select(SolflareWalletName);
       await connect();
     } catch (error) {
       console.error("Failed to connect to Solflare:", error);
@@ -63,7 +64,7 @@ export default function Step1({ form }: Step1Props) {
                 </FormItem>
                 <FormItem className="flex items-center space-x-3 space-y-0">
                   <FormControl>
-                    <RadioGroupItem value="solflare" />
+                    <RadioGroupItem value="auto-approve" />
                   </FormControl>
                   <FormLabel className="font-normal">
                     Use Solflare Wallet Connect
@@ -161,10 +162,11 @@ export default function Step1({ form }: Step1Props) {
         </>
       )}
 
-      {form.watch("walletMethod") === "solflare" && (
+      {form.watch("walletMethod") === "auto-approve" && (
         <div className="p-4 bg-secondary rounded-md space-y-4">
           <p>Connect your Solflare wallet to proceed with the airdrop.</p>
           {!connected ? (
+
             <Button
               onClick={handleSolflareConnect}
               disabled={isConnecting}
@@ -173,7 +175,8 @@ export default function Step1({ form }: Step1Props) {
             </Button>
           ) : (
             <div className="space-y-2">
-              <p className="text-green-600">Solflare wallet connected successfully!</p>
+              <p className="text-green-600">Solflare wallet connected successfully! {publicKey?.toBase58()}</p>
+              {wallet?.adapter.name}
               <Button onClick={disconnect} variant="outline">
                 Disconnect
               </Button>
