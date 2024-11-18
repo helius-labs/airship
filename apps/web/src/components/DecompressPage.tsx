@@ -259,7 +259,7 @@ export function DecompressPage() {
       setDialogState(DialogState.Error);
       setAlertDialogContent({
         title: 'Decompress cancelled',
-        message: `${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `${error instanceof Error ? JSON.stringify(error.message) : 'Unknown error'}`
       });
     }
   };
