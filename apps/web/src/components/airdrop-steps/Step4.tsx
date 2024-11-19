@@ -57,7 +57,7 @@ export default function Step4({
       try {
         const keypair = getKeypairFromPrivateKey(privateKey);
         const selectedTokenInfo = tokens.find(
-          (t) => t.mintAddress.toString() === selectedToken
+          (t) => t.mintAddress.toString() === selectedToken,
         );
 
         if (!selectedTokenInfo) {
@@ -65,11 +65,12 @@ export default function Step4({
         }
 
         const numberOfTransactions = BigInt(
-          Math.ceil(recipientList.length / Number(maxAddressesPerTransaction))
+          Math.ceil(recipientList.length / Number(maxAddressesPerTransaction)),
         );
         const transactionFee =
           BigInt(baseFee) +
-          ((BigInt(computeUnitLimit) * BigInt(computeUnitPrice)) / BigInt(MICRO_LAMPORTS_PER_LAMPORT));
+          (BigInt(computeUnitLimit) * BigInt(computeUnitPrice)) /
+            BigInt(MICRO_LAMPORTS_PER_LAMPORT);
 
         const totalAmount = amountValue * BigInt(recipientList.length);
 
@@ -80,13 +81,13 @@ export default function Step4({
           totalAddresses: recipientList.length,
           amountPerAddress: normalizeTokenAmount(
             amountValue.toString(),
-            selectedTokenInfo.decimals
+            selectedTokenInfo.decimals,
           ).toLocaleString("en-US", {
             maximumFractionDigits: selectedTokenInfo.decimals,
           }),
           totalAmount: normalizeTokenAmount(
             totalAmount.toString(),
-            selectedTokenInfo.decimals
+            selectedTokenInfo.decimals,
           ).toLocaleString("en-US", {
             maximumFractionDigits: selectedTokenInfo.decimals,
           }),

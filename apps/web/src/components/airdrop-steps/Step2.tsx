@@ -124,7 +124,7 @@ export default function Step2({
           }))
         ) {
           setCollectionAddressError(
-            "Collection not found please check the address"
+            "Collection not found please check the address",
           );
           return "Collection not found please check the address";
         }
@@ -217,7 +217,7 @@ export default function Step2({
                 error: reject,
                 skipEmptyLines: true,
               });
-            }
+            },
           );
 
           addresses = [];
@@ -240,7 +240,7 @@ export default function Step2({
 
       if (addresses.length === 0) {
         throw new Error(
-          "No addresses found. Are you maybe connected to Devnet? Please check your input and try again."
+          "No addresses found. Are you maybe connected to Devnet? Please check your input and try again.",
         );
       } else {
         setValue("recipients", addresses.join("\n"), { shouldValidate: true });
@@ -255,7 +255,7 @@ export default function Step2({
       setImportError(
         error instanceof Error
           ? error.message
-          : "Failed to import addresses. Please try again."
+          : "Failed to import addresses. Please try again.",
       );
       setImportResult({ success: false, count: 0, rejected: rejectedCount });
     } finally {
@@ -293,7 +293,8 @@ export default function Step2({
                   <HelpCircle className="h-4 w-4" />
                 </PopoverTrigger>
                 <PopoverContent className="space-y-2">
-                  Currently, ZK Compression supports only SPL tokens. Support for Token 2022 tokens will be added soon.
+                  Currently, ZK Compression supports only SPL tokens. Support
+                  for Token 2022 tokens will be added soon.
                 </PopoverContent>
               </Popover>
             </FormLabel>
@@ -336,7 +337,9 @@ export default function Step2({
                   onClick={onRefreshTokens}
                   disabled={isRefreshingTokens}
                 >
-                  <RefreshCw className={`h-4 w-4 ${isRefreshingTokens ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`h-4 w-4 ${isRefreshingTokens ? "animate-spin" : ""}`}
+                  />
                 </Button>
               </div>
             </FormControl>
@@ -480,12 +483,13 @@ export default function Step2({
           <Label htmlFor="recipients">CSV file</Label>
           <div
             {...getRootProps()}
-            className={`border border-dashed rounded-md p-8 transition-colors duration-200 ease-in-out ${isDragActive
-              ? "border-primary bg-primary/10"
-              : csvFileError
-                ? "border-red-50"
-                : "border-gray-300 hover:border-primary/50 hover:bg-primary/5"
-              }`}
+            className={`border border-dashed rounded-md p-8 transition-colors duration-200 ease-in-out ${
+              isDragActive
+                ? "border-primary bg-primary/10"
+                : csvFileError
+                  ? "border-red-50"
+                  : "border-gray-300 hover:border-primary/50 hover:bg-primary/5"
+            }`}
           >
             <input {...getInputProps()} />
             {csvFile ? (

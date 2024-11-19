@@ -63,15 +63,9 @@ function App() {
             path="/"
             element={
               selectedAction === "create" ? (
-                <CreateAirdrop
-                  db={db}
-                  onBackToHome={handleBackToHome}
-                />
+                <CreateAirdrop db={db} onBackToHome={handleBackToHome} />
               ) : selectedAction === "resume" ? (
-                <ResumeAirdrop
-                  db={db}
-                  onBackToHome={handleBackToHome}
-                />
+                <ResumeAirdrop db={db} onBackToHome={handleBackToHome} />
               ) : (
                 <AirdropSelection
                   existingAirdrop={existingAirdrop}

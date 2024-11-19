@@ -20,11 +20,7 @@ let sendWorker: Worker | undefined = undefined;
 let pollWorker: Worker | undefined = undefined;
 let monitorInterval: NodeJS.Timeout | undefined = undefined;
 
-export function ResumeAirdrop({
-  db,
-  onBackToHome,
-}: ResumeAirdropProps) {
-
+export function ResumeAirdrop({ db, onBackToHome }: ResumeAirdropProps) {
   // TODO: Refactor methods and state management to be more reusable with CreateAirdrop
   const [step, setStep] = useState(1);
   const [isAirdropInProgress, setIsAirdropInProgress] = useState(false);
@@ -44,8 +40,10 @@ export function ResumeAirdrop({
     defaultValues: {
       privateKey: window.sessionStorage.getItem("privateKey") || "",
       rpcUrl: window.sessionStorage.getItem("rpcUrl") || "",
-      saveCredentials: window.sessionStorage.getItem("saveCredentials") === "true",
-      acknowledgedRisks: window.sessionStorage.getItem("acknowledgedRisks") === "true",
+      saveCredentials:
+        window.sessionStorage.getItem("saveCredentials") === "true",
+      acknowledgedRisks:
+        window.sessionStorage.getItem("acknowledgedRisks") === "true",
     },
   });
 
@@ -93,8 +91,14 @@ export function ResumeAirdrop({
   const { privateKey, rpcUrl, saveCredentials, acknowledgedRisks } = watch();
 
   useEffect(() => {
-    window.sessionStorage.setItem("saveCredentials", saveCredentials.toString());
-    window.sessionStorage.setItem("acknowledgedRisks", acknowledgedRisks.toString());
+    window.sessionStorage.setItem(
+      "saveCredentials",
+      saveCredentials.toString(),
+    );
+    window.sessionStorage.setItem(
+      "acknowledgedRisks",
+      acknowledgedRisks.toString(),
+    );
     if (saveCredentials) {
       window.sessionStorage.setItem("privateKey", privateKey);
       window.sessionStorage.setItem("rpcUrl", rpcUrl);
@@ -125,11 +129,13 @@ export function ResumeAirdrop({
     const { privateKey, rpcUrl } = values;
 
     try {
-
-      if (typeof (sendWorker) === "undefined") {
-        sendWorker = new Worker(new URL("../workers/send.ts", import.meta.url), {
-          type: "module",
-        });
+      if (typeof sendWorker === "undefined") {
+        sendWorker = new Worker(
+          new URL("../workers/send.ts", import.meta.url),
+          {
+            type: "module",
+          },
+        );
       }
 
       sendWorker.onmessage = (event) => {
@@ -139,10 +145,13 @@ export function ResumeAirdrop({
       };
       sendWorker.postMessage({ privateKey, rpcUrl });
 
-      if (typeof (pollWorker) === "undefined") {
-        pollWorker = new Worker(new URL("../workers/poll.ts", import.meta.url), {
-          type: "module",
-        });
+      if (typeof pollWorker === "undefined") {
+        pollWorker = new Worker(
+          new URL("../workers/poll.ts", import.meta.url),
+          {
+            type: "module",
+          },
+        );
       }
 
       pollWorker.onmessage = (event) => {
@@ -157,7 +166,7 @@ export function ResumeAirdrop({
           const currentStatus = await airdropsender.status({ db });
           setSendProgress((currentStatus.sent / currentStatus.total) * 100);
           setFinalizeProgress(
-            (currentStatus.finalized / currentStatus.total) * 100
+            (currentStatus.finalized / currentStatus.total) * 100,
           );
           setTotalTransactions(currentStatus.total);
           setSentTransactions(currentStatus.sent);
@@ -212,7 +221,9 @@ export function ResumeAirdrop({
               <Alert variant="default" className="mb-6">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Airdrop Canceled</AlertTitle>
-                <AlertDescription>The airdrop has been canceled.</AlertDescription>
+                <AlertDescription>
+                  The airdrop has been canceled.
+                </AlertDescription>
               </Alert>
               <div className="flex justify-center">
                 <Button onClick={onBackToHome} className="mt-1">
@@ -222,7 +233,10 @@ export function ResumeAirdrop({
             </>
           ) : (
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
                 {step === 1 && (
                   <Card>
                     <CardHeader>

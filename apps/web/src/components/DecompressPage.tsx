@@ -1,16 +1,43 @@
-import { ReactNode, useEffect, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from './ui/wallet-multi-button';
-import { bn, buildTx, createRpc, Rpc, sendAndConfirmTx } from '@lightprotocol/stateless.js';
-import { CompressedTokenProgram, selectMinCompressedTokenAccountsForTransfer } from '@lightprotocol/compressed-token';
-import { Button } from './ui/button';
-import { computeUnitLimit, computeUnitPrice, normalizeTokenAmount } from 'helius-airship-core';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress } from '@solana/spl-token';
-import { ComputeBudgetProgram, PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { Loader2, HelpCircle } from 'lucide-react';
+import { ReactNode, useEffect, useState } from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "./ui/wallet-multi-button";
+import {
+  bn,
+  buildTx,
+  createRpc,
+  Rpc,
+  sendAndConfirmTx,
+} from "@lightprotocol/stateless.js";
+import {
+  CompressedTokenProgram,
+  selectMinCompressedTokenAccountsForTransfer,
+} from "@lightprotocol/compressed-token";
+import { Button } from "./ui/button";
+import {
+  computeUnitLimit,
+  computeUnitPrice,
+  normalizeTokenAmount,
+} from "helius-airship-core";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./ui/table";
+import { WalletNotConnectedError } from "@solana/wallet-adapter-base";
+import {
+  createAssociatedTokenAccountInstruction,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
+import {
+  ComputeBudgetProgram,
+  PublicKey,
+  TransactionInstruction,
+} from "@solana/web3.js";
+import { Loader2, HelpCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -19,17 +46,17 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from './ui/alert-dialog';
-import { Link } from 'react-router-dom';
-import { Header } from './Header';
-import { BN } from '@coral-xyz/anchor';
+} from "./ui/alert-dialog";
+import { Link } from "react-router-dom";
+import { Header } from "./Header";
+import { BN } from "@coral-xyz/anchor";
 
 enum DialogState {
   Idle,
   ConfirmingTransaction,
   Processing,
   Success,
-  Error
+  Error,
 }
 
 interface Token {
@@ -41,14 +68,22 @@ interface Token {
   pricePerToken: number;
 }
 
-const connection: Rpc = createRpc(import.meta.env.VITE_RPC_ENDPOINT, import.meta.env.VITE_RPC_ENDPOINT);
+const connection: Rpc = createRpc(
+  import.meta.env.VITE_RPC_ENDPOINT,
+  import.meta.env.VITE_RPC_ENDPOINT,
+);
 
 export function DecompressPage() {
   const { publicKey, connected, signTransaction } = useWallet();
-  const [compressedTokenAccounts, setCompressedTokenAccounts] = useState<Token[]>([]);
+  const [compressedTokenAccounts, setCompressedTokenAccounts] = useState<
+    Token[]
+  >([]);
   const [isLoading, setIsLoading] = useState(false); // New state for loading
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
-  const [alertDialogContent, setAlertDialogContent] = useState<{ title: string; message: string | ReactNode }>({ title: '', message: '' });
+  const [alertDialogContent, setAlertDialogContent] = useState<{
+    title: string;
+    message: string | ReactNode;
+  }>({ title: "", message: "" });
   const [dialogState, setDialogState] = useState<DialogState>(DialogState.Idle);
 
   const fetchCompressedTokenAccounts = async () => {
@@ -56,35 +91,45 @@ export function DecompressPage() {
       setIsLoading(true);
       try {
         // Fetch compressed token accounts
-        const accounts = await connection.getCompressedTokenAccountsByOwner(publicKey);
+        const accounts =
+          await connection.getCompressedTokenAccountsByOwner(publicKey);
 
         // Deduplicate tokens with the same mint address and add the amounts
-        const deduplicatedAccounts = accounts.items.reduce((acc, current) => {
-          const existingAccount = acc.find(item => item.parsed.mint.equals(current.parsed.mint));
-          if (existingAccount) {
-            existingAccount.parsed.amount = existingAccount.parsed.amount.add(current.parsed.amount);
-          } else {
-            acc.push(current);
-          }
-          return acc;
-        }, [] as typeof accounts.items);
+        const deduplicatedAccounts = accounts.items.reduce(
+          (acc, current) => {
+            const existingAccount = acc.find((item) =>
+              item.parsed.mint.equals(current.parsed.mint),
+            );
+            if (existingAccount) {
+              existingAccount.parsed.amount = existingAccount.parsed.amount.add(
+                current.parsed.amount,
+              );
+            } else {
+              acc.push(current);
+            }
+            return acc;
+          },
+          [] as typeof accounts.items,
+        );
 
         // Fetch asset data using Helius DAS API getAssetBatch method
         const url = `${import.meta.env.VITE_RPC_ENDPOINT}`;
-        const assetIds = deduplicatedAccounts.map(account => account.parsed.mint.toBase58());
+        const assetIds = deduplicatedAccounts.map((account) =>
+          account.parsed.mint.toBase58(),
+        );
 
         const getAssetBatch = async (ids: string[]) => {
           const response = await fetch(url, {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              jsonrpc: '2.0',
-              id: 'helius-airship',
-              method: 'getAssetBatch',
+              jsonrpc: "2.0",
+              id: "helius-airship",
+              method: "getAssetBatch",
               params: {
-                ids: ids
+                ids: ids,
               },
             }),
           });
@@ -95,22 +140,27 @@ export function DecompressPage() {
         const assetData = await getAssetBatch(assetIds);
 
         // Merge asset data with account data
-        let tokens = deduplicatedAccounts.map(account => {
-          const asset = assetData.find((asset: { id: string }) => asset.id === account.parsed.mint.toBase58());
+        let tokens = deduplicatedAccounts.map((account) => {
+          const asset = assetData.find(
+            (asset: { id: string }) =>
+              asset.id === account.parsed.mint.toBase58(),
+          );
           return {
             mint: account.parsed.mint,
             amount: account.parsed.amount,
-            symbol: asset.content?.metadata?.symbol || '',
+            symbol: asset.content?.metadata?.symbol || "",
             decimals: asset.token_info?.decimals || 0,
-            image: asset.content?.links?.image || '',
+            image: asset.content?.links?.image || "",
             pricePerToken: asset.token_info?.price_info?.price_per_token || 0,
           };
         });
 
         // Sort tokens by value (price * amount)
         const sortedTokens = tokens.sort((a, b) => {
-          const valueA = a.pricePerToken * Number(a.amount) / Math.pow(10, a.decimals);
-          const valueB = b.pricePerToken * Number(b.amount) / Math.pow(10, b.decimals);
+          const valueA =
+            (a.pricePerToken * Number(a.amount)) / Math.pow(10, a.decimals);
+          const valueB =
+            (b.pricePerToken * Number(b.amount)) / Math.pow(10, b.decimals);
           return valueB - valueA; // Sort in descending order
         });
 
@@ -138,8 +188,8 @@ export function DecompressPage() {
       setAlertDialogOpen(true);
       setDialogState(DialogState.ConfirmingTransaction);
       setAlertDialogContent({
-        title: 'Confirm Transaction',
-        message: 'Please confirm the transaction in your wallet...'
+        title: "Confirm Transaction",
+        message: "Please confirm the transaction in your wallet...",
       });
 
       // Set the compute unit limit and add it to the transaction
@@ -157,10 +207,7 @@ export function DecompressPage() {
       instructions.push(unitPriceIX);
 
       // Calculate ATA
-      const ata = await getAssociatedTokenAddress(
-        mint,
-        publicKey,
-      );
+      const ata = await getAssociatedTokenAddress(mint, publicKey);
 
       // Check if the ATA exists
       const ataInfo = await connection.getAccountInfo(ata);
@@ -168,12 +215,13 @@ export function DecompressPage() {
 
       if (!ataExists) {
         // Create an associated token account if it doesn't exist
-        const createAtaInstruction = await createAssociatedTokenAccountInstruction(
-          publicKey,
-          ata,
-          publicKey,
-          mint,
-        );
+        const createAtaInstruction =
+          await createAssociatedTokenAccountInstruction(
+            publicKey,
+            ata,
+            publicKey,
+            mint,
+          );
 
         instructions.push(createAtaInstruction);
       }
@@ -192,7 +240,7 @@ export function DecompressPage() {
 
       // Fetch recent validity proof
       const proof = await connection.getValidityProof(
-        inputAccounts.map(account => bn(account.compressedAccount.hash)),
+        inputAccounts.map((account) => bn(account.compressedAccount.hash)),
       );
 
       // Create the decompress instruction
@@ -207,27 +255,22 @@ export function DecompressPage() {
 
       instructions.push(decompressInstruction);
 
-      const {
-        value: blockhashCtx,
-      } = await connection.getLatestBlockhashAndContext();
+      const { value: blockhashCtx } =
+        await connection.getLatestBlockhashAndContext();
 
-      const tx = buildTx(
-        instructions,
-        publicKey,
-        blockhashCtx.blockhash,
-      );
+      const tx = buildTx(instructions, publicKey, blockhashCtx.blockhash);
 
       const signedTx = await signTransaction(tx);
 
       setDialogState(DialogState.Processing);
       setAlertDialogContent({
-        title: 'Confirming Transaction',
+        title: "Confirming Transaction",
         message: (
           <div className="flex items-center space-x-2">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>Please wait while the transaction is being confirmed...</span>
           </div>
-        )
+        ),
       });
 
       const txId = await sendAndConfirmTx(connection, signedTx);
@@ -237,29 +280,29 @@ export function DecompressPage() {
 
       setDialogState(DialogState.Success);
       setAlertDialogContent({
-        title: 'Token decompressed successfully!',
+        title: "Token decompressed successfully!",
         message: (
           <>
-            <p>Signature:&nbsp;
+            <p>
+              Signature:&nbsp;
               <a
                 href={`https://photon.helius.dev/tx/${txId}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary font-semibold underline hover:underline"
               >
-                {txId.slice(0, 4) + '...' + txId.slice(-4)}
+                {txId.slice(0, 4) + "..." + txId.slice(-4)}
               </a>
             </p>
           </>
-        )
+        ),
       });
-
     } catch (error) {
       console.error("Error decompressing token:", error);
       setDialogState(DialogState.Error);
       setAlertDialogContent({
-        title: 'Decompress cancelled',
-        message: `${error instanceof Error ? (typeof error.message === 'string' ? error.message : JSON.stringify(error.message, null, 2)) : 'Unknown error'}`
+        title: "Decompress cancelled",
+        message: `${error instanceof Error ? (typeof error.message === "string" ? error.message : JSON.stringify(error.message, null, 2)) : "Unknown error"}`,
       });
     }
   };
@@ -288,7 +331,9 @@ export function DecompressPage() {
                     <TableRow>
                       <TableHead></TableHead>
                       <TableHead className="text-right">Amount</TableHead>
-                      <TableHead className="text-right hidden sm:table-cell">Value</TableHead>
+                      <TableHead className="text-right hidden sm:table-cell">
+                        Value
+                      </TableHead>
                       <TableHead className="text-right">Action</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -301,18 +346,20 @@ export function DecompressPage() {
                               <img
                                 crossOrigin=""
                                 src={token.image}
-                                alt={token.symbol || 'Token'}
+                                alt={token.symbol || "Token"}
                                 className="w-8 h-8 rounded-full"
                                 onError={(e) => {
                                   e.currentTarget.onerror = null;
-                                  e.currentTarget.src = '/not-found.svg';
+                                  e.currentTarget.src = "/not-found.svg";
                                 }}
                               />
                             ) : (
                               <HelpCircle className="w-8 h-8 text-gray-400" />
                             )}
                             <div>
-                              <span className="font-medium">{token.symbol || 'Unknown'}</span>
+                              <span className="font-medium">
+                                {token.symbol || "Unknown"}
+                              </span>
                               <a
                                 className="block text-xs text-gray-400 hover:underline"
                                 href={`https://birdeye.so/token/${token.mint.toBase58()}?chain=solana`}
@@ -320,21 +367,34 @@ export function DecompressPage() {
                                 rel="noopener noreferrer"
                                 title="View on Birdeye"
                               >
-                                {token.mint.toBase58().slice(0, 4) + '...' + token.mint.toBase58().slice(-4)}
+                                {token.mint.toBase58().slice(0, 4) +
+                                  "..." +
+                                  token.mint.toBase58().slice(-4)}
                               </a>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          {normalizeTokenAmount(token.amount.toString(), token.decimals)}
+                          {normalizeTokenAmount(
+                            token.amount.toString(),
+                            token.decimals,
+                          )}
                         </TableCell>
                         <TableCell className="text-right hidden sm:table-cell">
                           {token.pricePerToken > 0
                             ? `$${(normalizeTokenAmount(token.amount.toString(), token.decimals) * token.pricePerToken).toFixed(2)}`
-                            : 'N/A'}
+                            : "N/A"}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="outline" size="sm" onClick={() => handleDecompress(token.mint, token.amount)}>Decompress</Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleDecompress(token.mint, token.amount)
+                            }
+                          >
+                            Decompress
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -348,7 +408,7 @@ export function DecompressPage() {
             <p>Connect your wallet to view your compressed tokens.</p>
           )}
         </CardContent>
-      </Card >
+      </Card>
       <Link
         to="/"
         className="text-primary text-white shadow-lg hover:underline"
@@ -363,18 +423,21 @@ export function DecompressPage() {
               {alertDialogContent.message}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {(dialogState === DialogState.Success || dialogState === DialogState.Error) && (
+          {(dialogState === DialogState.Success ||
+            dialogState === DialogState.Error) && (
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => {
-                setAlertDialogOpen(false);
-                setDialogState(DialogState.Idle);
-              }}>
+              <AlertDialogCancel
+                onClick={() => {
+                  setAlertDialogOpen(false);
+                  setDialogState(DialogState.Idle);
+                }}
+              >
                 Close
               </AlertDialogCancel>
             </AlertDialogFooter>
           )}
         </AlertDialogContent>
       </AlertDialog>
-    </main >
+    </main>
   );
 }

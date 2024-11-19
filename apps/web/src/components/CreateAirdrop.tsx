@@ -12,12 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/ui/dialog";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Step1 from "./airdrop-steps/Step1";
 import Step2 from "./airdrop-steps/Step2";
 import Step3 from "./airdrop-steps/Step3";
@@ -40,21 +35,19 @@ interface CreateAirdropProps {
 }
 
 // Load the airdrop sender worker
-const createWorker = new ComlinkWorker<
-  typeof import("../workers/create.ts")
->(new URL("../workers/create.ts", import.meta.url), {
-  name: "createWorker",
-  type: "module",
-});
+const createWorker = new ComlinkWorker<typeof import("../workers/create.ts")>(
+  new URL("../workers/create.ts", import.meta.url),
+  {
+    name: "createWorker",
+    type: "module",
+  },
+);
 
 let sendWorker: Worker | undefined = undefined;
 let pollWorker: Worker | undefined = undefined;
 let monitorInterval: NodeJS.Timeout | undefined = undefined;
 
-export function CreateAirdrop({
-  db,
-  onBackToHome,
-}: CreateAirdropProps) {
+export function CreateAirdrop({ db, onBackToHome }: CreateAirdropProps) {
   const [step, setStep] = useState(1);
   const [tokens, setTokens] = useState<Token[]>([]);
   const [noTokensMessage, setNoTokensMessage] = useState<string | null>(null);
@@ -81,8 +74,10 @@ export function CreateAirdrop({
     defaultValues: {
       privateKey: window.sessionStorage.getItem("privateKey") || "",
       rpcUrl: window.sessionStorage.getItem("rpcUrl") || "",
-      saveCredentials: window.sessionStorage.getItem("saveCredentials") === "true",
-      acknowledgedRisks: window.sessionStorage.getItem("acknowledgedRisks") === "true",
+      saveCredentials:
+        window.sessionStorage.getItem("saveCredentials") === "true",
+      acknowledgedRisks:
+        window.sessionStorage.getItem("acknowledgedRisks") === "true",
       selectedToken: "",
       recipients: "",
       amountType: "fixed",
@@ -95,12 +90,20 @@ export function CreateAirdrop({
   });
 
   const { watch } = form;
-  const { privateKey, rpcUrl, selectedToken, recipients, amount, amountType, saveCredentials, acknowledgedRisks } =
-    watch();
+  const {
+    privateKey,
+    rpcUrl,
+    selectedToken,
+    recipients,
+    amount,
+    amountType,
+    saveCredentials,
+    acknowledgedRisks,
+  } = watch();
 
   const calculateAmountValue = useCallback(() => {
     const selectedTokenInfo = tokens.find(
-      (t) => t.mintAddress.toString() === selectedToken
+      (t) => t.mintAddress.toString() === selectedToken,
     );
 
     if (!selectedTokenInfo || !amount) {
@@ -127,8 +130,14 @@ export function CreateAirdrop({
   }, [calculateAmountValue]);
 
   useEffect(() => {
-    window.sessionStorage.setItem("saveCredentials", saveCredentials.toString());
-    window.sessionStorage.setItem("acknowledgedRisks", acknowledgedRisks.toString());
+    window.sessionStorage.setItem(
+      "saveCredentials",
+      saveCredentials.toString(),
+    );
+    window.sessionStorage.setItem(
+      "acknowledgedRisks",
+      acknowledgedRisks.toString(),
+    );
     if (saveCredentials) {
       window.sessionStorage.setItem("privateKey", privateKey);
       window.sessionStorage.setItem("rpcUrl", rpcUrl);
@@ -138,54 +147,57 @@ export function CreateAirdrop({
     }
   }, [privateKey, rpcUrl, saveCredentials, acknowledgedRisks]);
 
-  const loadTokens = useCallback(async (showToast: boolean = false) => {
-    if (!privateKey || !rpcUrl) {
-      setNoTokensMessage("Private key or RPC URL is missing");
-      return;
-    }
-    setIsRefreshingTokens(true);
-    try {
-      const keypair = getKeypairFromPrivateKey(privateKey);
-      const ownerAddress = keypair.publicKey;
-      const loadedTokens = await getTokensByOwner({
-        ownerAddress,
-        url: rpcUrl,
-      });
-      setTokens(loadedTokens);
-      if (loadedTokens.length === 0) {
-        setNoTokensMessage(
-          `No SPL Tokens found. Please transfer or mint tokens to ${keypair.publicKey.toBase58()}`
-        );
+  const loadTokens = useCallback(
+    async (showToast: boolean = false) => {
+      if (!privateKey || !rpcUrl) {
+        setNoTokensMessage("Private key or RPC URL is missing");
+        return;
+      }
+      setIsRefreshingTokens(true);
+      try {
+        const keypair = getKeypairFromPrivateKey(privateKey);
+        const ownerAddress = keypair.publicKey;
+        const loadedTokens = await getTokensByOwner({
+          ownerAddress,
+          url: rpcUrl,
+        });
+        setTokens(loadedTokens);
+        if (loadedTokens.length === 0) {
+          setNoTokensMessage(
+            `No SPL Tokens found. Please transfer or mint tokens to ${keypair.publicKey.toBase58()}`,
+          );
+          if (showToast) {
+            toast({
+              title: "No SPL Tokens found",
+              description: `Please transfer or mint SPL Tokens to ${keypair.publicKey.toBase58()}`,
+              variant: "destructive",
+            });
+          }
+        } else {
+          setNoTokensMessage(null);
+          if (showToast) {
+            toast({
+              title: "Tokens refreshed",
+              description: `${loadedTokens.length} token${loadedTokens.length !== 1 ? "s" : ""} found`,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error loading tokens:", error);
+        setNoTokensMessage("Error loading tokens. Please try again.");
         if (showToast) {
           toast({
-            title: "No SPL Tokens found",
-            description: `Please transfer or mint SPL Tokens to ${keypair.publicKey.toBase58()}`,
+            title: "Error refreshing tokens",
+            description: "Please try again",
             variant: "destructive",
           });
         }
-      } else {
-        setNoTokensMessage(null);
-        if (showToast) {
-          toast({
-            title: "Tokens refreshed",
-            description: `${loadedTokens.length} token${loadedTokens.length !== 1 ? 's' : ''} found`,
-          });
-        }
+      } finally {
+        setIsRefreshingTokens(false);
       }
-    } catch (error) {
-      console.error("Error loading tokens:", error);
-      setNoTokensMessage("Error loading tokens. Please try again.");
-      if (showToast) {
-        toast({
-          title: "Error refreshing tokens",
-          description: "Please try again",
-          variant: "destructive",
-        });
-      }
-    } finally {
-      setIsRefreshingTokens(false);
-    }
-  }, [privateKey, rpcUrl, toast]);
+    },
+    [privateKey, rpcUrl, toast],
+  );
 
   useEffect(() => {
     void loadTokens(false); // Don't show toast on initial load
@@ -253,17 +265,20 @@ export function CreateAirdrop({
         keypair.publicKey.toBase58(),
         recipientList,
         amountValue,
-        selectedToken
+        selectedToken,
       );
 
       setIsCreatingAirdrop(false);
       setIsAirdropInProgress(true);
       setStep(5); // Move to step 5 when airdrop starts
 
-      if (typeof (sendWorker) === "undefined") {
-        sendWorker = new Worker(new URL("../workers/send.ts", import.meta.url), {
-          type: "module",
-        });
+      if (typeof sendWorker === "undefined") {
+        sendWorker = new Worker(
+          new URL("../workers/send.ts", import.meta.url),
+          {
+            type: "module",
+          },
+        );
       }
 
       sendWorker.onmessage = (event) => {
@@ -273,10 +288,13 @@ export function CreateAirdrop({
       };
       sendWorker.postMessage({ privateKey, rpcUrl });
 
-      if (typeof (pollWorker) === "undefined") {
-        pollWorker = new Worker(new URL("../workers/poll.ts", import.meta.url), {
-          type: "module",
-        });
+      if (typeof pollWorker === "undefined") {
+        pollWorker = new Worker(
+          new URL("../workers/poll.ts", import.meta.url),
+          {
+            type: "module",
+          },
+        );
       }
 
       pollWorker.onmessage = (event) => {
@@ -291,7 +309,7 @@ export function CreateAirdrop({
           const currentStatus = await airdropsender.status({ db });
           setSendProgress((currentStatus.sent / currentStatus.total) * 100);
           setFinalizeProgress(
-            (currentStatus.finalized / currentStatus.total) * 100
+            (currentStatus.finalized / currentStatus.total) * 100,
           );
           setTotalTransactions(currentStatus.total);
           setSentTransactions(currentStatus.sent);
@@ -387,7 +405,9 @@ export function CreateAirdrop({
               <Alert variant="default" className="mb-6">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Airdrop Canceled</AlertTitle>
-                <AlertDescription>The airdrop has been canceled.</AlertDescription>
+                <AlertDescription>
+                  The airdrop has been canceled.
+                </AlertDescription>
               </Alert>
               <div className="flex justify-center">
                 <Button onClick={onBackToHome} className="mt-1">
