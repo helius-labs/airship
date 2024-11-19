@@ -94,28 +94,34 @@ export function DecompressPage() {
         const accounts =
           await connection.getCompressedTokenAccountsByOwner(publicKey);
 
+        // Disable deduplication to avoid issues with the inner instruction getting too large
+
         // Deduplicate tokens with the same mint address and add the amounts
-        const deduplicatedAccounts = accounts.items.reduce(
-          (acc, current) => {
-            const existingAccount = acc.find((item) =>
-              item.parsed.mint.equals(current.parsed.mint),
-            );
-            if (existingAccount) {
-              existingAccount.parsed.amount = existingAccount.parsed.amount.add(
-                current.parsed.amount,
-              );
-            } else {
-              acc.push(current);
-            }
-            return acc;
-          },
-          [] as typeof accounts.items,
-        );
+        // const deduplicatedAccounts = accounts.items.reduce(
+        //   (acc, current) => {
+        //     const existingAccount = acc.find((item) =>
+        //       item.parsed.mint.equals(current.parsed.mint)
+        //     );
+        //     if (existingAccount) {
+        //       existingAccount.parsed.amount = existingAccount.parsed.amount.add(
+        //         current.parsed.amount
+        //       );
+        //     } else {
+        //       acc.push(current);
+        //     }
+        //     return acc;
+        //   },
+        //   [] as typeof accounts.items
+        // );
 
         // Fetch asset data using Helius DAS API getAssetBatch method
         const url = `${import.meta.env.VITE_RPC_ENDPOINT}`;
-        const assetIds = deduplicatedAccounts.map((account) =>
-          account.parsed.mint.toBase58(),
+
+        // Get unique mint addresses by filtering out duplicates
+        const assetIds = Array.from(
+          new Set(
+            accounts.items.map((account) => account.parsed.mint.toBase58()),
+          ),
         );
 
         const getAssetBatch = async (ids: string[]) => {
@@ -140,7 +146,7 @@ export function DecompressPage() {
         const assetData = await getAssetBatch(assetIds);
 
         // Merge asset data with account data
-        let tokens = deduplicatedAccounts.map((account) => {
+        let tokens = accounts.items.map((account) => {
           const asset = assetData.find(
             (asset: { id: string }) =>
               asset.id === account.parsed.mint.toBase58(),
@@ -239,6 +245,7 @@ export function DecompressPage() {
       );
 
       // Fetch recent validity proof
+      // The prover can only generate proofs for 5 compressed accounts at a time
       const proof = await connection.getValidityProof(
         inputAccounts.map((account) => bn(account.compressedAccount.hash)),
       );
