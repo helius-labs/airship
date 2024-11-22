@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import {
   baseFee,
   compressionFee,
@@ -17,7 +17,7 @@ import { Globe2, Smartphone } from 'lucide-react'
 
 export function CostCalculator() {
   const SEEKER_HOLDERS = 185_000
-  const WORLD_POPULATION = 8_000_000_000
+  const WORLD_POPULATION = 8_200_000_000
 
   const [recipientCount, setRecipientCount] = useState<number>(SEEKER_HOLDERS)
 
@@ -113,7 +113,7 @@ export function CostCalculator() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">ZK Compression Airdrop</CardTitle>
@@ -140,6 +140,10 @@ export function CostCalculator() {
                 </div>
               </CardContent>
             </Card>
+
+            <div className="hidden md:flex items-center justify-center h-full">
+              <div className="text-3xl font-bold text-muted-foreground rotate-0 md:rotate-0">VS</div>
+            </div>
 
             <Card>
               <CardHeader>
