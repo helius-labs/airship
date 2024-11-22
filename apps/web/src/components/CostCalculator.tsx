@@ -70,7 +70,7 @@ export function CostCalculator() {
       <Header />
       <Card className="w-full max-w-3xl">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold text-primary text-center">Airdrop Cost Calculator</CardTitle>
+          <CardTitle className="text-3xl font-bold text-primary text-center">Airdrop Calculator</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col space-y-4 justify-center items-center">

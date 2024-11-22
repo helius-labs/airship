@@ -87,7 +87,7 @@ export function AirdropSelection({ existingAirdrop, onCreateAirdrop, onResumeAir
                 {existingAirdrop && <Button onClick={onResumeAirdrop}>Resume Existing Airdrop</Button>}
                 <Button onClick={() => navigate('/decompress')}>View Your Compressed Tokens</Button>
                 <Button asChild>
-                  <Link to="/calculator">Airdrop Cost Calculator</Link>
+                  <Link to="/calculator">Airdrop Calculator</Link>
                 </Button>
                 {showDownloadButton && <Button onClick={downloadDB}>Download Database</Button>}
               </div>
