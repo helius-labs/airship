@@ -1,55 +1,56 @@
-import { useState, useEffect } from "react";
-import { Route, Routes } from "react-router-dom";
-import { CreateAirdrop } from "./components/CreateAirdrop";
-import { ResumeAirdrop } from "./components/ResumeAirdrop";
-import { AirdropSelection } from "./components/AirdropSelection";
-import { DecompressPage } from "./components/DecompressPage";
-import { init, exist, databaseFile } from "helius-airship-core";
-import { SQLocalDrizzle } from "sqlocal/drizzle";
-import { drizzle } from "drizzle-orm/sqlite-proxy";
-import { configureDatabase } from "./lib/utils";
+import { useState, useEffect } from 'react'
+import { Route, Routes } from 'react-router-dom'
+import { CreateAirdrop } from './components/CreateAirdrop'
+import { ResumeAirdrop } from './components/ResumeAirdrop'
+import { AirdropSelection } from './components/AirdropSelection'
+import { DecompressPage } from './components/DecompressPage'
+import { CostCalculator } from './components/CostCalculator'
+import { init, exist, databaseFile } from 'helius-airship-core'
+import { SQLocalDrizzle } from 'sqlocal/drizzle'
+import { drizzle } from 'drizzle-orm/sqlite-proxy'
+import { configureDatabase } from './lib/utils'
 
 const { driver, batchDriver } = new SQLocalDrizzle({
   databasePath: databaseFile,
   verbose: false,
-});
+})
 
-const db = drizzle(driver, batchDriver);
+const db = drizzle(driver, batchDriver)
 
 function App() {
-  const [existingAirdrop, setExistingAirdrop] = useState<boolean | null>(null);
-  const [selectedAction, setSelectedAction] = useState<string | null>(null);
+  const [existingAirdrop, setExistingAirdrop] = useState<boolean | null>(null)
+  const [selectedAction, setSelectedAction] = useState<string | null>(null)
 
   useEffect(() => {
     async function initApp() {
       try {
-        await configureDatabase(db);
+        await configureDatabase(db)
 
         // Initialize the airdrop sender
-        await init({ db });
+        await init({ db })
 
         // Check if an airdrop already exists
-        const exists = await exist({ db });
-        setExistingAirdrop(exists);
+        const exists = await exist({ db })
+        setExistingAirdrop(exists)
       } catch (error) {
-        console.error("Error checking for existing airdrop:", error);
-        setExistingAirdrop(false);
+        console.error('Error checking for existing airdrop:', error)
+        setExistingAirdrop(false)
       }
     }
-    void initApp();
-  }, []);
+    void initApp()
+  }, [])
 
   const handleCreateAirdrop = () => {
-    setSelectedAction("create");
-  };
+    setSelectedAction('create')
+  }
 
   const handleResumeAirdrop = () => {
-    setSelectedAction("resume");
-  };
+    setSelectedAction('resume')
+  }
 
   const handleBackToHome = () => {
-    setSelectedAction(null);
-  };
+    setSelectedAction(null)
+  }
 
   return (
     <div
@@ -59,12 +60,13 @@ function App() {
       <div className="w-full max-w-4xl rounded-lg shadow-xl">
         <Routes>
           <Route path="/decompress" element={<DecompressPage />} />
+          <Route path="/calculator" element={<CostCalculator />} />
           <Route
             path="/"
             element={
-              selectedAction === "create" ? (
+              selectedAction === 'create' ? (
                 <CreateAirdrop db={db} onBackToHome={handleBackToHome} />
-              ) : selectedAction === "resume" ? (
+              ) : selectedAction === 'resume' ? (
                 <ResumeAirdrop db={db} onBackToHome={handleBackToHome} />
               ) : (
                 <AirdropSelection
@@ -78,7 +80,7 @@ function App() {
         </Routes>
       </div>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
