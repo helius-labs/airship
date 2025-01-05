@@ -24,6 +24,7 @@ import {
 import { logger } from "./logger";
 import { SendTransactionError } from "@solana/web3.js";
 import { sleep } from "../utils/common";
+import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 
 // Using db: any instead of db: BetterSQLite3Database | SqliteRemoteDatabase because of typescript limitations
 // https://github.com/drizzle-team/drizzle-orm/issues/1966#issuecomment-1981726977
@@ -45,7 +46,7 @@ export async function send(params: SendParams) {
     .select({ count: count() })
     .from(transaction_queue);
   const totalTransactionsToSend = totalQueue[0].count;
-
+  
   const connection: Rpc = createRpc(url, url, undefined, {
     commitment: "confirmed",
   });

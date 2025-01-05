@@ -1,12 +1,6 @@
-import { useCallback, useState, useEffect } from "react";
-import { Label } from "../ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
+import { useCallback, useState, useEffect } from 'react'
+import { Label } from '../ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import {
   AlertCircle,
   Upload,
@@ -21,25 +15,15 @@ import {
   CircleAlert,
   RefreshCw,
   HelpCircle,
-} from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import CodeMirror from "@uiw/react-codemirror";
-import {
-  isFungibleToken,
-  isNFTCollection,
-  isSolanaAddress,
-  normalizeTokenAmount,
-  Token,
-} from "helius-airship-core";
-import { useDropzone } from "react-dropzone";
-import {
-  getCollectionHolders,
-  getTokenAccounts,
-  saga2PreOrderTokenMintAddress,
-} from "helius-airship-core";
-import { PublicKey } from "@solana/web3.js";
+} from 'lucide-react'
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
+import { Input } from '../ui/input'
+import { Button } from '../ui/button'
+import CodeMirror from '@uiw/react-codemirror'
+import { isFungibleToken, isNFTCollection, isSolanaAddress, normalizeTokenAmount, Token } from 'helius-airship-core'
+import { useDropzone } from 'react-dropzone'
+import { getCollectionHolders, getTokenAccounts, saga2PreOrderTokenMintAddress } from 'helius-airship-core'
+import { PublicKey } from '@solana/web3.js'
 import {
   Dialog,
   DialogClose,
@@ -48,32 +32,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../ui/dialog";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "../ui/form";
-import { FormValues } from "@/schemas/formSchema";
-import { UseFormReturn } from "react-hook-form";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { AlertTriangle } from "lucide-react";
-import Papa from "papaparse";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+} from '../ui/dialog'
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form'
+import { FormValues } from '@/schemas/formSchema'
+import { UseFormReturn } from 'react-hook-form'
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
+import { AlertTriangle } from 'lucide-react'
+import Papa from 'papaparse'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 interface Step2Props {
-  form: UseFormReturn<FormValues>;
-  tokens: Token[];
-  rpcUrl: string;
-  noTokensMessage: string | null;
-  onRefreshTokens: () => Promise<void>;
-  isRefreshingTokens: boolean;
+  form: UseFormReturn<FormValues>
+  tokens: Token[]
+  rpcUrl: string
+  noTokensMessage: string | null
+  onRefreshTokens: () => Promise<void>
+  isRefreshingTokens: boolean
 }
 
 export default function Step2({
@@ -84,37 +58,35 @@ export default function Step2({
   onRefreshTokens,
   isRefreshingTokens,
 }: Step2Props) {
-  const { control, watch, setValue } = form;
+  const { control, watch, setValue } = form
 
-  const [isImporting, setIsImporting] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [collectionAddressError, setCollectionAddressError] = useState<
-    string | null
-  >(null);
-  const [mintAddressError, setMintAddressError] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false)
+  const [importError, setImportError] = useState<string | null>(null)
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
+  const [collectionAddressError, setCollectionAddressError] = useState<string | null>(null)
+  const [mintAddressError, setMintAddressError] = useState<string | null>(null)
   const [importResult, setImportResult] = useState<{
-    success: boolean;
-    count: number;
-    rejected: number;
-  } | null>(null);
-  const [csvFileError, setCsvFileError] = useState<string | null>(null);
-  const [csvFile, setCsvFile] = useState<File | null>(null);
+    success: boolean
+    count: number
+    rejected: number
+  } | null>(null)
+  const [csvFileError, setCsvFileError] = useState<string | null>(null)
+  const [csvFile, setCsvFile] = useState<File | null>(null)
 
-  const recipientImportOption = watch("recipientImportOption");
-  const collectionAddress = watch("collectionAddress");
-  const mintAddress = watch("mintAddress");
+  const recipientImportOption = watch('recipientImportOption')
+  const collectionAddress = watch('collectionAddress')
+  const mintAddress = watch('mintAddress')
 
   useEffect(() => {
-    setImportError(null);
-  }, [recipientImportOption]);
+    setImportError(null)
+  }, [recipientImportOption])
 
   const validateInput = async (): Promise<string | null> => {
     switch (recipientImportOption) {
-      case "nft":
+      case 'nft':
         if (collectionAddress && !isSolanaAddress(collectionAddress)) {
-          setCollectionAddressError("Please enter a collection address");
-          return "Please enter a collection address";
+          setCollectionAddressError('Please enter a collection address')
+          return 'Please enter a collection address'
         }
         if (
           collectionAddress &&
@@ -123,17 +95,15 @@ export default function Step2({
             collectionAddress: new PublicKey(collectionAddress),
           }))
         ) {
-          setCollectionAddressError(
-            "Collection not found please check the address",
-          );
-          return "Collection not found please check the address";
+          setCollectionAddressError('Collection not found please check the address')
+          return 'Collection not found please check the address'
         }
-        setCollectionAddressError(null);
-        break;
-      case "spl":
+        setCollectionAddressError(null)
+        break
+      case 'spl':
         if (mintAddress && !isSolanaAddress(mintAddress)) {
-          setMintAddressError("Please enter a mint address");
-          return "Please enter a mint address";
+          setMintAddressError('Please enter a mint address')
+          return 'Please enter a mint address'
         }
         if (
           mintAddress &&
@@ -142,142 +112,134 @@ export default function Step2({
             tokenAddress: new PublicKey(mintAddress),
           }))
         ) {
-          setMintAddressError("Token not found please check the address");
-          return "Token not found please check the address";
+          setMintAddressError('Token not found please check the address')
+          return 'Token not found please check the address'
         }
-        setMintAddressError(null);
-        break;
-      case "csv":
+        setMintAddressError(null)
+        break
+      case 'csv':
         if (!csvFile) {
-          setCsvFileError("Please select a CSV file");
-          return "Please select a CSV file";
+          setCsvFileError('Please select a CSV file')
+          return 'Please select a CSV file'
         }
-        setCsvFileError(null);
-        break;
+        setCsvFileError(null)
+        break
       // No validation needed for "saga2" option
     }
-    return null;
-  };
+    return null
+  }
 
   const handleImportClick = async () => {
-    const validationError = await validateInput();
+    const validationError = await validateInput()
     if (!validationError) {
-      setIsConfirmDialogOpen(true);
+      setIsConfirmDialogOpen(true)
     }
-  };
+  }
 
   const handleImportAddresses = async () => {
-    setIsImporting(true);
-    setImportError(null);
-    setImportResult(null);
-    setValue("recipients", "", { shouldValidate: true });
-    let addresses: string[] = [];
-    let rejectedCount = 0;
+    setIsImporting(true)
+    setImportError(null)
+    setImportResult(null)
+    setValue('recipients', '', { shouldValidate: true })
+    let addresses: string[] = []
+    let rejectedCount = 0
 
     try {
       switch (recipientImportOption) {
-        case "saga2": {
+        case 'saga2': {
           const saga2Accounts = await getTokenAccounts({
             tokenMintAddress: saga2PreOrderTokenMintAddress,
             url: rpcUrl,
-          });
-          addresses = saga2Accounts.map((account) => account.owner.toBase58());
-          break;
+          })
+          addresses = saga2Accounts.map((account) => account.owner.toBase58())
+          break
         }
-        case "nft": {
+        case 'nft': {
           if (!collectionAddress) {
-            throw new Error("Please enter a collection address");
+            throw new Error('Please enter a collection address')
           }
           const nftHolders = await getCollectionHolders({
             collectionAddress: new PublicKey(collectionAddress),
             url: rpcUrl,
-          });
-          addresses = nftHolders.map((holder) => holder.owner.toBase58());
-          break;
+          })
+          addresses = nftHolders.map((holder) => holder.owner.toBase58())
+          break
         }
-        case "spl": {
+        case 'spl': {
           if (!mintAddress) {
-            throw new Error("Please enter a mint address");
+            throw new Error('Please enter a mint address')
           }
           const splAccounts = await getTokenAccounts({
             tokenMintAddress: new PublicKey(mintAddress),
             url: rpcUrl,
-          });
-          addresses = splAccounts.map((account) => account.owner.toBase58());
-          break;
+          })
+          addresses = splAccounts.map((account) => account.owner.toBase58())
+          break
         }
-        case "csv": {
+        case 'csv': {
           if (!csvFile) {
-            throw new Error("Please import a CSV file");
+            throw new Error('Please import a CSV file')
           }
-          const parseResult = await new Promise<Papa.ParseResult<string[]>>(
-            (resolve, reject) => {
-              Papa.parse(csvFile, {
-                complete: resolve,
-                error: reject,
-                skipEmptyLines: true,
-              });
-            },
-          );
+          const parseResult = await new Promise<Papa.ParseResult<string[]>>((resolve, reject) => {
+            Papa.parse(csvFile, {
+              complete: resolve,
+              error: reject,
+              skipEmptyLines: true,
+            })
+          })
 
-          addresses = [];
-          rejectedCount = 0;
+          addresses = []
+          rejectedCount = 0
 
           parseResult.data.forEach((row) => {
             if (row.length > 0) {
-              const address = row[0].trim();
+              const address = row[0].trim()
               try {
-                new PublicKey(address);
-                addresses.push(address);
+                new PublicKey(address)
+                addresses.push(address)
               } catch {
-                rejectedCount++;
+                rejectedCount++
               }
             }
-          });
-          break;
+          })
+          break
         }
       }
 
       if (addresses.length === 0) {
-        throw new Error(
-          "No addresses found. Are you maybe connected to Devnet? Please check your input and try again.",
-        );
+        throw new Error('No addresses found. Are you maybe connected to Devnet? Please check your input and try again.')
       } else {
-        setValue("recipients", addresses.join("\n"), { shouldValidate: true });
+        setValue('recipients', addresses.join('\n'), { shouldValidate: true })
         setImportResult({
           success: true,
           count: addresses.length,
           rejected: rejectedCount,
-        });
+        })
       }
     } catch (error) {
-      console.error("Failed to import addresses:", error);
-      setImportError(
-        error instanceof Error
-          ? error.message
-          : "Failed to import addresses. Please try again.",
-      );
-      setImportResult({ success: false, count: 0, rejected: rejectedCount });
+      console.error('Failed to import addresses:', error)
+      setImportError(error instanceof Error ? error.message : 'Failed to import addresses. Please try again.')
+      setImportResult({ success: false, count: 0, rejected: rejectedCount })
     } finally {
-      setIsImporting(false);
+      setIsImporting(false)
     }
-  };
+  }
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
-      const file = acceptedFiles[0];
-      setCsvFile(file);
-      setCsvFileError(null);
+      const file = acceptedFiles[0]
+      setCsvFile(file)
+      setCsvFileError(null)
     }
-  }, []);
+  }, [])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      "text/csv": [".csv"],
+      'text/csv': ['.csv'],
     },
     multiple: false,
-  });
+  })
 
   return (
     <div className="space-y-6">
@@ -287,36 +249,28 @@ export default function Step2({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="flex items-center space-x-1">
-              <span>Which SPL Token do you want to airdrop?</span>
+              <span>Which Token do you want to airdrop?</span>
               <Popover>
                 <PopoverTrigger>
                   <HelpCircle className="h-4 w-4" />
                 </PopoverTrigger>
                 <PopoverContent className="space-y-2">
-                  Currently, ZK Compression supports only SPL tokens. Support
-                  for Token 2022 tokens will be added soon.
+                  ZK Compression supports both Token-2022 and SPL tokens.
                 </PopoverContent>
               </Popover>
             </FormLabel>
             <FormControl>
               <div className="flex items-center space-x-2">
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  disabled={isRefreshingTokens}
-                >
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isRefreshingTokens}>
                   <SelectTrigger ref={field.ref}>
                     <SelectValue placeholder="Select a token" />
                   </SelectTrigger>
                   <SelectContent>
                     {tokens.map((token) => (
-                      <SelectItem
-                        key={token.mintAddress.toString()}
-                        value={token.mintAddress.toString()}
-                      >
+                      <SelectItem key={token.mintAddress.toString()} value={token.mintAddress.toString()}>
                         {token.name && token.symbol
-                          ? `${token.name}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })} ${token.symbol}`
-                          : `${token.mintAddress.toString()}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })}`}
+                          ? `${token.name}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString('en-US', { maximumFractionDigits: token.decimals })} ${token.symbol}`
+                          : `${token.mintAddress.toString()}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString('en-US', { maximumFractionDigits: token.decimals })}`}
                       </SelectItem>
                     ))}
                     {noTokensMessage && (
@@ -337,9 +291,7 @@ export default function Step2({
                   onClick={onRefreshTokens}
                   disabled={isRefreshingTokens}
                 >
-                  <RefreshCw
-                    className={`h-4 w-4 ${isRefreshingTokens ? "animate-spin" : ""}`}
-                  />
+                  <RefreshCw className={`h-4 w-4 ${isRefreshingTokens ? 'animate-spin' : ''}`} />
                 </Button>
               </div>
             </FormControl>
@@ -361,40 +313,33 @@ export default function Step2({
               >
                 {[
                   {
-                    value: "saga2",
+                    value: 'saga2',
                     icon: Smartphone,
-                    title: "Import Chapter 2 Preorder Token holders",
+                    title: 'Import Chapter 2 Preorder Token holders',
                     description:
-                      "Import Solana Mobile Chapter 2 Preorder Token holders using the DAS API. This can take a few minutes.",
+                      'Import Solana Mobile Chapter 2 Preorder Token holders using the DAS API. This can take a few minutes.',
                   },
                   {
-                    value: "nft",
+                    value: 'nft',
                     icon: Images,
-                    title: "Import NFT/cNFT Collection holders",
-                    description:
-                      "Import NFT/cNFT Collection holders using the DAS API. This can take a few minutes.",
+                    title: 'Import NFT/cNFT Collection holders',
+                    description: 'Import NFT/cNFT Collection holders using the DAS API. This can take a few minutes.',
                   },
                   {
-                    value: "spl",
+                    value: 'spl',
                     icon: Coins,
-                    title: "Import SPL Token holders",
-                    description:
-                      "Import SPL Token holders using the DAS API. This can take a few minutes. ",
+                    title: 'Import SPL Token holders',
+                    description: 'Import SPL Token holders using the DAS API. This can take a few minutes. ',
                   },
                   {
-                    value: "csv",
+                    value: 'csv',
                     icon: FileSpreadsheet,
-                    title: "Upload a CSV file",
-                    description:
-                      "Import addresses from a CSV file. 1 address per line.",
+                    title: 'Upload a CSV file',
+                    description: 'Import addresses from a CSV file. 1 address per line.',
                   },
                 ].map((option) => (
                   <div key={option.value} className="relative">
-                    <RadioGroupItem
-                      value={option.value}
-                      id={option.value}
-                      className="peer sr-only"
-                    />
+                    <RadioGroupItem value={option.value} id={option.value} className="peer sr-only" />
                     <Label
                       htmlFor={option.value}
                       className="flex items-start rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
@@ -402,12 +347,8 @@ export default function Step2({
                       <div className="flex h-full">
                         <option.icon className="h-6 w-6 mr-4 mt-1 flex-shrink-0" />
                         <div className="flex flex-col justify-start h-full">
-                          <p className="text-sm font-medium leading-none">
-                            {option.title}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {option.description}
-                          </p>
+                          <p className="text-sm font-medium leading-none">{option.title}</p>
+                          <p className="text-sm text-muted-foreground mt-1">{option.description}</p>
                         </div>
                       </div>
                     </Label>
@@ -420,7 +361,7 @@ export default function Step2({
         )}
       />
 
-      {recipientImportOption === "nft" && (
+      {recipientImportOption === 'nft' && (
         <FormField
           control={control}
           name="collectionAddress"
@@ -432,8 +373,8 @@ export default function Step2({
                   {...field}
                   placeholder="Enter the NFT collection address"
                   onChange={(e) => {
-                    field.onChange(e);
-                    setCollectionAddressError(null);
+                    field.onChange(e)
+                    setCollectionAddressError(null)
                   }}
                 />
               </FormControl>
@@ -449,7 +390,7 @@ export default function Step2({
         />
       )}
 
-      {recipientImportOption === "spl" && (
+      {recipientImportOption === 'spl' && (
         <FormField
           control={control}
           name="mintAddress"
@@ -461,8 +402,8 @@ export default function Step2({
                   {...field}
                   placeholder="Enter the SPL Token Mint Address"
                   onChange={(e) => {
-                    field.onChange(e);
-                    setMintAddressError(null);
+                    field.onChange(e)
+                    setMintAddressError(null)
                   }}
                 />
               </FormControl>
@@ -478,17 +419,17 @@ export default function Step2({
         />
       )}
 
-      {recipientImportOption === "csv" && (
+      {recipientImportOption === 'csv' && (
         <div className="space-y-3">
           <Label htmlFor="recipients">CSV file</Label>
           <div
             {...getRootProps()}
             className={`border border-dashed rounded-md p-8 transition-colors duration-200 ease-in-out ${
               isDragActive
-                ? "border-primary bg-primary/10"
+                ? 'border-primary bg-primary/10'
                 : csvFileError
-                  ? "border-red-50"
-                  : "border-gray-300 hover:border-primary/50 hover:bg-primary/5"
+                  ? 'border-red-50'
+                  : 'border-gray-300 hover:border-primary/50 hover:bg-primary/5'
             }`}
           >
             <input {...getInputProps()} />
@@ -502,8 +443,8 @@ export default function Step2({
                   variant="ghost"
                   size="sm"
                   onClick={(e) => {
-                    e.stopPropagation();
-                    setCsvFile(null);
+                    e.stopPropagation()
+                    setCsvFile(null)
                   }}
                 >
                   <X className="h-4 w-4" />
@@ -514,19 +455,15 @@ export default function Step2({
                 <Upload className="mx-auto h-12 w-12 text-gray-400" />
                 <p className="mt-2 text-sm text-gray-600">
                   {isDragActive ? (
-                    "Drop the CSV file here"
+                    'Drop the CSV file here'
                   ) : (
                     <>
-                      Drag and drop a CSV file here, or{" "}
-                      <span className="text-primary font-medium">
-                        click to select a file
-                      </span>
+                      Drag and drop a CSV file here, or{' '}
+                      <span className="text-primary font-medium">click to select a file</span>
                     </>
                   )}
                 </p>
-                <p className="mt-1 text-xs text-gray-500">
-                  File should contain one address per line
-                </p>
+                <p className="mt-1 text-xs text-gray-500">File should contain one address per line</p>
               </div>
             )}
           </div>
@@ -540,32 +477,24 @@ export default function Step2({
       )}
 
       <div className="space-y-3">
-        <Button
-          onClick={handleImportClick}
-          type="button"
-          disabled={isImporting}
-        >
+        <Button onClick={handleImportClick} type="button" disabled={isImporting}>
           Import
         </Button>
         <Dialog
           open={isConfirmDialogOpen}
           onOpenChange={(open) => {
             if (!open) {
-              setImportResult(null);
-              setImportError(null);
-              setIsImporting(false);
+              setImportResult(null)
+              setImportError(null)
+              setIsImporting(false)
             }
-            setIsConfirmDialogOpen(open);
+            setIsConfirmDialogOpen(open)
           }}
         >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {isImporting
-                  ? "Importing Addresses"
-                  : importResult
-                    ? "Import Result"
-                    : "Confirm Import"}
+                {isImporting ? 'Importing Addresses' : importResult ? 'Import Result' : 'Confirm Import'}
               </DialogTitle>
               <DialogDescription asChild>
                 <div className="pt-4 space-y-2">
@@ -579,20 +508,14 @@ export default function Step2({
                       <div className="space-y-2">
                         <div className="flex items-center space-x-2 text-green-500">
                           <CircleCheck className="h-4 w-4" />
-                          <span className="text-sm">
-                            Successfully imported {importResult.count}{" "}
-                            addresses.
-                          </span>
+                          <span className="text-sm">Successfully imported {importResult.count} addresses.</span>
                         </div>
                         {importResult.rejected > 0 && (
                           <div className="flex items-center space-x-2 text-yellow-500">
                             <CircleAlert className="h-4 w-4" />
                             <span className="text-sm">
                               {importResult.rejected} invalid address
-                              {importResult.rejected > 1
-                                ? "es were"
-                                : " was"}{" "}
-                              not imported.
+                              {importResult.rejected > 1 ? 'es were' : ' was'} not imported.
                             </span>
                           </div>
                         )}
@@ -604,7 +527,7 @@ export default function Step2({
                       </div>
                     )
                   ) : (
-                    "Are you sure you want to overwrite the current addresses?"
+                    'Are you sure you want to overwrite the current addresses?'
                   )}
                 </div>
               </DialogDescription>
@@ -619,7 +542,7 @@ export default function Step2({
 
                 <Button
                   onClick={() => {
-                    handleImportAddresses();
+                    handleImportAddresses()
                   }}
                 >
                   Confirm Import
@@ -657,5 +580,5 @@ export default function Step2({
         )}
       />
     </div>
-  );
+  )
 }
