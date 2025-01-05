@@ -189,15 +189,15 @@ async function selectToken(keypair: web3.Keypair, tokens: any[]) {
   const tokenChoices = tokens.map((token) => ({
     name:
       token.name && token.symbol
-        ? `${token.name}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })} ${token.symbol}`
-        : `${token.mintAddress.toBase58()}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })}`,
+        ? `${token.name} (${token.tokenType}):  ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })} ${token.symbol}`
+        : `${token.mintAddress.toBase58()} (${token.tokenType}): ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString("en-US", { maximumFractionDigits: token.decimals })}`,
     value: token.mintAddress.toBase58(),
   }));
 
   if (tokenChoices.length === 0) {
     console.log(
       chalk.red(
-        `No SPL Tokens found. Please transfer or mint SPL Tokens to ${keypair.publicKey.toBase58()}`
+        `No Tokens found. Please transfer or mint Tokens to ${keypair.publicKey.toBase58()}`
       )
     );
     process.exit(0);

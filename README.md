@@ -7,7 +7,7 @@ Helius AirShip is an open-source tool that makes token airdrops simple, affordab
 - 🚀 **Simplified Airdrops**: Easy token airdrops for all, no technical skills needed.
 - 💸 **ZK Compression**: Cut costs on large airdrops by reducing account usage. [More info](https://www.zkcompression.com/).
 - 🖥️ **Web Version**: Perfect for small airdrops, up to 200,000 recipients.
--  **CLI Version**: For advanced users needing larger-scale distribution.
+- ⚙️ **CLI Version**: For advanced users needing larger-scale distribution.
 
 ## Web Version
 
@@ -35,7 +35,7 @@ Open http://localhost:4173/
 
 ### Requirements
 
-- Ensure you have Node >= v20.9.0 installed on your machine.
+- Ensure you have Node >= v20.9.0 and pnpm >= v9.13.2 installed on your machine.
 - You will need an RPC that supports both ZK Compression and the DAS API. If you don't have one, you can get one for free at https://www.helius.dev
 - You will need a valid Solana filesystem wallet. If you don't have one yet, visit the [Solana documentation](https://docs.solanalabs.com/cli/wallets/file-system) for details. The CLI will use this wallet for signing transactions, covering transaction fees, and as the owner of the token you wish to distribute.
 
@@ -63,7 +63,7 @@ helius-airship --help
 To perform an airdrop, use the following command and follow the steps:
 
 ```bash
-helius-airship --keypair /path/to/your/airdrop_wallet.json --url https://mainnet.helius-rpc.com/?api-key=<YOUR_API_KEY>
+helius-airship --keypair /path/to/your/airdrop_wallet.json --url "https://mainnet.helius-rpc.com/?api-key=<YOUR_API_KEY>"
 ```
 
 Replace `/path/to/your/airdrop_wallet.json` with the path to your Solana filesystem wallet that holds the token you wish to distribute and some SOL to pay for the transaction fees. Replace `https://mainnet.helius-rpc.com/?api-key=<YOUR_API_KEY>` with your RPC URL and API key.
