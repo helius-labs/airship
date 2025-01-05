@@ -14,6 +14,7 @@ export interface Token {
   amount: number;
   decimals: number;
   mintAddress: web3.PublicKey;
+  tokenType: "SPL" | "Token-2022";
 }
 
 export async function getTokensByOwner(
@@ -64,6 +65,7 @@ export async function getTokensByOwner(
         amount: item.token_info?.balance || 0,
         decimals: item.token_info?.decimals || 0,
         mintAddress: new web3.PublicKey(item.id),
+        tokenType: item.token_info?.token_program === TOKEN_PROGRAM_ID.toBase58() ? "SPL" : "Token-2022",
       };
     }
     return [];

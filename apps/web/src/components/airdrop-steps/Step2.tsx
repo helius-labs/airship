@@ -269,8 +269,8 @@ export default function Step2({
                     {tokens.map((token) => (
                       <SelectItem key={token.mintAddress.toString()} value={token.mintAddress.toString()}>
                         {token.name && token.symbol
-                          ? `${token.name}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString('en-US', { maximumFractionDigits: token.decimals })} ${token.symbol}`
-                          : `${token.mintAddress.toString()}: ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString('en-US', { maximumFractionDigits: token.decimals })}`}
+                          ? `${token.name} (${token.tokenType}): ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString('en-US', { maximumFractionDigits: token.decimals })} ${token.symbol}`
+                          : `${token.mintAddress.toString()} (${token.tokenType}): ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString('en-US', { maximumFractionDigits: token.decimals })}`}
                       </SelectItem>
                     ))}
                     {noTokensMessage && (
