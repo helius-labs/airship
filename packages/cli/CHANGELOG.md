@@ -1,5 +1,13 @@
 # helius-airship
 
+## 0.9.1
+
+### Patch Changes
+
+- a77ffc0: Fix punycode is deprecated warning
+- Updated dependencies [a77ffc0]
+  - helius-airship-core@0.6.1
+
 ## 0.9.0
 
 ### Minor Changes
