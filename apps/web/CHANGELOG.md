@@ -1,5 +1,16 @@
 # web
 
+## 0.6.0
+
+### Minor Changes
+
+- 6bbcd42: Token-22 Support
+
+### Patch Changes
+
+- Updated dependencies [6bbcd42]
+  - helius-airship-core@0.6.0
+
 ## 0.5.4
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # helius-airship-core
 
+## 0.6.0
+
+### Minor Changes
+
+- 6bbcd42: Token-22 Support
+
 ## 0.5.4
 
 ### Patch Changes

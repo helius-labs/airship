@@ -1,6 +1,6 @@
 {
   "name": "helius-airship",
-  "version": "0.8.4",
+  "version": "0.9.0",
   "description": "Helius AirShip is an open-source tool that simplifies and reduces the cost of Solana token airdrops",
   "publishConfig": {
     "access": "public"
