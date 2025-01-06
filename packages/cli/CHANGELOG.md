@@ -1,5 +1,11 @@
 # helius-airship
 
+## 0.9.2
+
+### Patch Changes
+
+- c7e2deb: Fix punycode is deprecated warning CLI package
+
 ## 0.9.1
 
 ### Patch Changes
