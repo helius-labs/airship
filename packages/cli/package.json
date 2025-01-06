@@ -53,10 +53,8 @@
     "type-fest": "^4.25.0",
     "typescript": "^5.5.4"
   },
-  "pnpm": {
-    "overrides": {
-      "ajv": "^8.17.1",
-      "whatwg-url": "^14.1.0"
-    }
+  "overrides": {
+    "ajv": "^8.17.1",
+    "whatwg-url": "^14.1.0"
   }
 }
