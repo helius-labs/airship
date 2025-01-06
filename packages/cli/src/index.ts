@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env node --disable-warning=DeprecationWarning
 import { Command } from "commander";
 import { number, select, confirm, input } from "@inquirer/prompts";
 import * as cliProgress from "cli-progress";
