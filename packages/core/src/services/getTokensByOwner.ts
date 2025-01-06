@@ -1,4 +1,4 @@
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import * as web3 from "@solana/web3.js";
 
 interface GetTokensByOwnerParams {
@@ -14,6 +14,7 @@ export interface Token {
   amount: number;
   decimals: number;
   mintAddress: web3.PublicKey;
+  tokenType: "SPL" | "Token-2022";
 }
 
 export async function getTokensByOwner(
@@ -50,10 +51,10 @@ export async function getTokensByOwner(
   const data = await response.json();
 
   const tokens: Token[] = data.result.items.flatMap((item: any) => {
-    // ZK Compression currently only supports SPL Tokens
     if (
       item.interface === "FungibleToken" &&
-      item.token_info?.token_program === TOKEN_PROGRAM_ID.toBase58() &&
+      (item.token_info?.token_program === TOKEN_PROGRAM_ID.toBase58() ||
+        item.token_info?.token_program === TOKEN_2022_PROGRAM_ID.toBase58()) &&
       item.token_info?.associated_token_address
     ) {
       return {
@@ -64,6 +65,7 @@ export async function getTokensByOwner(
         amount: item.token_info?.balance || 0,
         decimals: item.token_info?.decimals || 0,
         mintAddress: new web3.PublicKey(item.id),
+        tokenType: item.token_info?.token_program === TOKEN_PROGRAM_ID.toBase58() ? "SPL" : "Token-2022",
       };
     }
     return [];

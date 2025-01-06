@@ -24,6 +24,8 @@ import {
 import { logger } from "./logger";
 import { SendTransactionError } from "@solana/web3.js";
 import { sleep } from "../utils/common";
+import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getToken } from "./getToken";
 
 // Using db: any instead of db: BetterSQLite3Database | SqliteRemoteDatabase because of typescript limitations
 // https://github.com/drizzle-team/drizzle-orm/issues/1966#issuecomment-1981726977
@@ -45,7 +47,7 @@ export async function send(params: SendParams) {
     .select({ count: count() })
     .from(transaction_queue);
   const totalTransactionsToSend = totalQueue[0].count;
-
+  
   const connection: Rpc = createRpc(url, url, undefined, {
     commitment: "confirmed",
   });
@@ -66,6 +68,16 @@ export async function send(params: SendParams) {
 
   const mintAddress = new web3.PublicKey(firstTransaction[0].mint_address);
 
+  // Get the token type using the DAS API getAsset
+
+  const token = await getToken({ mintAddress, url });
+  if (!token) {
+    logger.error(`Token not found for mint address: ${mintAddress.toBase58()}`);
+    throw new Error(`Token not found for mint address: ${mintAddress.toBase58()}`);
+  }
+
+  const tokenProgramId = token.tokenType === "SPL" ? TOKEN_PROGRAM_ID : TOKEN_2022_PROGRAM_ID;
+
   // Get or create the source token account for the mint address
   let sourceTokenAccount: splToken.Account;
   try {
@@ -74,6 +86,10 @@ export async function send(params: SendParams) {
       keypair,
       mintAddress,
       keypair.publicKey,
+      undefined, 
+      undefined,
+      undefined,
+      tokenProgramId
     );
   } catch (error) {
     logger.error("Source token account not found and failed to create it. Please add funds to your wallet and try again.");
@@ -82,7 +98,7 @@ export async function send(params: SendParams) {
 
   // Create a token pool for the mint address if it doesn't exist
   try {
-    await createTokenPool(connection, keypair, mintAddress);
+    await createTokenPool(connection, keypair, mintAddress, undefined, tokenProgramId);
     logger.info("Token pool created.");
   } catch (error: any) {
     if (error.message.includes("already in use")) {
@@ -93,7 +109,7 @@ export async function send(params: SendParams) {
   }
 
   while (true) {
-    const shouldContinue = await processBatch(db, connection, keypair, lookupTableAccount, totalTransactionsToSend, sourceTokenAccount, mintAddress);
+    const shouldContinue = await processBatch(db, connection, keypair, lookupTableAccount, totalTransactionsToSend, sourceTokenAccount, mintAddress, tokenProgramId);
     if (!shouldContinue) {
       break;
     }
@@ -109,7 +125,8 @@ async function processBatch(
   lookupTableAccount: web3.AddressLookupTableAccount,
   totalTransactionsToSend: number,
   sourceTokenAccount: splToken.Account,
-  mintAddress: web3.PublicKey
+  mintAddress: web3.PublicKey,
+  tokenProgramId: web3.PublicKey
 ): Promise<boolean> {
   // Fetch total amount of addresses to send
   const totalFinalizedQueue = await db
@@ -164,7 +181,8 @@ async function processBatch(
         mintAddress,
         sourceTokenAccount,
         addresses,
-        transaction.amount
+        transaction.amount,
+        tokenProgramId
       );
 
       const { blockhash, lastValidBlockHeight } =
@@ -219,7 +237,8 @@ async function createInstructions(
   mintAddress: web3.PublicKey,
   sourceTokenAccount: splToken.Account,
   addresses: web3.PublicKey[],
-  amount: bigint
+  amount: bigint,
+  tokenProgramId: web3.PublicKey
 ): Promise<web3.TransactionInstruction[]> {
   if (addresses.length === 0) {
     throw new AirdropError(
@@ -265,6 +284,7 @@ async function createInstructions(
       toAddress: batch, // address to send the compressed tokens to.
       amount: batch.map(() => Number(amount)), // amount of tokens to compress.
       mint: mintAddress, // Mint address of the token to compress.
+      tokenProgramId: tokenProgramId,
     });
     instructions.push(compressIx);
   }
