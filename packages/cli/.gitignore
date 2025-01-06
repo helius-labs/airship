@@ -1,1 +1,13 @@
-sqlite.db
+# turbo
+.turbo
+
+# db
+*.db
+*.db-shm
+*.db-wal
+
+# logs
+*.log
+
+# csv
+*.csv
