@@ -23,5 +23,11 @@
   "name": "airship",
   "dependencies": {
     "@changesets/cli": "^2.27.7"
+  },
+  "pnpm": {
+    "overrides": {
+      "ajv": "^8.17.1",
+      "whatwg-url": "^14.1.0"
+    }
   }
 }
