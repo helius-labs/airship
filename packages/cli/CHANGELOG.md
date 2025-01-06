@@ -1,5 +1,11 @@
 # helius-airship
 
+## 0.9.3
+
+### Patch Changes
+
+- 6c92670: Fix file ignore
+
 ## 0.9.2
 
 ### Patch Changes
