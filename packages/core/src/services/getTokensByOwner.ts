@@ -1,5 +1,6 @@
 import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import * as web3 from "@solana/web3.js";
+import { supportedExtensions } from "../config/constants";
 
 interface GetTokensByOwnerParams {
   ownerAddress: web3.PublicKey;
@@ -15,6 +16,26 @@ export interface Token {
   decimals: number;
   mintAddress: web3.PublicKey;
   tokenType: "SPL" | "Token-2022";
+  supported: boolean;
+}
+
+function isSupported(tokenProgramId: string, mintExtensions: any) {
+  // If the token is an SPL token, it is supported
+  if (tokenProgramId === TOKEN_PROGRAM_ID.toBase58()) {
+    return true;
+  }
+
+  // If the token is a Token-2022 and has no extensions, it is supported
+  if (tokenProgramId === TOKEN_2022_PROGRAM_ID.toBase58() && !mintExtensions) {
+    return true;
+  }
+
+  // If the token is a Token-2022 and has extensions, check if all extensions are supported
+  if (tokenProgramId === TOKEN_2022_PROGRAM_ID.toBase58() && mintExtensions && Object.keys(mintExtensions).length > 0) {
+    return Object.keys(mintExtensions).every((key) => supportedExtensions[key as keyof typeof supportedExtensions]);
+  }
+
+  return false;
 }
 
 export async function getTokensByOwner(
@@ -66,6 +87,7 @@ export async function getTokensByOwner(
         decimals: item.token_info?.decimals || 0,
         mintAddress: new web3.PublicKey(item.id),
         tokenType: item.token_info?.token_program === TOKEN_PROGRAM_ID.toBase58() ? "SPL" : "Token-2022",
+        supported: isSupported(item.token_info?.token_program, item.mint_extensions),
       };
     }
     return [];

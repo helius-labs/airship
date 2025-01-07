@@ -255,7 +255,17 @@ export default function Step2({
                   <HelpCircle className="h-4 w-4" />
                 </PopoverTrigger>
                 <PopoverContent className="space-y-2">
-                  ZK Compression supports both Token-2022 and SPL tokens.
+                  ZK Compression supports both Token-2022 and SPL tokens. <br />
+                  <br /> For Token-2022 tokens, the following extensions are supported:
+                  <ul className="list-disc ml-4">
+                    <li>MetadataPointer</li>
+                    <li>TokenMetadata</li>
+                    <li>InterestBearingConfig</li>
+                    <li>GroupPointer</li>
+                    <li>GroupMemberPointer</li>
+                    <li>TokenGroup</li>
+                    <li>TokenGroupMember</li>
+                  </ul>
                 </PopoverContent>
               </Popover>
             </FormLabel>
@@ -267,10 +277,16 @@ export default function Step2({
                   </SelectTrigger>
                   <SelectContent>
                     {tokens.map((token) => (
-                      <SelectItem key={token.mintAddress.toString()} value={token.mintAddress.toString()}>
+                      <SelectItem
+                        key={token.mintAddress.toString()}
+                        value={token.mintAddress.toString()}
+                        disabled={!token.supported}
+                      >
                         {token.name && token.symbol
                           ? `${token.name} (${token.tokenType}): ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString('en-US', { maximumFractionDigits: token.decimals })} ${token.symbol}`
                           : `${token.mintAddress.toString()} (${token.tokenType}): ${normalizeTokenAmount(token.amount, token.decimals).toLocaleString('en-US', { maximumFractionDigits: token.decimals })}`}
+                        {!token.supported &&
+                          ': Token extensions used by this token are not yet supported by ZK Compression.'}
                       </SelectItem>
                     ))}
                     {noTokensMessage && (

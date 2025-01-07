@@ -31,3 +31,22 @@ export enum CommitmentStatus {
 export const databaseFile = "airship.db";
 export const TABLE_NAME = "transaction_queue";
 export const SQLITE_MAX_VARIABLE_NUMBER = 999;
+
+// ZK Compression Token 2022 supported extensions
+export const supportedExtensions = {
+  metadata_pointer: true,
+  metadata: true,
+  interest_bearing_config: true,
+  group_pointer: true,
+  group_member_pointer: true,
+  token_group: true,
+  token_group_member: true,
+  transfer_hook: false,
+  mint_close_authority: false,
+  permanent_delegate: false,
+  confidential_transfer_mint: false,
+  confidential_transfer_account: false,
+  confidential_transfer_fee_config: false,
+  transfer_fee_config: false,
+  default_account_state: false,
+};
