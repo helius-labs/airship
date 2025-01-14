@@ -25,6 +25,7 @@ You can find public web version of Helius AirShip [here](https://airship.helius.
 git clone https://github.com/helius-labs/airship.git
 cd airship
 pnpm install
+pnpm build
 cd apps/web
 pnpm preview
 ```
