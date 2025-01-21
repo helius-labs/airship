@@ -10,7 +10,7 @@ import {
   lookupTableAddressMainnet,
 } from "../config/constants";
 import { desc, asc, sql, eq, count, isNull, or } from "drizzle-orm";
-import { buildAndSignTx, createRpc, Rpc } from "@lightprotocol/stateless.js";
+import { buildAndSignTx, buildTx, createRpc, Rpc } from "@lightprotocol/stateless.js";
 import * as splToken from "@solana/spl-token";
 import {
   CompressedTokenProgram,
@@ -26,6 +26,7 @@ import { SendTransactionError } from "@solana/web3.js";
 import { sleep } from "../utils/common";
 import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { getToken } from "./getToken";
+import bs58 from 'bs58';
 
 // Using db: any instead of db: BetterSQLite3Database | SqliteRemoteDatabase because of typescript limitations
 // https://github.com/drizzle-team/drizzle-orm/issues/1966#issuecomment-1981726977
@@ -170,6 +171,9 @@ async function processBatch(
     return true;
   }
 
+  // Store the priority fee estimate for the entire batch as they are the same for all transactions
+  let priorityFeeEstimate: number | null = null;
+
   for (const transaction of transactionQueue) {
     try {
       const addresses = transaction.addresses.map(
@@ -182,11 +186,31 @@ async function processBatch(
         sourceTokenAccount,
         addresses,
         transaction.amount,
-        tokenProgramId
+        tokenProgramId,
       );
 
       const { blockhash, lastValidBlockHeight } =
         await connection.getLatestBlockhash();
+
+      const tx = buildTx(
+        instructions,
+        keypair.publicKey,
+        blockhash,
+        [lookupTableAccount]
+      );
+
+      if (!priorityFeeEstimate) {
+        // Get the priority fee estimate
+        priorityFeeEstimate = await getPriorityFeeEstimate(connection.rpcEndpoint, "Medium", tx);
+      }
+
+      // Set the compute unit limit and add it to the transaction
+      const unitPriceIX = web3.ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: priorityFeeEstimate ?? computeUnitPrice,
+      });
+
+      // Insert the unit price instruction at the second position in the instructions array
+      instructions.splice(1, 0, unitPriceIX);
 
       const signedTx = buildAndSignTx(
         instructions,
@@ -263,13 +287,6 @@ async function createInstructions(
 
   instructions.push(unitLimitIX);
 
-  // Set the compute unit limit and add it to the transaction
-  const unitPriceIX = web3.ComputeBudgetProgram.setComputeUnitPrice({
-    microLamports: computeUnitPrice,
-  });
-
-  instructions.push(unitPriceIX);
-
   // Create batches of 5 addresses per instruction to not go over the maximum cross-program invocation instruction size
   const batches = Math.ceil(addresses.length / maxAddressesPerInstruction);
 
@@ -290,4 +307,47 @@ async function createInstructions(
   }
 
   return instructions;
+}
+
+async function getPriorityFeeEstimate(url: string, priorityLevel: "Min" | "Low" | "Medium" | "High" | "VeryHigh" | "UnsafeMax", transaction: web3.VersionedTransaction): Promise<number | null> {
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "helius-airship",
+        method: "getPriorityFeeEstimate",
+        params: [
+          {
+            transaction: bs58.encode(transaction.serialize()),
+            options: { priorityLevel: priorityLevel },
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      logger.error(`Failed to get priority fee estimate. Status: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.error) {
+      logger.error(`RPC error getting priority fee estimate: ${data.error.message}`);
+      return null;
+    }
+
+    if (!data.result || typeof data.result.priorityFeeEstimate !== 'number') {
+      logger.error('Invalid priority fee estimate response format');
+      return null;
+    }
+
+    return data.result.priorityFeeEstimate;
+
+  } catch (error) {
+    logger.error('Error getting priority fee estimate:', error);
+    return null;
+  }
 }
