@@ -5,7 +5,7 @@ import { WalletMultiButton } from './ui/wallet-multi-button'
 import { bn, buildTx, createRpc, Rpc, sendAndConfirmTx } from '@lightprotocol/stateless.js'
 import { CompressedTokenProgram, selectMinCompressedTokenAccountsForTransfer } from '@lightprotocol/compressed-token'
 import { Button } from './ui/button'
-import { computeUnitLimit, computeUnitPrice, normalizeTokenAmount } from 'helius-airship-core'
+import { computeUnitPrice, normalizeTokenAmount } from 'helius-airship-core'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base'
 import {
@@ -156,7 +156,6 @@ export function DecompressPage() {
   }, [connected, publicKey])
 
   const handleDecompress = async (mint: PublicKey, amount: BN, tokenProgramId: PublicKey) => {
-    console.log('tokenProgramId', tokenProgramId)
     try {
       if (!publicKey || !signTransaction) throw new WalletNotConnectedError()
 
@@ -169,7 +168,7 @@ export function DecompressPage() {
 
       // Set the compute unit limit and add it to the transaction
       const unitLimitIX = ComputeBudgetProgram.setComputeUnitLimit({
-        units: computeUnitLimit,
+        units: 300_000,
       })
 
       const instructions: TransactionInstruction[] = [unitLimitIX]
