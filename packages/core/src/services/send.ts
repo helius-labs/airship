@@ -171,9 +171,6 @@ async function processBatch(
     return true;
   }
 
-  // Store the priority fee estimate for the entire batch as they are the same for all transactions
-  let priorityFeeEstimate: number | null = null;
-
   for (const transaction of transactionQueue) {
     try {
       const addresses = transaction.addresses.map(
@@ -199,10 +196,8 @@ async function processBatch(
         [lookupTableAccount]
       );
 
-      if (!priorityFeeEstimate) {
-        // Get the priority fee estimate
-        priorityFeeEstimate = await getPriorityFeeEstimate(connection.rpcEndpoint, "Medium", tx);
-      }
+      // Get the priority fee estimate
+      const priorityFeeEstimate = await getPriorityFeeEstimate(connection.rpcEndpoint, tx);
 
       // Set the compute unit limit and add it to the transaction
       const unitPriceIX = web3.ComputeBudgetProgram.setComputeUnitPrice({

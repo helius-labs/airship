@@ -2,7 +2,7 @@ import * as web3 from "@solana/web3.js";
 import { logger } from "./logger";
 import bs58 from 'bs58';
 
-export async function getPriorityFeeEstimate(url: string, priorityLevel: "Min" | "Low" | "Medium" | "High" | "VeryHigh" | "UnsafeMax", transaction: web3.VersionedTransaction): Promise<number | null> {
+export async function getPriorityFeeEstimate(url: string, transaction: web3.VersionedTransaction): Promise<number | null> {
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -14,7 +14,9 @@ export async function getPriorityFeeEstimate(url: string, priorityLevel: "Min" |
           params: [
             {
               transaction: bs58.encode(transaction.serialize()),
-              options: { priorityLevel: priorityLevel },
+              options: { 
+                recommended: true
+               },
             },
           ],
         }),
