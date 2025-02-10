@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from 'react'
+import { ReactNode, useEffect, useState, useMemo, useCallback, memo } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from './ui/wallet-multi-button'
@@ -28,8 +28,10 @@ import {
 import { Link } from 'react-router-dom'
 import { Header } from './Header'
 import { BN } from '@coral-xyz/anchor'
-import { ColumnDef, flexRender, getCoreRowModel, useReactTable, RowSelectionState } from '@tanstack/react-table'
-import { columns } from './columns'
+import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import { HelpCircle } from 'lucide-react'
+import { normalizeTokenAmount } from 'helius-airship-core'
+import { Checkbox } from './ui/checkbox'
 
 enum DialogState {
   Idle,
@@ -39,7 +41,7 @@ enum DialogState {
   Error,
 }
 
-export interface Token {
+interface Token {
   mint: PublicKey
   amount: BN
   symbol: string
@@ -51,6 +53,107 @@ export interface Token {
 }
 
 const connection: Rpc = createRpc(import.meta.env.VITE_RPC_ENDPOINT, import.meta.env.VITE_RPC_ENDPOINT)
+
+const TokenCell = memo(({ token }: { token: Token }) => {
+  return (
+    <div className="flex items-center space-x-2">
+      {token.image ? (
+        <img
+          crossOrigin=""
+          src={token.image}
+          alt={token.symbol || 'Token'}
+          className="w-8 h-8 rounded-full"
+          onError={(e) => {
+            if (e.currentTarget.src !== '/not-found.svg') {
+              e.currentTarget.onerror = null
+              e.currentTarget.src = '/not-found.svg'
+            }
+          }}
+        />
+      ) : (
+        <HelpCircle className="w-8 h-8 text-gray-400" strokeWidth={1} />
+      )}
+      <div>
+        <span className="font-medium">{token.symbol || 'Unknown'}</span>
+        <a
+          className="block text-xs text-gray-400 hover:underline"
+          href={`https://birdeye.so/token/${token.mint.toBase58()}?chain=solana`}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="View on Birdeye"
+        >
+          {token.mint.toBase58().slice(0, 4) + '...' + token.mint.toBase58().slice(-4)}
+        </a>
+      </div>
+    </div>
+  )
+})
+
+const getColumns = (normalizeTokenAmount: Function, handleDecompress: Function): ColumnDef<Token>[] => [
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: 'token',
+    header: 'Token',
+    cell: ({ row }) => <TokenCell token={row.original} />,
+  },
+  {
+    accessorKey: 'amount',
+    header: () => <div className="text-right">Amount</div>,
+    cell: ({ row }) => {
+      const amount = normalizeTokenAmount(row.original.amount.toString(), row.original.decimals)
+      return <div className="text-right font-medium">{amount}</div>
+    },
+  },
+  {
+    accessorKey: 'value',
+    header: () => <div className="text-right">Value</div>,
+    cell: ({ row }) => {
+      const token = row.original
+      const value =
+        token.pricePerToken > 0
+          ? `$${(normalizeTokenAmount(token.amount.toString(), token.decimals) * token.pricePerToken).toFixed(2)}`
+          : 'N/A'
+      return <div className="text-right font-medium">{value}</div>
+    },
+  },
+  {
+    id: 'actions',
+    cell: ({ row }) => {
+      const token = row.original
+      return (
+        <div className="text-right">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              handleDecompress(token.mint, token.amount, token.tokenProgramId)
+            }}
+          >
+            Decompress
+          </Button>
+        </div>
+      )
+    },
+  },
+]
 
 export function DecompressPage() {
   const { publicKey, connected, signTransaction } = useWallet()
@@ -159,128 +262,143 @@ export function DecompressPage() {
     fetchCompressedTokenAccounts()
   }, [connected, publicKey])
 
-  const handleDecompress = async (mint: PublicKey, amount: BN, tokenProgramId: PublicKey) => {
-    try {
-      if (!publicKey || !signTransaction) throw new WalletNotConnectedError()
+  const handleDecompress = useCallback(
+    async (mint: PublicKey, amount: BN, tokenProgramId: PublicKey) => {
+      try {
+        if (!publicKey || !signTransaction) throw new WalletNotConnectedError()
 
-      setAlertDialogOpen(true)
-      setDialogState(DialogState.ConfirmingTransaction)
-      setAlertDialogContent({
-        title: 'Confirm Transaction',
-        message: 'Please confirm the transaction in your wallet...',
-      })
+        setAlertDialogOpen(true)
+        setDialogState(DialogState.ConfirmingTransaction)
+        setAlertDialogContent({
+          title: 'Confirm Transaction',
+          message: 'Please confirm the transaction in your wallet...',
+        })
 
-      // Set the compute unit limit and add it to the transaction
-      const unitLimitIX = ComputeBudgetProgram.setComputeUnitLimit({
-        units: 300_000,
-      })
+        // Set the compute unit limit and add it to the transaction
+        const unitLimitIX = ComputeBudgetProgram.setComputeUnitLimit({
+          units: 300_000,
+        })
 
-      const instructions: TransactionInstruction[] = [unitLimitIX]
+        const instructions: TransactionInstruction[] = [unitLimitIX]
 
-      // Set the compute unit limit and add it to the transaction
-      const unitPriceIX = ComputeBudgetProgram.setComputeUnitPrice({
-        microLamports: computeUnitPrice,
-      })
+        // Set the compute unit limit and add it to the transaction
+        const unitPriceIX = ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports: computeUnitPrice,
+        })
 
-      instructions.push(unitPriceIX)
+        instructions.push(unitPriceIX)
 
-      // Calculate ATA
-      const ata = await getAssociatedTokenAddress(mint, publicKey, undefined, tokenProgramId)
+        // Calculate ATA
+        const ata = await getAssociatedTokenAddress(mint, publicKey, undefined, tokenProgramId)
 
-      // Check if the ATA exists
-      const ataInfo = await connection.getAccountInfo(ata)
-      const ataExists = ataInfo !== null
+        // Check if the ATA exists
+        const ataInfo = await connection.getAccountInfo(ata)
+        const ataExists = ataInfo !== null
 
-      if (!ataExists) {
-        // Create an associated token account if it doesn't exist
-        const createAtaInstruction = await createAssociatedTokenAccountInstruction(
-          publicKey,
-          ata,
-          publicKey,
+        if (!ataExists) {
+          // Create an associated token account if it doesn't exist
+          const createAtaInstruction = await createAssociatedTokenAccountInstruction(
+            publicKey,
+            ata,
+            publicKey,
+            mint,
+            tokenProgramId
+          )
+
+          instructions.push(createAtaInstruction)
+        }
+
+        // Fetch the latest compressed token account state
+        const compressedTokenAccounts = await connection.getCompressedTokenAccountsByOwner(publicKey, {
           mint,
-          tokenProgramId
+        })
+
+        // Select accounts to transfer from based on the transfer amount
+        const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(compressedTokenAccounts.items, amount)
+
+        // Fetch recent validity proof
+        // The prover can only generate proofs for 5 compressed accounts at a time
+        const proof = await connection.getValidityProof(
+          inputAccounts.map((account) => bn(account.compressedAccount.hash))
         )
 
-        instructions.push(createAtaInstruction)
+        // Create the decompress instruction
+        const decompressInstruction = await CompressedTokenProgram.decompress({
+          payer: publicKey,
+          inputCompressedTokenAccounts: inputAccounts,
+          toAddress: ata,
+          amount,
+          recentInputStateRootIndices: proof.rootIndices,
+          recentValidityProof: proof.compressedProof,
+          tokenProgramId: tokenProgramId,
+        })
+
+        instructions.push(decompressInstruction)
+
+        const { value: blockhashCtx } = await connection.getLatestBlockhashAndContext()
+
+        const tx = buildTx(instructions, publicKey, blockhashCtx.blockhash)
+
+        const signedTx = await signTransaction(tx)
+
+        setDialogState(DialogState.Processing)
+        setAlertDialogContent({
+          title: 'Confirming Transaction',
+          message: (
+            <div className="flex items-center space-x-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Please wait while the transaction is being confirmed...</span>
+            </div>
+          ),
+        })
+
+        const txId = await sendAndConfirmTx(connection, signedTx)
+
+        // Refresh the list of compressed tokens
+        await fetchCompressedTokenAccounts()
+
+        setDialogState(DialogState.Success)
+        setAlertDialogContent({
+          title: 'Token decompressed successfully!',
+          message: (
+            <>
+              <p>
+                Signature:&nbsp;
+                <a
+                  href={`https://photon.helius.dev/tx/${txId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary font-semibold underline hover:underline"
+                >
+                  {txId.slice(0, 4) + '...' + txId.slice(-4)}
+                </a>
+              </p>
+            </>
+          ),
+        })
+      } catch (error) {
+        console.error('Error decompressing token:', error)
+        setDialogState(DialogState.Error)
+        setAlertDialogContent({
+          title: 'Decompress cancelled',
+          message: `${error instanceof Error ? (typeof error.message === 'string' ? error.message : JSON.stringify(error.message, null, 2)) : 'Unknown error'}`,
+        })
       }
+    },
+    [
+      publicKey,
+      signTransaction,
+      setAlertDialogOpen,
+      setDialogState,
+      setAlertDialogContent,
+      fetchCompressedTokenAccounts,
+    ]
+  )
 
-      // Fetch the latest compressed token account state
-      const compressedTokenAccounts = await connection.getCompressedTokenAccountsByOwner(publicKey, {
-        mint,
-      })
-
-      // Select accounts to transfer from based on the transfer amount
-      const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(compressedTokenAccounts.items, amount)
-
-      // Fetch recent validity proof
-      // The prover can only generate proofs for 5 compressed accounts at a time
-      const proof = await connection.getValidityProof(
-        inputAccounts.map((account) => bn(account.compressedAccount.hash))
-      )
-
-      // Create the decompress instruction
-      const decompressInstruction = await CompressedTokenProgram.decompress({
-        payer: publicKey,
-        inputCompressedTokenAccounts: inputAccounts,
-        toAddress: ata,
-        amount,
-        recentInputStateRootIndices: proof.rootIndices,
-        recentValidityProof: proof.compressedProof,
-        tokenProgramId: tokenProgramId,
-      })
-
-      instructions.push(decompressInstruction)
-
-      const { value: blockhashCtx } = await connection.getLatestBlockhashAndContext()
-
-      const tx = buildTx(instructions, publicKey, blockhashCtx.blockhash)
-
-      const signedTx = await signTransaction(tx)
-
-      setDialogState(DialogState.Processing)
-      setAlertDialogContent({
-        title: 'Confirming Transaction',
-        message: (
-          <div className="flex items-center space-x-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Please wait while the transaction is being confirmed...</span>
-          </div>
-        ),
-      })
-
-      const txId = await sendAndConfirmTx(connection, signedTx)
-
-      // Refresh the list of compressed tokens
-      await fetchCompressedTokenAccounts()
-
-      setDialogState(DialogState.Success)
-      setAlertDialogContent({
-        title: 'Token decompressed successfully!',
-        message: (
-          <>
-            <p>
-              Signature:&nbsp;
-              <a
-                href={`https://photon.helius.dev/tx/${txId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary font-semibold underline hover:underline"
-              >
-                {txId.slice(0, 4) + '...' + txId.slice(-4)}
-              </a>
-            </p>
-          </>
-        ),
-      })
-    } catch (error) {
-      console.error('Error decompressing token:', error)
-      setDialogState(DialogState.Error)
-      setAlertDialogContent({
-        title: 'Decompress cancelled',
-        message: `${error instanceof Error ? (typeof error.message === 'string' ? error.message : JSON.stringify(error.message, null, 2)) : 'Unknown error'}`,
-      })
-    }
-  }
+  const columns = useMemo(
+    () => getColumns(normalizeTokenAmount, handleDecompress),
+    [normalizeTokenAmount, handleDecompress]
+  )
 
   const table = useReactTable({
     data: compressedTokenAccounts,
