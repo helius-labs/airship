@@ -334,7 +334,6 @@ export function DecompressPage() {
                               >
                                 {token.mint.toBase58().slice(0, 4) + '...' + token.mint.toBase58().slice(-4)}
                               </a>
-                              {token.tokenProgramId.toBase58()}
                             </div>
                           </div>
                         </TableCell>
