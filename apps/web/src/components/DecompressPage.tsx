@@ -274,13 +274,13 @@ export function DecompressPage() {
         setAlertDialogOpen(true)
         setDialogState(DialogState.ConfirmingTransaction)
         setAlertDialogContent({
-          title: 'Confirm Transaction',
-          message: 'Please confirm the transaction in your wallet...',
+          title: 'Approve Transaction',
+          message: 'Please approve the transaction in your wallet...',
         })
 
         // Set the compute unit limit and add it to the transaction
         const unitLimitIX = ComputeBudgetProgram.setComputeUnitLimit({
-          units: 300_000,
+          units: 260_000,
         })
 
         const instructions: TransactionInstruction[] = [unitLimitIX]
@@ -384,7 +384,7 @@ export function DecompressPage() {
         console.error('Error decompressing token:', error)
         setDialogState(DialogState.Error)
         setAlertDialogContent({
-          title: 'Decompress cancelled',
+          title: 'Error decompressing',
           message: `${error instanceof Error ? (typeof error.message === 'string' ? error.message : JSON.stringify(error.message, null, 2)) : 'Unknown error'}`,
         })
       }
@@ -439,7 +439,7 @@ export function DecompressPage() {
 
           // Add compute budget instructions
           const unitLimitIX = ComputeBudgetProgram.setComputeUnitLimit({
-            units: 300_000,
+            units: 260_000,
           })
           instructions.push(unitLimitIX)
 
@@ -503,13 +503,41 @@ export function DecompressPage() {
 
         setDialogState(DialogState.ConfirmingTransaction)
         setAlertDialogContent({
-          title: 'Confirm Transactions',
-          message: 'Please confirm the transactions in your wallet...',
+          title: 'Approve Transactions',
+          message: 'Please approve the transactions in your wallet...',
         })
 
         const signedTxs = await signAllTransactions(transactions)
 
-        const txIds = await Promise.all(signedTxs.map((tx) => sendAndConfirmTx(connection, tx)))
+        setDialogState(DialogState.Processing)
+        setAlertDialogContent({
+          title: 'Sending Transactions',
+          message: (
+            <div className="flex items-center space-x-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Sending and confirming transactions... (0/{transactions.length})</span>
+            </div>
+          ),
+        })
+
+        const txIds = []
+        for (let i = 0; i < signedTxs.length; i++) {
+          // Update progress message
+          setAlertDialogContent({
+            title: 'Sending Transactions',
+            message: (
+              <div className="flex items-center space-x-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>
+                  Sending and confirming transactions... ({i + 1}/{transactions.length})
+                </span>
+              </div>
+            ),
+          })
+
+          const txId = await sendAndConfirmTx(connection, signedTxs[i])
+          txIds.push(txId)
+        }
 
         // Refresh the list of compressed tokens
         await fetchCompressedTokenAccounts()
@@ -542,7 +570,7 @@ export function DecompressPage() {
         console.error('Error decompressing tokens:', error)
         setDialogState(DialogState.Error)
         setAlertDialogContent({
-          title: 'Decompress cancelled',
+          title: 'Error decompressing',
           message: `${error instanceof Error ? (typeof error.message === 'string' ? error.message : JSON.stringify(error.message, null, 2)) : 'Unknown error'}`,
         })
       }
@@ -668,7 +696,7 @@ export function DecompressPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{alertDialogContent.title}</AlertDialogTitle>
-            <AlertDialogDescription>{alertDialogContent.message}</AlertDialogDescription>
+            <AlertDialogDescription className="break-all">{alertDialogContent.message}</AlertDialogDescription>
           </AlertDialogHeader>
           {(dialogState === DialogState.Success || dialogState === DialogState.Error) && (
             <AlertDialogFooter>
