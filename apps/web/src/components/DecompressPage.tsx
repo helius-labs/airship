@@ -155,8 +155,9 @@ const getColumns = (normalizeTokenAmount: Function, handleDecompress: Function):
   },
 ]
 
-// Add this helper function at the top level
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const MAX_BATCH_SIZE = 5
 
 export function DecompressPage() {
   const { publicKey, connected, signTransaction, signAllTransactions } = useWallet()
@@ -634,14 +635,19 @@ export function DecompressPage() {
                       {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length}{' '}
                       row(s) selected.
                     </div>
+                    <div>
+                      {table.getFilteredSelectedRowModel().rows.length > MAX_BATCH_SIZE && (
+                        <span className="text-xs"> (Maximum {MAX_BATCH_SIZE} tokens can be decompressed at once)</span>
+                      )}
+                    </div>
                     <div className="space-x-2">
                       <Button
                         variant="default"
                         size="sm"
-                        onClick={() => handleBatchDecompress(selectedTokens)}
+                        onClick={() => handleBatchDecompress(selectedTokens.slice(0, MAX_BATCH_SIZE))}
                         disabled={selectedTokens.length === 0}
                       >
-                        Decompress Selected
+                        Decompress {selectedTokens.length > MAX_BATCH_SIZE ? `First ${MAX_BATCH_SIZE}` : 'Selected'}
                       </Button>
                     </div>
                   </div>
