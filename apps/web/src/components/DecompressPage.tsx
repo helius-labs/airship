@@ -5,7 +5,7 @@ import { WalletMultiButton } from './ui/wallet-multi-button'
 import { bn, buildTx, createRpc, Rpc, sendAndConfirmTx } from '@lightprotocol/stateless.js'
 import { CompressedTokenProgram, selectMinCompressedTokenAccountsForTransfer } from '@lightprotocol/compressed-token'
 import { Button } from './ui/button'
-import { computeUnitPrice, normalizeTokenAmount } from 'helius-airship-core'
+import { computeUnitPrice } from 'helius-airship-core'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base'
 import {
@@ -15,7 +15,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token'
 import { ComputeBudgetProgram, PublicKey, TransactionInstruction } from '@solana/web3.js'
-import { Loader2, HelpCircle } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -28,6 +28,8 @@ import {
 import { Link } from 'react-router-dom'
 import { Header } from './Header'
 import { BN } from '@coral-xyz/anchor'
+import { ColumnDef, flexRender, getCoreRowModel, useReactTable, RowSelectionState } from '@tanstack/react-table'
+import { columns } from './columns'
 
 enum DialogState {
   Idle,
@@ -37,7 +39,7 @@ enum DialogState {
   Error,
 }
 
-interface Token {
+export interface Token {
   mint: PublicKey
   amount: BN
   symbol: string
@@ -45,6 +47,7 @@ interface Token {
   image: string
   pricePerToken: number
   tokenProgramId: PublicKey
+  onDecompress?: (mint: PublicKey, amount: BN, tokenProgramId: PublicKey) => void
 }
 
 const connection: Rpc = createRpc(import.meta.env.VITE_RPC_ENDPOINT, import.meta.env.VITE_RPC_ENDPOINT)
@@ -59,6 +62,7 @@ export function DecompressPage() {
     message: string | ReactNode
   }>({ title: '', message: '' })
   const [dialogState, setDialogState] = useState<DialogState>(DialogState.Idle)
+  const [rowSelection, setRowSelection] = useState({})
 
   const fetchCompressedTokenAccounts = async () => {
     if (connected && publicKey) {
@@ -278,6 +282,18 @@ export function DecompressPage() {
     }
   }
 
+  const table = useReactTable({
+    data: compressedTokenAccounts,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    onRowSelectionChange: setRowSelection,
+    state: {
+      rowSelection,
+    },
+  })
+
+  const selectedTokens = table.getFilteredSelectedRowModel().rows.map((row) => row.original)
+
   return (
     <main className="flex flex-col items-center justify-top my-12 space-y-12">
       <Header />
@@ -295,70 +311,65 @@ export function DecompressPage() {
                   <span className="ml-2">Loading tokens...</span>
                 </div>
               ) : compressedTokenAccounts.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead></TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                      <TableHead className="text-right hidden sm:table-cell">Value</TableHead>
-                      <TableHead className="text-right">Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {compressedTokenAccounts.map((token, index) => (
-                      <TableRow key={index}>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            {token.image ? (
-                              <img
-                                crossOrigin=""
-                                src={token.image}
-                                alt={token.symbol || 'Token'}
-                                className="w-8 h-8 rounded-full"
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null
-                                  e.currentTarget.src = '/not-found.svg'
-                                }}
-                              />
-                            ) : (
-                              <HelpCircle className="w-8 h-8 text-gray-400" strokeWidth={1} />
-                            )}
-                            <div>
-                              <span className="font-medium">{token.symbol || 'Unknown'}</span>
-                              <a
-                                className="block text-xs text-gray-400 hover:underline"
-                                href={`https://birdeye.so/token/${token.mint.toBase58()}?chain=solana`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title="View on Birdeye"
-                              >
-                                {token.mint.toBase58().slice(0, 4) + '...' + token.mint.toBase58().slice(-4)}
-                              </a>
-                              {token.tokenProgramId.toBase58()}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {normalizeTokenAmount(token.amount.toString(), token.decimals)}
-                        </TableCell>
-                        <TableCell className="text-right hidden sm:table-cell">
-                          {token.pricePerToken > 0
-                            ? `$${(normalizeTokenAmount(token.amount.toString(), token.decimals) * token.pricePerToken).toFixed(2)}`
-                            : 'N/A'}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDecompress(token.mint, token.amount, token.tokenProgramId)}
-                          >
-                            Decompress
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                          <TableRow key={headerGroup.id}>
+                            {headerGroup.headers.map((header) => {
+                              return (
+                                <TableHead key={header.id}>
+                                  {header.isPlaceholder
+                                    ? null
+                                    : flexRender(header.column.columnDef.header, header.getContext())}
+                                </TableHead>
+                              )
+                            })}
+                          </TableRow>
+                        ))}
+                      </TableHeader>
+                      <TableBody>
+                        {table.getRowModel().rows?.length ? (
+                          table.getRowModel().rows.map((row) => (
+                            <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                              {row.getVisibleCells().map((cell) => (
+                                <TableCell key={cell.id}>
+                                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={columns.length} className="h-24 text-center">
+                              No results.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <div className="flex items-center justify-end space-x-2 py-4">
+                    <div className="flex-1 text-sm text-muted-foreground">
+                      {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length}{' '}
+                      row(s) selected.
+                    </div>
+                    <div className="space-x-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => {
+                          selectedTokens.forEach((token) => {
+                            handleDecompress(token.mint, token.amount, token.tokenProgramId)
+                          })
+                        }}
+                      >
+                        Decompress Selected
+                      </Button>
+                    </div>
+                  </div>
+                </>
               ) : (
                 <p>No compressed tokens found.</p>
               )}

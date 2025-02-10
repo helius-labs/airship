@@ -32,6 +32,7 @@
     "@solana/wallet-adapter-react": "^0.15.35",
     "@solana/wallet-adapter-react-ui": "^0.9.35",
     "@solana/web3.js": "1.95.3",
+    "@tanstack/react-table": "^8.20.6",
     "@uiw/react-codemirror": "^4.23.1",
     "bs58": "^6.0.0",
     "class-variance-authority": "^0.7.0",
