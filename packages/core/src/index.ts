@@ -31,6 +31,7 @@ import { getTokensByOwner, Token } from "./services/getTokensByOwner";
 import { isFungibleToken } from "./services/isFungibleToken";
 import { isNFTCollection } from "./services/isNFTCollection";
 import { NodeDatabase, BrowserDatabase } from "./services/db";
+import { getPriorityFeeEstimate } from "./services/getPriorityFeeEstimate";
 
 export {
   init,
@@ -60,6 +61,7 @@ export {
   AirdropErrorCode,
   MICRO_LAMPORTS_PER_LAMPORT,
   databaseFile,
+  getPriorityFeeEstimate, 
 };
 
 export type { Token, NodeDatabase, BrowserDatabase };
