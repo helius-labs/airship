@@ -155,8 +155,11 @@ const getColumns = (normalizeTokenAmount: Function, handleDecompress: Function):
   },
 ]
 
+// Add this helper function at the top level
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
 export function DecompressPage() {
-  const { publicKey, connected, signTransaction } = useWallet()
+  const { publicKey, connected, signTransaction, signAllTransactions } = useWallet()
   const [compressedTokenAccounts, setCompressedTokenAccounts] = useState<Token[]>([])
   const [isLoading, setIsLoading] = useState(false) // New state for loading
   const [alertDialogOpen, setAlertDialogOpen] = useState(false)
@@ -395,6 +398,164 @@ export function DecompressPage() {
     ]
   )
 
+  // Update handleBatchDecompress to process tokens sequentially with delay
+  const handleBatchDecompress = useCallback(
+    async (tokens: Token[]) => {
+      try {
+        if (!publicKey || !signAllTransactions) throw new WalletNotConnectedError()
+
+        setAlertDialogOpen(true)
+        setDialogState(DialogState.Processing)
+        setAlertDialogContent({
+          title: 'Building Transactions',
+          message: (
+            <div className="flex items-center space-x-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Building transactions... (0/{tokens.length})</span>
+            </div>
+          ),
+        })
+
+        // Process tokens sequentially instead of in parallel
+        const transactions = []
+        for (let i = 0; i < tokens.length; i++) {
+          const token = tokens[i]
+
+          // Update progress message
+          setAlertDialogContent({
+            title: 'Building Transactions',
+            message: (
+              <div className="flex items-center space-x-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>
+                  Building transactions... ({i + 1}/{tokens.length})
+                </span>
+              </div>
+            ),
+          })
+
+          const instructions: TransactionInstruction[] = []
+
+          // Add compute budget instructions
+          const unitLimitIX = ComputeBudgetProgram.setComputeUnitLimit({
+            units: 300_000,
+          })
+          instructions.push(unitLimitIX)
+
+          const unitPriceIX = ComputeBudgetProgram.setComputeUnitPrice({
+            microLamports: computeUnitPrice,
+          })
+          instructions.push(unitPriceIX)
+
+          // Calculate ATA
+          const ata = await getAssociatedTokenAddress(token.mint, publicKey, undefined, token.tokenProgramId)
+
+          // Check if the ATA exists
+          const ataInfo = await connection.getAccountInfo(ata)
+          const ataExists = ataInfo !== null
+
+          if (!ataExists) {
+            const createAtaInstruction = await createAssociatedTokenAccountInstruction(
+              publicKey,
+              ata,
+              publicKey,
+              token.mint,
+              token.tokenProgramId
+            )
+            instructions.push(createAtaInstruction)
+          }
+
+          // Fetch compressed token accounts for this token
+          const compressedTokenAccounts = await connection.getCompressedTokenAccountsByOwner(publicKey, {
+            mint: token.mint,
+          })
+
+          const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(
+            compressedTokenAccounts.items,
+            token.amount
+          )
+
+          // Fetch validity proof
+          const proof = await connection.getValidityProof(
+            inputAccounts.map((account) => bn(account.compressedAccount.hash))
+          )
+
+          // Create decompress instruction
+          const decompressInstruction = await CompressedTokenProgram.decompress({
+            payer: publicKey,
+            inputCompressedTokenAccounts: inputAccounts,
+            toAddress: ata,
+            amount: token.amount,
+            recentInputStateRootIndices: proof.rootIndices,
+            recentValidityProof: proof.compressedProof,
+            tokenProgramId: token.tokenProgramId,
+          })
+
+          instructions.push(decompressInstruction)
+
+          const { value: blockhashCtx } = await connection.getLatestBlockhashAndContext()
+          transactions.push(buildTx(instructions, publicKey, blockhashCtx.blockhash))
+
+          // Add delay between tokens
+          await sleep(500)
+        }
+
+        setDialogState(DialogState.ConfirmingTransaction)
+        setAlertDialogContent({
+          title: 'Confirm Transactions',
+          message: 'Please confirm the transactions in your wallet...',
+        })
+
+        const signedTxs = await signAllTransactions(transactions)
+
+        const txIds = await Promise.all(signedTxs.map((tx) => sendAndConfirmTx(connection, tx)))
+
+        // Refresh the list of compressed tokens
+        await fetchCompressedTokenAccounts()
+
+        setDialogState(DialogState.Success)
+        setAlertDialogContent({
+          title: 'Tokens decompressed successfully!',
+          message: (
+            <div className="space-y-2">
+              <p>Transaction signatures:</p>
+              <div className="space-y-1">
+                {txIds.map((txId, index) => (
+                  <p key={txId}>
+                    {index + 1}.{' '}
+                    <a
+                      href={`https://photon.helius.dev/tx/${txId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary font-semibold underline hover:underline"
+                    >
+                      {txId.slice(0, 4) + '...' + txId.slice(-4)}
+                    </a>
+                  </p>
+                ))}
+              </div>
+            </div>
+          ),
+        })
+      } catch (error) {
+        console.error('Error decompressing tokens:', error)
+        setDialogState(DialogState.Error)
+        setAlertDialogContent({
+          title: 'Decompress cancelled',
+          message: `${error instanceof Error ? (typeof error.message === 'string' ? error.message : JSON.stringify(error.message, null, 2)) : 'Unknown error'}`,
+        })
+      }
+    },
+    [
+      publicKey,
+      signAllTransactions,
+      setAlertDialogOpen,
+      setDialogState,
+      setAlertDialogContent,
+      fetchCompressedTokenAccounts,
+    ]
+  )
+
   const columns = useMemo(
     () => getColumns(normalizeTokenAmount, handleDecompress),
     [normalizeTokenAmount, handleDecompress]
@@ -477,11 +638,8 @@ export function DecompressPage() {
                       <Button
                         variant="default"
                         size="sm"
-                        onClick={() => {
-                          selectedTokens.forEach((token) => {
-                            handleDecompress(token.mint, token.amount, token.tokenProgramId)
-                          })
-                        }}
+                        onClick={() => handleBatchDecompress(selectedTokens)}
+                        disabled={selectedTokens.length === 0}
                       >
                         Decompress Selected
                       </Button>
