@@ -11,7 +11,6 @@ import {
   baseFee,
   compressionFee,
   MICRO_LAMPORTS_PER_LAMPORT,
-  getPriorityFeeEstimate,
   sampleTransaction,
 } from 'helius-airship-core'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
