@@ -7,6 +7,7 @@ import {
   saga2PreOrderTokenMintAddress,
   databaseFile,
   MICRO_LAMPORTS_PER_LAMPORT,
+  sampleTransaction,
 } from "./config/constants";
 
 import { isSolanaAddress, normalizeTokenAmount, sleep } from "./utils/common";
@@ -62,6 +63,7 @@ export {
   MICRO_LAMPORTS_PER_LAMPORT,
   databaseFile,
   getPriorityFeeEstimate, 
+  sampleTransaction, 
 };
 
 export type { Token, NodeDatabase, BrowserDatabase };

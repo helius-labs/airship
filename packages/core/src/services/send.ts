@@ -197,7 +197,7 @@ async function processBatch(
       );
 
       // Get the priority fee estimate
-      const priorityFeeEstimate = await getPriorityFeeEstimate(connection.rpcEndpoint, tx);
+      const priorityFeeEstimate = await getPriorityFeeEstimate(connection.rpcEndpoint, "Low", tx);
 
       // Set the compute unit limit and add it to the transaction
       const unitPriceIX = web3.ComputeBudgetProgram.setComputeUnitPrice({
