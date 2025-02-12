@@ -10,7 +10,7 @@ import {
   lookupTableAddressMainnet,
 } from "../config/constants";
 import { desc, asc, sql, eq, count, isNull, or } from "drizzle-orm";
-import { buildAndSignTx, createRpc, Rpc } from "@lightprotocol/stateless.js";
+import { buildAndSignTx, buildTx, createRpc, Rpc } from "@lightprotocol/stateless.js";
 import * as splToken from "@solana/spl-token";
 import {
   CompressedTokenProgram,
@@ -26,6 +26,7 @@ import { SendTransactionError } from "@solana/web3.js";
 import { sleep } from "../utils/common";
 import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { getToken } from "./getToken";
+import { getPriorityFeeEstimate } from "./getPriorityFeeEstimate";
 
 // Using db: any instead of db: BetterSQLite3Database | SqliteRemoteDatabase because of typescript limitations
 // https://github.com/drizzle-team/drizzle-orm/issues/1966#issuecomment-1981726977
@@ -182,11 +183,29 @@ async function processBatch(
         sourceTokenAccount,
         addresses,
         transaction.amount,
-        tokenProgramId
+        tokenProgramId,
       );
 
       const { blockhash, lastValidBlockHeight } =
         await connection.getLatestBlockhash();
+
+      const tx = buildTx(
+        instructions,
+        keypair.publicKey,
+        blockhash,
+        [lookupTableAccount]
+      );
+
+      // Get the priority fee estimate
+      const priorityFeeEstimate = await getPriorityFeeEstimate(connection.rpcEndpoint, "Low", tx);
+
+      // Set the compute unit limit and add it to the transaction
+      const unitPriceIX = web3.ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: priorityFeeEstimate ?? computeUnitPrice,
+      });
+
+      // Insert the unit price instruction at the second position in the instructions array
+      instructions.splice(1, 0, unitPriceIX);
 
       const signedTx = buildAndSignTx(
         instructions,
@@ -262,13 +281,6 @@ async function createInstructions(
   });
 
   instructions.push(unitLimitIX);
-
-  // Set the compute unit limit and add it to the transaction
-  const unitPriceIX = web3.ComputeBudgetProgram.setComputeUnitPrice({
-    microLamports: computeUnitPrice,
-  });
-
-  instructions.push(unitPriceIX);
 
   // Create batches of 5 addresses per instruction to not go over the maximum cross-program invocation instruction size
   const batches = Math.ceil(addresses.length / maxAddressesPerInstruction);

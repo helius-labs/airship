@@ -7,6 +7,7 @@ import {
   saga2PreOrderTokenMintAddress,
   databaseFile,
   MICRO_LAMPORTS_PER_LAMPORT,
+  sampleTransaction,
 } from "./config/constants";
 
 import { isSolanaAddress, normalizeTokenAmount, sleep } from "./utils/common";
@@ -31,6 +32,7 @@ import { getTokensByOwner, Token } from "./services/getTokensByOwner";
 import { isFungibleToken } from "./services/isFungibleToken";
 import { isNFTCollection } from "./services/isNFTCollection";
 import { NodeDatabase, BrowserDatabase } from "./services/db";
+import { getPriorityFeeEstimate } from "./services/getPriorityFeeEstimate";
 
 export {
   init,
@@ -60,6 +62,8 @@ export {
   AirdropErrorCode,
   MICRO_LAMPORTS_PER_LAMPORT,
   databaseFile,
+  getPriorityFeeEstimate, 
+  sampleTransaction, 
 };
 
 export type { Token, NodeDatabase, BrowserDatabase };
