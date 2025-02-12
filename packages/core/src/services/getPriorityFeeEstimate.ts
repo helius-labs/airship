@@ -14,7 +14,11 @@ export async function getPriorityFeeEstimate(url: string, priorityLevel: "Min" |
           params: [
             {
               transaction: bs58.encode(transaction.serialize()),
-              options: { priorityLevel: priorityLevel },
+              options: { 
+                priorityLevel: priorityLevel,
+                evaluateEmptySlotAsZero: true,
+                lookbackSlots: 150,
+              },
             },
           ],
         }),

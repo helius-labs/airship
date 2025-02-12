@@ -71,7 +71,11 @@ export default function Step4({ form, tokens, recipientList, amountValue }: Step
             params: [
               {
                 transaction: sampleTransaction,
-                options: { priorityLevel: 'Low' },
+                options: {
+                  priorityLevel: 'Low',
+                  evaluateEmptySlotAsZero: true,
+                  lookbackSlots: 150,
+                },
               },
             ],
           }),

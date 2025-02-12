@@ -44,7 +44,11 @@ export function CostCalculator() {
         params: [
           {
             transaction: sampleTransaction,
-            options: { priorityLevel: 'Low' },
+            options: {
+              priorityLevel: 'Low',
+              evaluateEmptySlotAsZero: true,
+              lookbackSlots: 150,
+            },
           },
         ],
       }),
