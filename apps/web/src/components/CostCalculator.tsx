@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,6 +10,7 @@ import {
   computeUnitPrice,
   MICRO_LAMPORTS_PER_LAMPORT,
   maxAddressesPerTransaction,
+  sampleTransaction,
 } from 'helius-airship-core'
 import { Header } from './Header'
 import { Button } from './ui/button'
@@ -20,6 +21,7 @@ export function CostCalculator() {
   const WORLD_POPULATION = 8_200_000_000
 
   const [recipientCount, setRecipientCount] = useState<number>(SEEKER_HOLDERS)
+  const [priorityFeeEstimate, setPriorityFeeEstimate] = useState<number>(computeUnitPrice)
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US').format(num)
@@ -31,13 +33,43 @@ export function CostCalculator() {
     setRecipientCount(Number(rawValue))
   }
 
+  const getPriorityFeeEstimate = async () => {
+    const response = await fetch(import.meta.env.VITE_RPC_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'helius-airship',
+        method: 'getPriorityFeeEstimate',
+        params: [
+          {
+            transaction: sampleTransaction,
+            options: {
+              priorityLevel: 'Low',
+              evaluateEmptySlotAsZero: true,
+              lookbackSlots: 150,
+            },
+          },
+        ],
+      }),
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      if (data.result && typeof data.result.priorityFeeEstimate === 'number') {
+        setPriorityFeeEstimate(data.result.priorityFeeEstimate)
+      }
+    }
+  }
+
   const calculateCompressedFees = () => {
     const transactionCount = Math.ceil(recipientCount / maxAddressesPerTransaction)
 
     // Convert lamports to SOL
     const baseFeeSol = (transactionCount * baseFee) / 1e9
     const compressionFeeSol = (transactionCount * compressionFee) / 1e9
-    const priorityFeeSol = (transactionCount * computeUnitLimit * computeUnitPrice) / (MICRO_LAMPORTS_PER_LAMPORT * 1e9)
+    const priorityFeeSol =
+      (transactionCount * computeUnitLimit * priorityFeeEstimate) / (MICRO_LAMPORTS_PER_LAMPORT * 1e9)
 
     return {
       baseFee: baseFeeSol.toFixed(2),
@@ -52,7 +84,8 @@ export function CostCalculator() {
 
     // Convert lamports to SOL
     const baseFeeSol = (transactionCount * baseFee) / 1e9
-    const priorityFeeSol = (transactionCount * computeUnitLimit * computeUnitPrice) / (MICRO_LAMPORTS_PER_LAMPORT * 1e9)
+    const priorityFeeSol =
+      (transactionCount * computeUnitLimit * priorityFeeEstimate) / (MICRO_LAMPORTS_PER_LAMPORT * 1e9)
     const accountRent = 0.00203928 // solana rent 165
     return {
       baseFee: baseFeeSol.toFixed(2),
@@ -62,8 +95,17 @@ export function CostCalculator() {
     }
   }
 
-  const compressedFees = calculateCompressedFees()
-  const normalFees = calculateNormalFees()
+  useEffect(() => {
+    getPriorityFeeEstimate()
+  }, [])
+
+  const normalFees = useMemo(() => {
+    return calculateNormalFees()
+  }, [recipientCount, priorityFeeEstimate])
+
+  const compressedFees = useMemo(() => {
+    return calculateCompressedFees()
+  }, [recipientCount, priorityFeeEstimate])
 
   return (
     <main className="flex flex-col items-center justify-top my-12 space-y-12">
@@ -130,7 +172,7 @@ export function CostCalculator() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Priority Fee:</span>
-                    <span>{compressedFees.priorityFee} SOL</span>
+                    <span>~{compressedFees.priorityFee} SOL</span>
                   </div>
                   <div className="h-px bg-border my-2" />
                   <div className="flex justify-between font-semibold">
@@ -161,7 +203,7 @@ export function CostCalculator() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Priority Fee:</span>
-                    <span>{normalFees.priorityFee} SOL</span>
+                    <span>~{normalFees.priorityFee} SOL</span>
                   </div>
                   <div className="h-px bg-border my-2" />
                   <div className="flex justify-between font-semibold">
