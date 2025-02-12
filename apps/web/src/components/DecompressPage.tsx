@@ -691,9 +691,16 @@ export function DecompressPage() {
                         variant="default"
                         size="sm"
                         onClick={() => handleBatchDecompress(selectedTokens.slice(0, MAX_BATCH_SIZE))}
-                        disabled={selectedTokens.length === 0}
+                        disabled={selectedTokens.length === 0 || !signAllTransactions}
+                        title={!signAllTransactions ? "Your wallet doesn't support batch transactions" : undefined}
                       >
-                        Decompress {selectedTokens.length > MAX_BATCH_SIZE ? `First ${MAX_BATCH_SIZE}` : 'Selected'}
+                        {!signAllTransactions ? (
+                          'Batch Decompress Not Supported'
+                        ) : (
+                          <>
+                            Decompress {selectedTokens.length > MAX_BATCH_SIZE ? `First ${MAX_BATCH_SIZE}` : 'Selected'}
+                          </>
+                        )}
                       </Button>
                     </div>
                   </div>
