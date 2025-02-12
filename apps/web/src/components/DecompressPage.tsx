@@ -5,7 +5,7 @@ import { WalletMultiButton } from './ui/wallet-multi-button'
 import { bn, buildTx, createRpc, Rpc, sendAndConfirmTx } from '@lightprotocol/stateless.js'
 import { CompressedTokenProgram, selectMinCompressedTokenAccountsForTransfer } from '@lightprotocol/compressed-token'
 import { Button } from './ui/button'
-import { computeUnitPrice } from 'helius-airship-core'
+import { computeUnitPrice, getPriorityFeeEstimate } from 'helius-airship-core'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base'
 import {
@@ -285,13 +285,6 @@ export function DecompressPage() {
 
         const instructions: TransactionInstruction[] = [unitLimitIX]
 
-        // Set the compute unit limit and add it to the transaction
-        const unitPriceIX = ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports: computeUnitPrice,
-        })
-
-        instructions.push(unitPriceIX)
-
         // Calculate ATA
         const ata = await getAssociatedTokenAddress(mint, publicKey, undefined, tokenProgramId)
 
@@ -341,6 +334,19 @@ export function DecompressPage() {
 
         const { value: blockhashCtx } = await connection.getLatestBlockhashAndContext()
 
+        const tempTx = buildTx(instructions, publicKey, blockhashCtx.blockhash)
+
+        // Get the priority fee estimate
+        const priorityFeeEstimate = await getPriorityFeeEstimate(import.meta.env.VITE_RPC_ENDPOINT, 'Medium', tempTx)
+
+        // Set the compute unit limit and add it to the transaction
+        const unitPriceIX = ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports: priorityFeeEstimate ?? computeUnitPrice,
+        })
+
+        // Insert the unit price instruction at the second position in the instructions array
+        instructions.splice(1, 0, unitPriceIX)
+
         const tx = buildTx(instructions, publicKey, blockhashCtx.blockhash)
 
         const signedTx = await signTransaction(tx)
@@ -357,9 +363,6 @@ export function DecompressPage() {
         })
 
         const txId = await sendAndConfirmTx(connection, signedTx)
-
-        // Refresh the list of compressed tokens
-        await fetchCompressedTokenAccounts()
 
         setDialogState(DialogState.Success)
         setAlertDialogContent({
@@ -387,6 +390,9 @@ export function DecompressPage() {
           title: 'Error decompressing',
           message: `${error instanceof Error ? (typeof error.message === 'string' ? error.message : JSON.stringify(error.message, null, 2)) : 'Unknown error'}`,
         })
+      } finally {
+        // Refresh the list of compressed tokens
+        await fetchCompressedTokenAccounts()
       }
     },
     [
@@ -443,11 +449,6 @@ export function DecompressPage() {
           })
           instructions.push(unitLimitIX)
 
-          const unitPriceIX = ComputeBudgetProgram.setComputeUnitPrice({
-            microLamports: computeUnitPrice,
-          })
-          instructions.push(unitPriceIX)
-
           // Calculate ATA
           const ata = await getAssociatedTokenAddress(token.mint, publicKey, undefined, token.tokenProgramId)
 
@@ -495,6 +496,20 @@ export function DecompressPage() {
           instructions.push(decompressInstruction)
 
           const { value: blockhashCtx } = await connection.getLatestBlockhashAndContext()
+          const tempTx = buildTx(instructions, publicKey, blockhashCtx.blockhash)
+
+          // Get the priority fee estimate
+          const priorityFeeEstimate = await getPriorityFeeEstimate(import.meta.env.VITE_RPC_ENDPOINT, 'Medium', tempTx)
+
+          // Set the compute unit limit and add it to the transaction
+          const unitPriceIX = ComputeBudgetProgram.setComputeUnitPrice({
+            microLamports: priorityFeeEstimate ?? computeUnitPrice,
+          })
+
+          // Insert the unit price instruction at the second position in the instructions array
+          instructions.splice(1, 0, unitPriceIX)
+
+          // Build the final transaction
           transactions.push(buildTx(instructions, publicKey, blockhashCtx.blockhash))
 
           // Add delay between tokens
@@ -573,6 +588,9 @@ export function DecompressPage() {
           title: 'Error decompressing',
           message: `${error instanceof Error ? (typeof error.message === 'string' ? error.message : JSON.stringify(error.message, null, 2)) : 'Unknown error'}`,
         })
+      } finally {
+        // Refresh the list of compressed tokens
+        await fetchCompressedTokenAccounts()
       }
     },
     [
