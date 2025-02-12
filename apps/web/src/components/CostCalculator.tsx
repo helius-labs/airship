@@ -99,7 +99,6 @@ export function CostCalculator() {
     getPriorityFeeEstimate()
   }, [])
 
-  // Calculate fees when priorityFeeEstimate or recipientCount changes
   const normalFees = useMemo(() => {
     return calculateNormalFees()
   }, [recipientCount, priorityFeeEstimate])
