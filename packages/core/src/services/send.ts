@@ -10,7 +10,7 @@ import {
   lookupTableAddressMainnet,
 } from "../config/constants";
 import { desc, asc, sql, eq, count, isNull, or } from "drizzle-orm";
-import { buildAndSignTx, buildTx, createRpc, Rpc } from "@lightprotocol/stateless.js";
+import { buildAndSignTx, buildTx, createRpc, pickRandomTreeAndQueue, Rpc } from "@lightprotocol/stateless.js";
 import * as splToken from "@solana/spl-token";
 import {
   CompressedTokenProgram,
@@ -171,11 +171,15 @@ async function processBatch(
     return true;
   }
 
+  const activeStateTrees = await connection.getCachedActiveStateTreeInfo();
+
   for (const transaction of transactionQueue) {
     try {
       const addresses = transaction.addresses.map(
         (address: any) => new web3.PublicKey(address)
       );
+
+      const { tree } = pickRandomTreeAndQueue(activeStateTrees);
 
       const instructions = await createInstructions(
         keypair,
@@ -184,6 +188,7 @@ async function processBatch(
         addresses,
         transaction.amount,
         tokenProgramId,
+        tree
       );
 
       const { blockhash, lastValidBlockHeight } =
@@ -257,7 +262,8 @@ async function createInstructions(
   sourceTokenAccount: splToken.Account,
   addresses: web3.PublicKey[],
   amount: bigint,
-  tokenProgramId: web3.PublicKey
+  tokenProgramId: web3.PublicKey,
+  outputStateTree: web3.PublicKey
 ): Promise<web3.TransactionInstruction[]> {
   if (addresses.length === 0) {
     throw new AirdropError(
@@ -297,6 +303,7 @@ async function createInstructions(
       amount: batch.map(() => Number(amount)), // amount of tokens to compress.
       mint: mintAddress, // Mint address of the token to compress.
       tokenProgramId: tokenProgramId,
+      outputStateTree: outputStateTree
     });
     instructions.push(compressIx);
   }

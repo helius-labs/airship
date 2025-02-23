@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState, useMemo, useCallback, memo } from 'reac
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from './ui/wallet-multi-button'
-import { bn, buildTx, createRpc, Rpc, sendAndConfirmTx } from '@lightprotocol/stateless.js'
+import { bn, buildTx, createRpc, pickRandomTreeAndQueue, Rpc, sendAndConfirmTx } from '@lightprotocol/stateless.js'
 import { CompressedTokenProgram, selectMinCompressedTokenAccountsForTransfer } from '@lightprotocol/compressed-token'
 import { Button } from './ui/button'
 import { computeUnitPrice, getPriorityFeeEstimate } from 'helius-airship-core'
@@ -313,10 +313,19 @@ export function DecompressPage() {
         // Select accounts to transfer from based on the transfer amount
         const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(compressedTokenAccounts.items, amount)
 
+        // Get a random tree and queue from the active state tree addresses.
+        // Prevents write lock contention on state trees.
+        const activeStateTrees = await connection.getCachedActiveStateTreeInfo()
+        const { tree, queue } = pickRandomTreeAndQueue(activeStateTrees)
+
         // Fetch recent validity proof
         // The prover can only generate proofs for 5 compressed accounts at a time
-        const proof = await connection.getValidityProof(
-          inputAccounts.map((account) => bn(account.compressedAccount.hash))
+        const proof = await connection.getValidityProofV0(
+          inputAccounts.map((account) => ({
+            hash: bn(account.compressedAccount.hash),
+            tree: tree,
+            queue: queue,
+          }))
         )
 
         // Create the decompress instruction
@@ -328,6 +337,7 @@ export function DecompressPage() {
           recentInputStateRootIndices: proof.rootIndices,
           recentValidityProof: proof.compressedProof,
           tokenProgramId: tokenProgramId,
+          outputStateTree: tree,
         })
 
         instructions.push(decompressInstruction)
