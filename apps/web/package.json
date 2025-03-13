@@ -13,8 +13,8 @@
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
     "@hookform/resolvers": "^3.9.0",
-    "@lightprotocol/compressed-token": "0.20.3",
-    "@lightprotocol/stateless.js": "0.20.3",
+    "@lightprotocol/compressed-token": "0.20.9",
+    "@lightprotocol/stateless.js": "0.20.9",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-checkbox": "^1.1.1",
     "@radix-ui/react-dialog": "^1.1.1",

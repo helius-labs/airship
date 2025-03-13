@@ -31,11 +31,11 @@ importers:
         specifier: ^3.9.0
         version: 3.9.0(react-hook-form@7.53.0(react@18.3.1))
       '@lightprotocol/compressed-token':
-        specifier: 0.20.3
-        version: 0.20.3(@lightprotocol/stateless.js@0.20.3(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10)))(@solana/spl-token@0.4.9(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10))(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))
+        specifier: 0.20.9
+        version: 0.20.9(@lightprotocol/stateless.js@0.20.9(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10)))(@solana/spl-token@0.4.9(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10))(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))
       '@lightprotocol/stateless.js':
-        specifier: 0.20.3
-        version: 0.20.3(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))
+        specifier: 0.20.9
+        version: 0.20.9(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))
       '@radix-ui/react-alert-dialog':
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@18.3.0)(@types/react@18.3.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1719,8 +1719,20 @@ packages:
       '@solana/spl-token': '>=0.3.9'
       '@solana/web3.js': '>=1.73.5'
 
+  '@lightprotocol/compressed-token@0.20.9':
+    resolution: {integrity: sha512-svpFD+UbMxYHHcp1GERyOMMRl1WWhZfKDxR+he/mSHwXu0xf4AgtXsBeVubSow3Ruxw9sxz0oa5HqtSCtrlG0g==}
+    peerDependencies:
+      '@lightprotocol/stateless.js': 0.20.9
+      '@solana/spl-token': '>=0.3.9'
+      '@solana/web3.js': '>=1.73.5'
+
   '@lightprotocol/stateless.js@0.20.3':
     resolution: {integrity: sha512-76+zmFzyf9J9JVxGGnl9NahqK+09m/z70watVwTaFR8SrQeYiyHC1VhXnZWGWdGsD6cgqKfW+2rU78jUketdCw==}
+    peerDependencies:
+      '@solana/web3.js': '>=1.73.5'
+
+  '@lightprotocol/stateless.js@0.20.9':
+    resolution: {integrity: sha512-YRvK7eKbA5E2lTDis8JWxVM3oxOhyD690BZBjIstKcVnweBW7NGHm5Xc033hjxSN1aO5WfjUuRNSVlXvbALfWQ==}
     peerDependencies:
       '@solana/web3.js': '>=1.73.5'
 
@@ -3457,6 +3469,10 @@ packages:
   camelcase-css@2.0.1:
     resolution: {integrity: sha512-QOSvevhslijgYwRx6Rv7zKdMF8lbRmx+uQGx2+vDc+KI/eBnsy9kit5aj23AgGu3pa4t9AgwbnXWqS+iOY+2aA==}
     engines: {node: '>= 6'}
+
+  camelcase-keys@9.1.3:
+    resolution: {integrity: sha512-Rircqi9ch8AnZscQcsA1C47NFdaO3wukpmIRzYcDOrmvgt78hM/sj5pZhZNec2NM12uk5vTwRHZ4anGcrC4ZTg==}
+    engines: {node: '>=16'}
 
   camelcase@5.3.1:
     resolution: {integrity: sha512-L28STB170nwWS63UjtlEOE3dldQApaJXZkOI1uMFfzf3rRuPegHaHesyee+YxQ+W6SvRDQV6UrdOdRiR153wJg==}
@@ -5214,6 +5230,10 @@ packages:
   makeerror@1.0.12:
     resolution: {integrity: sha512-JmqCvUhmt43madlpFzG4BQzG2Z3m6tvQDNKdClZnO3VbIudJYmxsT0FNJMeiB2+JTSlTQTSbU8QdesVmwJcmLg==}
 
+  map-obj@5.0.0:
+    resolution: {integrity: sha512-2L3MIgJynYrZ3TYMriLDLWocz15okFakV6J12HXvMXDHui2x/zgChzg1u9mFFGbbGWE+GsLpQByt4POb9Or+uA==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
   marky@1.2.5:
     resolution: {integrity: sha512-q9JtQJKjpsVxCRVgQ+WapguSbKC3SQ5HEzFGPAJMStgh3QjCawp00UKv3MTTAArTmGmmPUvllHZoNbZ3gs0I+Q==}
 
@@ -5942,6 +5962,10 @@ packages:
 
   queue@6.0.2:
     resolution: {integrity: sha512-iHZWu+q3IdFZFX36ro/lKBkSvfkztY5Y7HMiPlOUjhupPcG2JMfst2KKEpu5XndviX/3UhFbRngUPNKtgvtZiA==}
+
+  quick-lru@6.1.2:
+    resolution: {integrity: sha512-AAFUA5O1d83pIHEhJwWCq/RQcRukCkn/NSm2QsTEMle5f2hP0ChI2+3Xb051PZCkLryI/Ir1MVKviT2FIloaTQ==}
+    engines: {node: '>=12'}
 
   randombytes@2.1.0:
     resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}
@@ -8794,6 +8818,15 @@ snapshots:
       bn.js: 5.2.1
       buffer: 6.0.3
 
+  '@lightprotocol/compressed-token@0.20.9(@lightprotocol/stateless.js@0.20.9(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10)))(@solana/spl-token@0.4.9(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10))(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))':
+    dependencies:
+      '@coral-xyz/borsh': 0.29.0(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))
+      '@lightprotocol/stateless.js': 0.20.9(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))
+      '@solana/spl-token': 0.4.9(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.5.4)(utf-8-validate@5.0.10)
+      '@solana/web3.js': 1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      bn.js: 5.2.1
+      buffer: 6.0.3
+
   '@lightprotocol/stateless.js@0.20.3(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))':
     dependencies:
       '@coral-xyz/borsh': 0.29.0(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))
@@ -8804,6 +8837,19 @@ snapshots:
       buffer: 6.0.3
       buffer-layout: 1.2.2
       camelcase: 8.0.0
+      superstruct: 2.0.2
+
+  '@lightprotocol/stateless.js@0.20.9(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))':
+    dependencies:
+      '@coral-xyz/borsh': 0.29.0(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))
+      '@noble/hashes': 1.5.0
+      '@solana/web3.js': 1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      bn.js: 5.2.1
+      bs58: 6.0.0
+      buffer: 6.0.3
+      buffer-layout: 1.2.2
+      camelcase: 8.0.0
+      camelcase-keys: 9.1.3
       superstruct: 2.0.2
 
   '@manypkg/find-root@1.1.0':
@@ -11119,6 +11165,13 @@ snapshots:
 
   camelcase-css@2.0.1: {}
 
+  camelcase-keys@9.1.3:
+    dependencies:
+      camelcase: 8.0.0
+      map-obj: 5.0.0
+      quick-lru: 6.1.2
+      type-fest: 4.26.0
+
   camelcase@5.3.1: {}
 
   camelcase@6.3.0: {}
@@ -13042,6 +13095,8 @@ snapshots:
     dependencies:
       tmpl: 1.0.5
 
+  map-obj@5.0.0: {}
+
   marky@1.2.5: {}
 
   md5.js@1.3.5:
@@ -13816,6 +13871,8 @@ snapshots:
   queue@6.0.2:
     dependencies:
       inherits: 2.0.4
+
+  quick-lru@6.1.2: {}
 
   randombytes@2.1.0:
     dependencies:
