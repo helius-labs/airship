@@ -305,7 +305,7 @@ export function DecompressPage() {
           instructions.push(createAtaInstruction)
         }
 
-        // Fetch the latest compressed token account state
+        // Fetch compressed token accounts for this token
         const compressedTokenAccounts = await connection.getCompressedTokenAccountsByOwner(publicKey, {
           mint,
         })
@@ -482,14 +482,25 @@ export function DecompressPage() {
             mint: token.mint,
           })
 
+          // Select accounts to transfer from based on the transfer amount
           const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(
             compressedTokenAccounts.items,
             token.amount
           )
 
-          // Fetch validity proof
-          const proof = await connection.getValidityProof(
-            inputAccounts.map((account) => bn(account.compressedAccount.hash))
+          // Get a random tree and queue from the active state tree addresses.
+          // Prevents write lock contention on state trees.
+          const activeStateTrees = await connection.getCachedActiveStateTreeInfo()
+          const { tree, queue } = pickRandomTreeAndQueue(activeStateTrees)
+
+          // Fetch recent validity proof
+          // The prover can only generate proofs for 5 compressed accounts at a time
+          const proof = await connection.getValidityProofV0(
+            inputAccounts.map((account) => ({
+              hash: bn(account.compressedAccount.hash),
+              tree: tree,
+              queue: queue,
+            }))
           )
 
           // Create decompress instruction
