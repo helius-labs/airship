@@ -280,7 +280,7 @@ export function DecompressPage() {
 
         // Set the compute unit limit and add it to the transaction
         const unitLimitIX = ComputeBudgetProgram.setComputeUnitLimit({
-          units: 260_000,
+          units: 300_000,
         })
 
         const instructions: TransactionInstruction[] = [unitLimitIX]
@@ -455,7 +455,7 @@ export function DecompressPage() {
 
           // Add compute budget instructions
           const unitLimitIX = ComputeBudgetProgram.setComputeUnitLimit({
-            units: 260_000,
+            units: 300_000,
           })
           instructions.push(unitLimitIX)
 
