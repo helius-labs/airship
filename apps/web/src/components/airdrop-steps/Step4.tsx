@@ -15,14 +15,16 @@ import {
 } from 'helius-airship-core'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { AlertTriangle } from 'lucide-react'
-import { Skeleton } from '../ui/skeleton' // Import the Skeleton component
+import { Skeleton } from '../ui/skeleton'
 import { getKeypairFromPrivateKey } from '@/lib/utils'
+import { RecipientAmount } from '@/lib/variable-amounts'
 
 interface AirdropOverviewInterface {
   keypairAddress: string
   token: string
   totalAddresses: number
-  amountPerAddress: string
+  amountType: string
+  amountPerAddress?: string
   totalAmount: string
   numberOfTransactions: number
   approximateTransactionFee: string
@@ -34,15 +36,22 @@ interface Step4Props {
   form: UseFormReturn<FormValues>
   tokens: Token[]
   recipientList: string[]
-  amountValue: bigint
+  amountValue: bigint | null
+  recipientAmounts?: RecipientAmount[]
 }
 
-export default function Step4({ form, tokens, recipientList, amountValue }: Step4Props) {
+export default function Step4({
+  form,
+  tokens,
+  recipientList,
+  amountValue,
+  recipientAmounts
+}: Step4Props) {
   const [airdropOverview, setAirdropOverview] = useState<AirdropOverviewInterface | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isCalculating, setIsCalculating] = useState(true)
 
-  const { privateKey, selectedToken, rpcUrl } = form.getValues()
+  const { privateKey, selectedToken, rpcUrl, amountType, variableAmounts } = form.getValues()
 
   useEffect(() => {
     const calculateAirdropOverview = async () => {
@@ -55,6 +64,30 @@ export default function Step4({ form, tokens, recipientList, amountValue }: Step
 
         if (!selectedTokenInfo) {
           throw new Error('Selected token not found')
+        }
+
+        let totalAmount: bigint = BigInt(0)
+        let amountPerAddressDisplay = ''
+
+        if (amountType === 'variable') {
+          if (!recipientAmounts || recipientAmounts.length === 0) {
+            throw new Error('No recipient amounts specified')
+          }
+
+          totalAmount = recipientAmounts.reduce((sum, recipient) => sum + recipient.amount, BigInt(0))
+          amountPerAddressDisplay = 'Variable'
+        } else {
+          if (!amountValue) {
+            throw new Error('Amount value not set')
+          }
+
+          totalAmount = amountValue * BigInt(recipientList.length)
+          amountPerAddressDisplay = normalizeTokenAmount(amountValue.toString(), selectedTokenInfo.decimals).toLocaleString(
+            'en-US',
+            {
+              maximumFractionDigits: selectedTokenInfo.decimals,
+            }
+          )
         }
 
         const numberOfTransactions = BigInt(Math.ceil(recipientList.length / Number(maxAddressesPerTransaction)))
@@ -92,18 +125,12 @@ export default function Step4({ form, tokens, recipientList, amountValue }: Step
           BigInt(baseFee) +
           (BigInt(computeUnitLimit) * BigInt(priorityFeeEstimate)) / BigInt(MICRO_LAMPORTS_PER_LAMPORT)
 
-        const totalAmount = amountValue * BigInt(recipientList.length)
-
         const overview = {
           keypairAddress: keypair.publicKey.toBase58(),
           token: selectedTokenInfo.name || selectedTokenInfo.mintAddress.toString(),
           totalAddresses: recipientList.length,
-          amountPerAddress: normalizeTokenAmount(amountValue.toString(), selectedTokenInfo.decimals).toLocaleString(
-            'en-US',
-            {
-              maximumFractionDigits: selectedTokenInfo.decimals,
-            }
-          ),
+          amountType: amountType === 'fixed' ? 'Fixed' : amountType === 'percent' ? 'Percentage' : 'Variable',
+          amountPerAddress: amountType !== 'variable' ? amountPerAddressDisplay : undefined,
           totalAmount: normalizeTokenAmount(totalAmount.toString(), selectedTokenInfo.decimals).toLocaleString(
             'en-US',
             {
@@ -129,7 +156,7 @@ export default function Step4({ form, tokens, recipientList, amountValue }: Step
     }
 
     calculateAirdropOverview()
-  }, [amountValue, privateKey, recipientList, rpcUrl, selectedToken, tokens])
+  }, [amountValue, privateKey, recipientList, rpcUrl, selectedToken, tokens, amountType, variableAmounts, recipientAmounts])
 
   if (isCalculating) {
     return (
@@ -179,9 +206,15 @@ export default function Step4({ form, tokens, recipientList, amountValue }: Step
               <TableCell>{airdropOverview.totalAddresses}</TableCell>
             </TableRow>
             <TableRow>
-              <TableCell className="font-medium">Amount per address</TableCell>
-              <TableCell>{airdropOverview.amountPerAddress}</TableCell>
+              <TableCell className="font-medium">Amount type</TableCell>
+              <TableCell>{airdropOverview.amountType}</TableCell>
             </TableRow>
+            {airdropOverview.amountPerAddress && (
+              <TableRow>
+                <TableCell className="font-medium">Amount per address</TableCell>
+                <TableCell>{airdropOverview.amountPerAddress}</TableCell>
+              </TableRow>
+            )}
             <TableRow>
               <TableCell className="font-medium">Total amount</TableCell>
               <TableCell>{airdropOverview.totalAmount}</TableCell>
