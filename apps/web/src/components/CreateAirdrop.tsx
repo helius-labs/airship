@@ -25,9 +25,10 @@ import { Form } from '@/components/ui/form'
 import { FormValues, validationSchema } from '@/schemas/formSchema'
 import { getKeypairFromPrivateKey } from '@/lib/utils'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, AlertTriangle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Header } from './Header.tsx'
+import { validateVariableAmounts, RecipientAmount } from '@/lib/variable-amounts'
 
 interface CreateAirdropProps {
   db: airdropsender.BrowserDatabase
@@ -53,6 +54,8 @@ export function CreateAirdrop({ db, onBackToHome }: CreateAirdropProps) {
   const [noTokensMessage, setNoTokensMessage] = useState<string | null>(null)
   const [amountValue, setAmountValue] = useState<bigint | null>(null)
   const [recipientList, setRecipientList] = useState<string[]>([])
+  const [recipientAmounts, setRecipientAmounts] = useState<RecipientAmount[]>([])
+  const [variableAmountErrors, setVariableAmountErrors] = useState<string[]>([])
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [sendProgress, setSendProgress] = useState(0)
   const [finalizeProgress, setFinalizeProgress] = useState(0)
@@ -80,6 +83,7 @@ export function CreateAirdrop({ db, onBackToHome }: CreateAirdropProps) {
       recipients: '',
       amountType: 'fixed',
       amount: 0,
+      variableAmounts: '',
       recipientImportOption: 'saga2',
       collectionAddress: '',
       mintAddress: '',
@@ -88,17 +92,22 @@ export function CreateAirdrop({ db, onBackToHome }: CreateAirdropProps) {
   })
 
   const { watch } = form
-  const { privateKey, rpcUrl, selectedToken, recipients, amount, amountType, saveCredentials, acknowledgedRisks } =
+  const { privateKey, rpcUrl, selectedToken, recipients, amount, amountType, variableAmounts, saveCredentials, acknowledgedRisks } =
     watch()
 
   const calculateAmountValue = useCallback(() => {
     const selectedTokenInfo = tokens.find((t) => t.mintAddress.toString() === selectedToken)
 
-    if (!selectedTokenInfo || !amount) {
+    if (!selectedTokenInfo || recipientList.length === 0) {
       return null
     }
 
-    if (recipientList.length === 0) {
+    if (amountType === 'variable') {
+      // For variable amounts, we don't need a single amount value
+      return null
+    }
+
+    if (!amount) {
       return null
     }
 
@@ -115,6 +124,26 @@ export function CreateAirdrop({ db, onBackToHome }: CreateAirdropProps) {
   useEffect(() => {
     setAmountValue(calculateAmountValue())
   }, [calculateAmountValue])
+
+  useEffect(() => {
+    if (amountType === 'variable' && variableAmounts && recipientList.length > 0) {
+      const selectedTokenInfo = tokens.find((t) => t.mintAddress.toString() === selectedToken)
+
+      if (selectedTokenInfo) {
+        const validation = validateVariableAmounts(variableAmounts, recipientList, selectedTokenInfo.decimals)
+        setVariableAmountErrors(validation.errors)
+
+        if (validation.isValid) {
+          setRecipientAmounts(validation.recipients)
+        } else {
+          setRecipientAmounts([])
+        }
+      }
+    } else {
+      setVariableAmountErrors([])
+      setRecipientAmounts([])
+    }
+  }, [variableAmounts, recipientList, amountType, selectedToken, tokens])
 
   useEffect(() => {
     window.sessionStorage.setItem('saveCredentials', saveCredentials.toString())
@@ -234,13 +263,32 @@ export function CreateAirdrop({ db, onBackToHome }: CreateAirdropProps) {
     setIsAirdropCanceled(false)
 
     try {
-      if (!amountValue) {
-        throw new Error('Amount value is not set')
-      }
-
       const keypair = getKeypairFromPrivateKey(privateKey)
 
-      await createWorker.create(keypair.publicKey.toBase58(), recipientList, amountValue, selectedToken)
+      if (amountType === 'variable') {
+        if (recipientAmounts.length === 0) {
+          throw new Error('No recipient amounts specified')
+        }
+
+        console.log(`Processing ${recipientAmounts.length} recipients with variable amounts`);
+
+        await createWorker.createVariableAmounts(
+          keypair.publicKey.toBase58(),
+          recipientAmounts.map(ra => ({
+            address: ra.address.toBase58(),
+            amount: ra.amount
+          })),
+          selectedToken
+        )
+
+        console.log(`Successfully created variable amount airdrop`);
+      } else {
+        if (!amountValue) {
+          throw new Error('Amount value is not set')
+        }
+
+        await createWorker.create(keypair.publicKey.toBase58(), recipientList, amountValue, selectedToken)
+      }
 
       setIsCreatingAirdrop(false)
       setIsAirdropInProgress(true)
@@ -326,6 +374,47 @@ export function CreateAirdrop({ db, onBackToHome }: CreateAirdropProps) {
       } else {
         setRecipientList(validatedRecipients)
         form.clearErrors('recipients')
+      }
+    }
+
+    if (step === 3) {
+      if (amountType === 'variable') {
+
+        if (!variableAmounts || !variableAmounts.trim()) {
+          form.setError('variableAmounts', {
+            type: 'manual',
+            message: 'Please specify amounts for all recipients'
+          })
+          return
+        }
+
+        if (variableAmountErrors.length > 0) {
+          form.setError('variableAmounts', {
+            type: 'manual',
+            message: variableAmountErrors[0]
+          })
+          return
+        }
+
+        if (recipientAmounts.length === 0) {
+          form.setError('variableAmounts', {
+            type: 'manual',
+            message: 'Please specify valid amounts for all recipients'
+          })
+          return
+        }
+
+        form.clearErrors('variableAmounts')
+      } else {
+
+        if (!amount || amount <= 0) {
+          form.setError('amount', {
+            type: 'manual',
+            message: 'Please specify a valid amount'
+          })
+          return
+        }
+        form.clearErrors('amount')
       }
     }
 
@@ -420,7 +509,20 @@ export function CreateAirdrop({ db, onBackToHome }: CreateAirdropProps) {
                       <CardTitle>Step 3: Set Airdrop Amount</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <Step3 form={form} />
+                      <Step3 form={form} recipientList={recipientList} />
+                      {variableAmountErrors.length > 0 && (
+                        <Alert variant="destructive" className="mt-4">
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertTitle>Validation Errors</AlertTitle>
+                          <AlertDescription>
+                            <ul className="list-disc list-inside">
+                              {variableAmountErrors.map((error, index) => (
+                                <li key={index}>{error}</li>
+                              ))}
+                            </ul>
+                          </AlertDescription>
+                        </Alert>
+                      )}
                     </CardContent>
                   </Card>
                 )}
@@ -435,6 +537,7 @@ export function CreateAirdrop({ db, onBackToHome }: CreateAirdropProps) {
                         tokens={tokens}
                         recipientList={recipientList}
                         amountValue={amountValue ?? BigInt(0)}
+                        recipientAmounts={amountType === 'variable' ? recipientAmounts : undefined}
                       />
                     </CardContent>
                   </Card>
