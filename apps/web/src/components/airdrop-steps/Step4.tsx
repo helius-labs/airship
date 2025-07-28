@@ -17,6 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { AlertTriangle } from 'lucide-react'
 import { Skeleton } from '../ui/skeleton' // Import the Skeleton component
 import { getKeypairFromPrivateKey } from '@/lib/utils'
+import { DecompressionInfo } from '../DecompressionInfo'
 
 interface AirdropOverviewInterface {
   keypairAddress: string
@@ -160,46 +161,52 @@ export default function Step4({ form, tokens, recipientList, amountValue }: Step
   return (
     <>
       {airdropOverview && (
-        <Table>
-          <TableBody>
-            <TableRow>
-              <TableCell className="font-medium w-1/3">RPC URL</TableCell>
-              <TableCell>{airdropOverview.rpcUrl}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">Keypair address</TableCell>
-              <TableCell>{airdropOverview.keypairAddress}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">Token</TableCell>
-              <TableCell>{airdropOverview.token}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">Total addresses</TableCell>
-              <TableCell>{airdropOverview.totalAddresses}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">Amount per address</TableCell>
-              <TableCell>{airdropOverview.amountPerAddress}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">Total amount</TableCell>
-              <TableCell>{airdropOverview.totalAmount}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">Number of transactions</TableCell>
-              <TableCell>{airdropOverview.numberOfTransactions}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">Approximate transaction fee</TableCell>
-              <TableCell>{airdropOverview.approximateTransactionFee}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">Approximate compression fee</TableCell>
-              <TableCell>{airdropOverview.approximateCompressionFee}</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+        <>
+          <Table>
+            <TableBody>
+              <TableRow>
+                <TableCell className="font-medium w-1/3">RPC URL</TableCell>
+                <TableCell>{airdropOverview.rpcUrl}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Keypair address</TableCell>
+                <TableCell>{airdropOverview.keypairAddress}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Token</TableCell>
+                <TableCell>{airdropOverview.token}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Total addresses</TableCell>
+                <TableCell>{airdropOverview.totalAddresses}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Amount per address</TableCell>
+                <TableCell>{airdropOverview.amountPerAddress}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Total amount</TableCell>
+                <TableCell>{airdropOverview.totalAmount}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Number of transactions</TableCell>
+                <TableCell>{airdropOverview.numberOfTransactions}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Approximate transaction fee</TableCell>
+                <TableCell>{airdropOverview.approximateTransactionFee}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Approximate compression fee</TableCell>
+                <TableCell>{airdropOverview.approximateCompressionFee}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+          
+          <div className="mt-6">
+            <DecompressionInfo variant="warning" />
+          </div>
+        </>
       )}
     </>
   )
