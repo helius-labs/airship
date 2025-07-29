@@ -1,9 +1,9 @@
 import { Alert, AlertDescription, AlertTitle } from './ui/alert'
-import { Info, ExternalLink, Wallet } from 'lucide-react'
+import { Info, ExternalLink, Wallet, Copy, Check } from 'lucide-react'
 import { Button } from './ui/button'
+import { useState } from 'react'
 
 interface DecompressionInfoProps {
-  variant?: 'info' | 'warning'
   showTitle?: boolean
   compact?: boolean
 }
@@ -84,8 +84,20 @@ export function DecompressionInfo({
 }
 
 export function RecipientInstructions() {
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
+  const [copied, setCopied] = useState(false)
+  
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      
+      // Reset the icon after 2 seconds
+      setTimeout(() => {
+        setCopied(false)
+      }, 2000)
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error)
+    }
   }
 
   const instructions = `You've received compressed tokens from an airdrop!
@@ -109,16 +121,18 @@ Option 2: Use a Compatible Wallet
       </AlertTitle>
       <AlertDescription className="text-muted-foreground space-y-3">
         <p>Copy and share these instructions so your recipients know how to access their tokens:</p>
-        <div className="bg-muted p-3 rounded border text-sm text-muted-foreground whitespace-pre-line">
+        <div className="relative bg-muted p-3 rounded border text-sm text-muted-foreground whitespace-pre-line">
+          <Button
+            onClick={() => copyToClipboard(instructions)}
+            variant="ghost"
+            size="icon"
+            className={`absolute top-2 right-2 h-6 w-6 hover:bg-background/80 transition-colors ${copied ? 'text-green-500' : ''}`}
+            title={copied ? "Copied!" : "Copy instructions"}
+          >
+            {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          </Button>
           {instructions}
         </div>
-        <Button 
-          onClick={() => copyToClipboard(instructions)}
-          variant="outline" 
-          size="sm"
-        >
-          Copy Instructions
-        </Button>
       </AlertDescription>
     </Alert>
   )
