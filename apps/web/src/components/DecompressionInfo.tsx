@@ -9,19 +9,18 @@ interface DecompressionInfoProps {
 }
 
 export function DecompressionInfo({ 
-  variant = 'info', 
   showTitle = true, 
   compact = false 
 }: DecompressionInfoProps) {
   return (
-    <Alert variant={variant === 'warning' ? 'destructive' : 'default'} className={variant === 'warning' ? '' : 'border-border bg-card'}>
+    <Alert variant="default" className="border-border bg-card">
       <Info className="h-4 w-4" />
       {showTitle && (
-        <AlertTitle className={variant === 'warning' ? '' : 'text-card-foreground'}>
+        <AlertTitle className="text-card-foreground">
           Important: Recipients Must Decompress Tokens
         </AlertTitle>
       )}
-      <AlertDescription className={variant === 'warning' ? '' : 'text-muted-foreground'}>
+      <AlertDescription className="text-muted-foreground">
         {!compact && (
           <div className="space-y-3">
             <p>
