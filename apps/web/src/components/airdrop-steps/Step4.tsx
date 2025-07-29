@@ -204,7 +204,7 @@ export default function Step4({ form, tokens, recipientList, amountValue }: Step
         </Table>
           
           <div className="mt-6">
-            <DecompressionInfo variant="warning" />
+            <DecompressionInfo />
           </div>
         </>
       )}
