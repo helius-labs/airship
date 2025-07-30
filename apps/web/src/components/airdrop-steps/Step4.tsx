@@ -17,6 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { AlertTriangle } from 'lucide-react'
 import { Skeleton } from '../ui/skeleton' // Import the Skeleton component
 import { getKeypairFromPrivateKey } from '@/lib/utils'
+import { DecompressionInfo } from '../DecompressionInfo'
 
 interface AirdropOverviewInterface {
   keypairAddress: string
@@ -160,6 +161,7 @@ export default function Step4({ form, tokens, recipientList, amountValue }: Step
   return (
     <>
       {airdropOverview && (
+        <>
         <Table>
           <TableBody>
             <TableRow>
@@ -200,6 +202,11 @@ export default function Step4({ form, tokens, recipientList, amountValue }: Step
             </TableRow>
           </TableBody>
         </Table>
+          
+          <div className="mt-6">
+            <DecompressionInfo />
+          </div>
+        </>
       )}
     </>
   )

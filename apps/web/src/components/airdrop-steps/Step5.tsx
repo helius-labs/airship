@@ -1,5 +1,6 @@
 import { Progress } from "@/components/ui/progress";
 import { Button } from "../ui/button";
+import { RecipientInstructions } from "../DecompressionInfo";
 
 interface Step5Props {
   isAirdropInProgress: boolean;
@@ -43,16 +44,23 @@ export default function Step5({
         </div>
       )}
       {isAirdropComplete && (
-        <div className="my-8 text-center">
-          <h3 className="text-3xl font-bold text-primary mb-2">
-            🎉 Airdrop Complete! 🎉
-          </h3>
-          <p className="text-xl">
-            Congratulations! Your tokens have been successfully airdropped.
-          </p>
-          <Button onClick={onBackToHome} className="mt-4">
-            Back to Home
-          </Button>
+        <div className="my-8 space-y-6">
+          <div className="text-center">
+            <h3 className="text-3xl font-bold text-primary mb-2">
+              🎉 Airdrop Complete! 🎉
+            </h3>
+            <p className="text-xl">
+              Congratulations! Your tokens have been successfully airdropped.
+            </p>
+          </div>
+
+          <RecipientInstructions />
+
+          <div className="text-center">
+            <Button onClick={onBackToHome} className="mt-4">
+              Back to Home
+            </Button>
+          </div>
         </div>
       )}
     </>

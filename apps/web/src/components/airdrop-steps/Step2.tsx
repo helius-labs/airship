@@ -40,6 +40,7 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { AlertTriangle } from 'lucide-react'
 import Papa from 'papaparse'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { DecompressionInfo } from '../DecompressionInfo'
 
 interface Step2Props {
   form: UseFormReturn<FormValues>
@@ -76,6 +77,7 @@ export default function Step2({
   const recipientImportOption = watch('recipientImportOption')
   const collectionAddress = watch('collectionAddress')
   const mintAddress = watch('mintAddress')
+  const selectedToken = watch('selectedToken')
 
   useEffect(() => {
     setImportError(null)
@@ -315,6 +317,11 @@ export default function Step2({
           </FormItem>
         )}
       />
+      
+      {selectedToken && (
+        <DecompressionInfo />
+      )}
+      
       <FormField
         control={control}
         name="recipientImportOption"
