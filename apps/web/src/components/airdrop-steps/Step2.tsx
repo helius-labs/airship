@@ -319,7 +319,7 @@ export default function Step2({
       />
       
       {selectedToken && (
-        <DecompressionInfo compact={true} />
+        <DecompressionInfo />
       )}
       
       <FormField

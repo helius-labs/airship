@@ -1,16 +1,14 @@
 import { Alert, AlertDescription, AlertTitle } from './ui/alert'
-import { Info, ExternalLink, Wallet, Copy, Check } from 'lucide-react'
+import { Info, Copy, Check } from 'lucide-react'
 import { Button } from './ui/button'
 import { useState } from 'react'
 
 interface DecompressionInfoProps {
   showTitle?: boolean
-  compact?: boolean
 }
 
 export function DecompressionInfo({ 
-  showTitle = true, 
-  compact = false 
+  showTitle = true
 }: DecompressionInfoProps) {
   return (
     <Alert variant="default" className="border-border bg-card">
@@ -20,64 +18,19 @@ export function DecompressionInfo({
           Important: Recipients Must Decompress Tokens
         </AlertTitle>
       )}
-      <AlertDescription className="text-muted-foreground">
-        {!compact && (
-          <div className="space-y-3">
-            <p>
-              <strong>Your airdrop will send compressed tokens</strong>, which are cost-efficient but require an 
-              additional step from recipients to use them.
-            </p>
-            <div className="space-y-2">
-              <p className="font-medium">Recipients have two options to decompress their tokens:</p>
-              <div className="ml-4 space-y-2">
-                <div className="flex items-start space-x-2">
-                  <ExternalLink className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium">Visit AirShip Website</p>
-                    <p className="text-sm">
-                      Go to{' '}
-                                             <a 
-                         href="https://airship.helius.dev" 
-                         target="_blank" 
-                         rel="noopener noreferrer"
-                         className="text-primary underline hover:no-underline"
-                       >
-                         airship.helius.dev
-                       </a>
-                      {' '}and click "View Your Compressed Tokens" to decompress them.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Wallet className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium">Use a Compatible Wallet</p>
-                    <p className="text-sm">
-                      Use a wallet that supports ZK Compression (automatic decompression).
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-                         <p className="text-sm font-medium text-primary">
-               Consider sharing these instructions with your recipients!
-             </p>
-          </div>
-        )}
-        {compact && (
-          <p>
-            Recipients will receive <strong>compressed tokens</strong> that need to be decompressed at{' '}
-                         <a 
-               href="https://airship.helius.dev" 
-               target="_blank" 
-               rel="noopener noreferrer"
-               className="text-primary underline hover:no-underline font-medium"
-             >
-               airship.helius.dev
-             </a>
-            {' '}or using a compatible wallet.
-          </p>
-        )}
+            <AlertDescription className="text-muted-foreground">
+        <p>
+          Recipients will receive <strong>compressed tokens</strong> that need to be decompressed at{' '}
+          <a 
+            href="https://airship.helius.dev/decompress" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-primary underline hover:no-underline font-medium"
+          >
+            airship.helius.dev
+          </a>
+          {' '}or using a compatible wallet.
+        </p>
       </AlertDescription>
     </Alert>
   )

@@ -47,15 +47,15 @@ export default function Step5({
         <div className="my-8 space-y-6">
           <div className="text-center">
             <h3 className="text-3xl font-bold text-primary mb-2">
-              Airdrop Complete!
+              🎉 Airdrop Complete! 🎉
             </h3>
             <p className="text-xl">
               Congratulations! Your tokens have been successfully airdropped.
             </p>
           </div>
-          
+
           <RecipientInstructions />
-          
+
           <div className="text-center">
             <Button onClick={onBackToHome} className="mt-4">
               Back to Home
