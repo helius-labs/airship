@@ -175,8 +175,35 @@ export function DecompressPage() {
     if (connected && publicKey) {
       setIsLoading(true)
       try {
-        // Fetch compressed token accounts
-        const accounts = await connection.getCompressedTokenAccountsByOwner(publicKey)
+        // Fetch compressed token accounts via raw JSON-RPC for display.
+        // The SDK's getCompressedTokenAccountsByOwner resolves each account's
+        // state tree -> nullifier queue and THROWS if any account sits in a
+        // tree the pinned SDK version doesn't know ("No associated queue found
+        // for tree"). One unknown tree would otherwise blank the entire wallet.
+        // Tree resolution is only required for the decompress action, not for
+        // listing balances, so read the accounts directly here.
+        const rawResponse = await fetch(import.meta.env.VITE_RPC_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 'helius-airship',
+            method: 'getCompressedTokenAccountsByOwner',
+            params: { owner: publicKey.toBase58() },
+          }),
+        })
+        const rawJson = await rawResponse.json()
+        if (rawJson.error) {
+          throw new Error(rawJson.error.message || 'Failed to fetch compressed token accounts')
+        }
+        const accounts: { items: { parsed: { mint: PublicKey; amount: BN } }[] } = {
+          items: (rawJson.result?.value?.items ?? []).map((item: { tokenData: { mint: string; amount: number | string } }) => ({
+            parsed: {
+              mint: new PublicKey(item.tokenData.mint),
+              amount: new BN(item.tokenData.amount.toString()),
+            },
+          })),
+        }
 
         // Disable deduplication to avoid issues with the inner instruction getting too large
 
@@ -225,20 +252,23 @@ export function DecompressPage() {
 
         const assetData = await getAssetBatch(assetIds)
 
-        // Merge asset data with account data
+        // Merge asset data with account data.
+        // getAssetBatch returns null for any mint the DAS API hasn't indexed,
+        // so guard every asset access — an un-indexed mint must not crash the
+        // whole map (which would blank the entire portfolio).
         let tokens = accounts.items.map((account) => {
-          const asset = assetData.find((asset: { id: string }) => asset.id === account.parsed.mint.toBase58())
+          const asset = assetData?.find((asset: { id: string } | null) => asset?.id === account.parsed.mint.toBase58())
           return {
             mint: account.parsed.mint,
             amount: account.parsed.amount,
-            symbol: asset.content?.metadata?.symbol || '',
-            decimals: asset.token_info?.decimals || 0,
-            image: asset.content?.links?.image || '',
-            pricePerToken: asset.token_info?.price_info?.price_per_token || 0,
+            symbol: asset?.content?.metadata?.symbol || '',
+            decimals: asset?.token_info?.decimals || 0,
+            image: asset?.content?.links?.image || '',
+            pricePerToken: asset?.token_info?.price_info?.price_per_token || 0,
             tokenProgramId:
-              asset.token_info?.token_program === TOKEN_PROGRAM_ID.toBase58()
-                ? TOKEN_PROGRAM_ID
-                : TOKEN_2022_PROGRAM_ID,
+              asset?.token_info?.token_program === TOKEN_2022_PROGRAM_ID.toBase58()
+                ? TOKEN_2022_PROGRAM_ID
+                : TOKEN_PROGRAM_ID,
           }
         })
 
